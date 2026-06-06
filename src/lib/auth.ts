@@ -38,15 +38,13 @@ declare module "next-auth/jwt" {
   }
 }
 
-// Session timeouts per role (seconds)
 const SESSION_DURATIONS: Record<RoleName, number> = {
-  super_admin: 2 * 60 * 60,  // 2 hours
-  hr_admin:    4 * 60 * 60,  // 4 hours
-  manager:     8 * 60 * 60,  // 8 hours
-  employee:    8 * 60 * 60,  // 8 hours
+  super_admin: 2 * 60 * 60,
+  hr_admin:    4 * 60 * 60,
+  manager:     8 * 60 * 60,
+  employee:    8 * 60 * 60,
 }
 
-// Role priority — higher number = more privileged = shorter session
 const ROLE_PRIORITY: Record<RoleName, number> = {
   super_admin: 4,
   hr_admin:    3,
@@ -61,8 +59,7 @@ function getHighestPrivilegeRole(userRoles: RoleName[]): RoleName {
   )
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  // Fix: explicit table mapping so adapter uses our schema
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
@@ -86,7 +83,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const user = await db.query.users.findFirst({
           where: eq(users.email, credentials.email as string),
         })
-
         if (!user?.password) return null
 
         const isValid = await bcryptjs.compare(
@@ -100,18 +96,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      // Only runs on fresh sign-in (user object is present)
+    async jwt({ token, user, trigger, session }) {
+      // Fresh sign-in
       if (user) {
         token.id = user.id
 
-        // Load tenant from employee record
         const employee = await db.query.employees.findFirst({
           where: eq(employees.userId, user.id),
         })
         token.tenantId = employee?.tenantId ?? null
 
-        // Load all roles for this user
         const userRoleRows = await db
           .select({ name: roles.name })
           .from(userRoles)
@@ -121,17 +115,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.roles = userRoleRows.map((r) => r.name as RoleName)
         token.isTwoFactorVerified = false
 
-        // Fix: set per-role expiry on the token itself
         const highestRole = getHighestPrivilegeRole(token.roles)
         token.exp = Math.floor(Date.now() / 1000) + SESSION_DURATIONS[highestRole]
       }
+
+      // Handle unstable_update (e.g. after 2FA verification)
+      if (trigger === "update" && session?.user) {
+        if (session.user.isTwoFactorVerified === true) {
+          token.isTwoFactorVerified = true
+        }
+        if (session.user.tenantId !== undefined) {
+          token.tenantId = session.user.tenantId
+        }
+        if (session.user.roles) {
+          token.roles = session.user.roles
+        }
+      }
+
       return token
     },
 
     async session({ session, token }) {
-      session.user.id                = token.id
-      session.user.tenantId          = token.tenantId ?? null
-      session.user.roles             = token.roles ?? []
+      session.user.id                  = token.id
+      session.user.tenantId            = token.tenantId ?? null
+      session.user.roles               = token.roles ?? []
       session.user.isTwoFactorVerified = token.isTwoFactorVerified ?? false
       return session
     },

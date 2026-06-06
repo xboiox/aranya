@@ -1,12 +1,24 @@
-// TODO Fase 0: 2FA verification page
-// Flow: user sudah login → jika role hr_admin/super_admin → redirect ke sini
-// Input TOTP code dari Google Authenticator (atau backup code)
-// Setelah verify → set token.isTwoFactorVerified = true → redirect ke dashboard
-export default function TwoFactorPage() {
+import { auth } from "@/lib/auth"
+import { redirect } from "next/navigation"
+import { db } from "@/lib/db"
+import { userTwoFactor } from "@/lib/db/schema"
+import { eq } from "drizzle-orm"
+import TwoFactorSetup from "./_components/TwoFactorSetup"
+import TwoFactorVerify from "./_components/TwoFactorVerify"
+
+export default async function TwoFactorPage() {
+  const session = await auth()
+  if (!session) redirect("/login")
+
+  const record = await db.query.userTwoFactor.findFirst({
+    where: eq(userTwoFactor.userId, session.user.id),
+  })
+
+  const isSetupComplete = record?.isEnabled === true
+
   return (
-    <div className="w-full max-w-md rounded-lg bg-white p-8 shadow">
-      <h1 className="mb-2 text-2xl font-bold">Verifikasi 2FA</h1>
-      <p className="text-gray-500">2FA form — coming in Fase 0</p>
+    <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
+      {isSetupComplete ? <TwoFactorVerify /> : <TwoFactorSetup />}
     </div>
   )
 }

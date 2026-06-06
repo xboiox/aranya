@@ -40,24 +40,24 @@
 - [x] PostgreSQL RLS policies (`src/lib/db/rls.sql`)
 - [x] `withTenantContext()` + `withSuperAdminContext()` helpers
 - [ ] Jalankan `drizzle-kit migrate` + `rls.sql` di database
-- [ ] Seed data: system roles, permissions, Super Admin user awal
+- [x] DB seed script (`npm run db:seed`): roles, permissions, role-permissions, Super Admin user
 
 **Auth (Auth.js v5):**
-- [x] Auth.js v5 config skeleton dengan DrizzleAdapter explicit table mapping
-- [x] Middleware guard + 2FA redirect (path check via `startsWith`)
-- [x] Session timeout per role: super_admin=2h, hr_admin=4h, manager/employee=8h
-- [x] Page stubs: /login, /2fa, /forgot-password, /reset-password, /invite/[token]
-- [ ] Login page + form validation (Zod)
-- [ ] Password reset flow (email → token 24h → form → update + invalidate token)
-- [ ] 2FA setup: TOTP secret generation, QR code display, verify + save
-- [ ] 2FA verify page: token input + backup code fallback
-- [ ] Invitation accept flow: validate token → register → setup employee record
+- [x] Auth.js v5 config + DrizzleAdapter + `unstable_update` export + trigger handling
+- [x] Middleware guard + 2FA redirect (`startsWith`)
+- [x] Session timeout per role (super_admin=2h, hr_admin=4h, manager/employee=8h)
+- [x] Login page + Zod validation + Server Action (`useActionState`)
+- [x] Password reset: forgot-password + reset-password pages + actions + email
+- [x] 2FA setup: QR code, TOTP verify, backup codes (8 kode single-use, bcrypt-hashed)
+- [x] 2FA verify: token + backup code fallback
+- [x] Invitation accept: validate token → register → employee + role → auto sign-in
 - [ ] Env var validation at startup
 
 **Tenant Management (Super Admin):**
-- [ ] Create tenant + kirim invite ke HR Admin
-- [ ] Activate/deactivate modules per tenant
-- [ ] Manage PPh 21 rates, PTKP values, BPJS rates
+- [x] Tenant list page (`/tenants`)
+- [x] Create tenant form + activate modules + send invite HR Admin (`/tenants/new`)
+- [ ] Edit / deactivate tenant
+- [ ] Manage PPh 21 rates, PTKP values, BPJS rates (`/rates`)
 
 **Platform Core:**
 - [ ] Notification engine: in-app + email via Resend
