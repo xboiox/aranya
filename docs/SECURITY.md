@@ -92,6 +92,26 @@ Ini dibungkus `withSuperAdminContext` secara eksplisit karena bersifat operasi s
 
 ---
 
+## 5b. Integritas Data Absensi GPS
+
+**Kontrol yang ada:**
+- Validasi geofence dilakukan **di server** (koordinat dari client tidak dipercaya mentah) — `evaluateAttendance`.
+- **Ambang akurasi GPS** (`MAX_ACCURACY_METERS = 100`): saat geofencing aktif, pembacaan dengan
+  akurasi lebih buruk ditolak (mencegah validasi atas posisi yang tidak andal).
+- Koordinat + akurasi + flag `within_geofence` disimpan per check-in/out untuk audit.
+
+**⚠️ Limitasi yang diketahui — GPS spoofing:**
+Geolocation berbasis browser **dapat dipalsukan** (DevTools, fake-GPS app, emulator). Aranya
+**tidak** menggunakan selfie/face-recognition (keputusan produk), sehingga absensi GPS via browser
+**tidak anti-fraud secara penuh**. Mitigasi yang berlaku saat ini hanya ambang akurasi + audit trail.
+
+Mitigasi lanjutan (jadwal ke depan, bukan sekarang):
+- Native app dengan deteksi mock-location (Android `isFromMockProvider`)
+- Flag anomali (lonjakan jarak antar absensi tak masuk akal)
+- Opsi selfie per-tenant jika klien memerlukan kepastian lebih tinggi
+
+---
+
 ## 6. Transport & Headers
 
 - HTTPS wajib (Let's Encrypt via Coolify).

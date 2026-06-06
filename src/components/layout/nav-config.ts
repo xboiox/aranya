@@ -7,6 +7,7 @@ import {
   Shield,
   Building2,
   MapPin,
+  Bell,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -29,6 +30,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Self-Service",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: Home },
+      { href: "/dashboard/notifications", label: "Notifikasi", icon: Bell },
       { href: "/dashboard/attendance", label: "Absensi", icon: Clock },
       { href: "/dashboard/leave", label: "Cuti", icon: CalendarOff, disabled: true },
       { href: "/dashboard/payslip", label: "Slip Gaji", icon: FileText, disabled: true },

@@ -8,32 +8,13 @@ import {
   GEOFENCING_ENABLED_KEY,
 } from "@/lib/db/schema"
 import { logAudit } from "@/lib/audit"
-import { isWithinAnyGeofence } from "@/lib/geo"
 import { coordsSchema, geofenceLocationSchema, type CoordsInput } from "./schema"
-import {
-  getEmployeeIdByUser,
-  getGeofenceConfig,
-  todayJakarta,
-  type GeofenceConfig,
-} from "./queries"
+import { evaluateAttendance } from "./geofence"
+import { getEmployeeIdByUser, getGeofenceConfig, todayJakarta } from "./queries"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 type State = { error?: string; success?: string }
-
-function evaluateGeofence(
-  isWfh: boolean,
-  lat: number,
-  lng: number,
-  config: GeofenceConfig,
-): { within: boolean | null; blocked: boolean } {
-  if (isWfh) return { within: null, blocked: false }
-  if (!config.enabled || config.locations.length === 0) {
-    return { within: null, blocked: false }
-  }
-  const within = isWithinAnyGeofence(lat, lng, config.locations)
-  return { within, blocked: !within }
-}
 
 async function resolveEmployee(): Promise<
   | { error: string }
@@ -51,16 +32,21 @@ async function resolveEmployee(): Promise<
 export async function checkIn(input: CoordsInput): Promise<State> {
   const parsed = coordsSchema.safeParse(input)
   if (!parsed.success) return { error: "Lokasi GPS tidak valid" }
-  const { latitude, longitude, isWfh } = parsed.data
+  const { latitude, longitude, accuracy, isWfh } = parsed.data
 
   const ctx = await resolveEmployee()
   if ("error" in ctx) return { error: ctx.error }
 
   const config = await getGeofenceConfig(ctx.tenantId)
-  const geo = evaluateGeofence(isWfh, latitude, longitude, config)
-  if (geo.blocked) {
-    return { error: "Anda berada di luar area kantor. Aktifkan mode WFH jika bekerja dari rumah." }
-  }
+  const geo = evaluateAttendance({
+    isWfh,
+    latitude,
+    longitude,
+    accuracy,
+    geofencingEnabled: config.enabled,
+    locations: config.locations,
+  })
+  if (geo.blocked) return { error: geo.reason ?? "Absensi ditolak" }
 
   const result = await withTenantContext(ctx.tenantId, async (tx) => {
     const existing = await tx.query.attendance.findFirst({
@@ -78,6 +64,7 @@ export async function checkIn(input: CoordsInput): Promise<State> {
       checkInAt: new Date(),
       checkInLat: latitude,
       checkInLng: longitude,
+      checkInAccuracy: accuracy,
       checkInWfh: isWfh,
       checkInWithinGeofence: geo.within,
     })
@@ -101,16 +88,21 @@ export async function checkIn(input: CoordsInput): Promise<State> {
 export async function checkOut(input: CoordsInput): Promise<State> {
   const parsed = coordsSchema.safeParse(input)
   if (!parsed.success) return { error: "Lokasi GPS tidak valid" }
-  const { latitude, longitude, isWfh } = parsed.data
+  const { latitude, longitude, accuracy, isWfh } = parsed.data
 
   const ctx = await resolveEmployee()
   if ("error" in ctx) return { error: ctx.error }
 
   const config = await getGeofenceConfig(ctx.tenantId)
-  const geo = evaluateGeofence(isWfh, latitude, longitude, config)
-  if (geo.blocked) {
-    return { error: "Anda berada di luar area kantor. Aktifkan mode WFH jika bekerja dari rumah." }
-  }
+  const geo = evaluateAttendance({
+    isWfh,
+    latitude,
+    longitude,
+    accuracy,
+    geofencingEnabled: config.enabled,
+    locations: config.locations,
+  })
+  if (geo.blocked) return { error: geo.reason ?? "Absensi ditolak" }
 
   const result = await withTenantContext(ctx.tenantId, async (tx) => {
     const existing = await tx.query.attendance.findFirst({
@@ -128,6 +120,7 @@ export async function checkOut(input: CoordsInput): Promise<State> {
         checkOutAt: new Date(),
         checkOutLat: latitude,
         checkOutLng: longitude,
+        checkOutAccuracy: accuracy,
         checkOutWfh: isWfh,
         checkOutWithinGeofence: geo.within,
         updatedAt: new Date(),

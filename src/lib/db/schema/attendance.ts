@@ -41,12 +41,14 @@ export const attendance = pgTable(
     checkInAt: timestamp("check_in_at", { mode: "date" }),
     checkInLat: doublePrecision("check_in_lat"),
     checkInLng: doublePrecision("check_in_lng"),
+    checkInAccuracy: doublePrecision("check_in_accuracy"),
     checkInWfh: boolean("check_in_wfh").default(false).notNull(),
     checkInWithinGeofence: boolean("check_in_within_geofence"),
 
     checkOutAt: timestamp("check_out_at", { mode: "date" }),
     checkOutLat: doublePrecision("check_out_lat"),
     checkOutLng: doublePrecision("check_out_lng"),
+    checkOutAccuracy: doublePrecision("check_out_accuracy"),
     checkOutWfh: boolean("check_out_wfh").default(false).notNull(),
     checkOutWithinGeofence: boolean("check_out_within_geofence"),
 

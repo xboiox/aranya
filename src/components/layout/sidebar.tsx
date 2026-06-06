@@ -10,9 +10,12 @@ interface Props {
   name?: string | null
   email?: string | null
   roles: RoleName[]
+  unreadCount?: number
 }
 
-export function Sidebar({ name, email, roles }: Props) {
+const NOTIF_HREF = "/dashboard/notifications"
+
+export function Sidebar({ name, email, roles, unreadCount = 0 }: Props) {
   const pathname = usePathname()
   const sections = visibleSections(roles)
 
@@ -45,6 +48,7 @@ export function Sidebar({ name, email, roles }: Props) {
                     </li>
                   )
                 }
+                const showBadge = item.href === NOTIF_HREF && unreadCount > 0
                 return (
                   <li key={item.href}>
                     <Link
@@ -56,6 +60,11 @@ export function Sidebar({ name, email, roles }: Props) {
                     >
                       <Icon className="size-4" />
                       {item.label}
+                      {showBadge && (
+                        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-medium text-primary-foreground">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
                     </Link>
                   </li>
                 )

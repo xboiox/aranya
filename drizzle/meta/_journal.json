@@ -15,6 +15,13 @@
       "when": 1780749764721,
       "tag": "0001_neat_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780754459452,
+      "tag": "0002_giant_nightshade",
+      "breakpoints": true
     }
   ]
 }

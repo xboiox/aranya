@@ -15,14 +15,23 @@ interface Props {
   checkOutLabel: string
 }
 
-function getPosition(): Promise<{ latitude: number; longitude: number }> {
+function getPosition(): Promise<{
+  latitude: number
+  longitude: number
+  accuracy: number
+}> {
   return new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error("Browser tidak mendukung GPS"))
       return
     }
     navigator.geolocation.getCurrentPosition(
-      (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+      (pos) =>
+        resolve({
+          latitude: pos.coords.latitude,
+          longitude: pos.coords.longitude,
+          accuracy: pos.coords.accuracy,
+        }),
       (err) =>
         reject(
           new Error(

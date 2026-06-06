@@ -6,6 +6,7 @@ import { z } from "zod"
 import bcryptjs from "bcryptjs"
 import { signIn } from "@/lib/auth"
 import { logAudit } from "@/lib/audit"
+import { notify } from "@/lib/notifications"
 import { AuthError } from "next-auth"
 
 const schema = z.object({
@@ -102,6 +103,14 @@ export async function acceptInvitationAction(
     action:     "auth.invite_accepted",
     entityType: "user",
     entityId:   result.userId,
+  })
+
+  await notify({
+    tenantId: result.tenantId,
+    userId:   result.userId,
+    type:     "welcome",
+    title:    "Selamat datang di Aranya HRIS",
+    body:     "Akun Anda berhasil diaktifkan. Lengkapi profil dan mulai gunakan fitur self-service.",
   })
 
   // Auto sign-in the new user

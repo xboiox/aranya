@@ -41,6 +41,18 @@ export async function sendPasswordResetEmail(email: string, resetUrl: string) {
   })
 }
 
+export async function sendNotificationEmail(
+  email: string,
+  title: string,
+  body: string,
+) {
+  await send({
+    to: email,
+    subject: title,
+    html: `<p>${body}</p><p style="color:#888;font-size:12px;">Notifikasi otomatis dari Aranya HRIS.</p>`,
+  })
+}
+
 export async function sendInvitationEmail(
   email: string,
   inviteUrl: string,
