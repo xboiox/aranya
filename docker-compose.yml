@@ -13,16 +13,14 @@ services:
         condition: service_healthy
     networks:
       - aranya_internal
-    # Port not exposed publicly — Coolify/Nginx proxies to this
     expose:
       - "3000"
 
   worker:
     build:
       context: .
-      dockerfile: Dockerfile
-      target: runner
-    command: ["node", "worker.js"]
+      dockerfile: Dockerfile.worker
+    command: ["npm", "run", "worker"]
     restart: unless-stopped
     env_file: .env
     depends_on:
@@ -47,7 +45,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    # Not exposed to host — only accessible within Docker network
     networks:
       - aranya_internal
 

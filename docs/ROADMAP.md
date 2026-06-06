@@ -32,18 +32,37 @@
 
 ## Fase 0 — Foundation (Platform Core)
 
-Sebelum implementasi modul apapun, fondasi berikut harus selesai:
+> Schema, folder structure, dan skeleton sudah dibuat pada 2026-06-06.
+> Item berikut adalah implementasi penuh yang perlu diselesaikan.
 
-- [ ] Setup multi-tenant: tabel `tenants`, `tenant_id` di semua tabel, PostgreSQL RLS
-- [ ] RBAC: roles (Super Admin, HR Admin, Manager, Employee), permission matrix
-- [ ] Authentication: login, session management, per-tenant routing
-- [ ] Tenant configuration: jam kerja, hari libur, BPJS kategori
-- [ ] Rate management: tabel PPh 21 dan BPJS dikelola Super Admin
-- [ ] Notification engine: in-app + email fallback
-- [ ] Audit trail: log perubahan data sensitif
-- [ ] File storage: GCS integration, signed URL generator
-- [ ] PWA setup: manifest, service worker, offline support dasar
-- [ ] Billing: tracking user aktif per tenant, module activation
+**Database & Infrastruktur:**
+- [x] Drizzle schema: auth, tenants, rbac, employees, audit, notifications, invitations, tax-rates
+- [x] PostgreSQL RLS policies (`src/lib/db/rls.sql`)
+- [x] `withTenantContext()` + `withSuperAdminContext()` helpers
+- [ ] Jalankan `drizzle-kit migrate` + `rls.sql` di database
+- [ ] Seed data: system roles, permissions, Super Admin user awal
+
+**Auth (Auth.js v5):**
+- [x] Auth.js v5 config skeleton (`src/lib/auth.ts`)
+- [x] Middleware guard + 2FA redirect (`src/middleware.ts`)
+- [ ] Login page + form validation
+- [ ] Password reset flow (email → token → form → update)
+- [ ] 2FA setup: TOTP secret generation, QR code, verify
+- [ ] 2FA verify page: token input + backup code fallback
+- [ ] Invitation accept flow: validate token → register → setup employee record
+- [ ] Session timeout per role (2h/4h/8h)
+
+**Tenant Management (Super Admin):**
+- [ ] Create tenant + kirim invite ke HR Admin
+- [ ] Activate/deactivate modules per tenant
+- [ ] Manage PPh 21 rates, PTKP values, BPJS rates
+
+**Platform Core:**
+- [ ] Notification engine: in-app + email via Resend
+- [ ] Audit trail: middleware log semua mutasi data
+- [ ] GCS integration: upload, signed URL, delete
+- [ ] PWA: manifest, icons, offline handler
+- [ ] Billing: track user aktif per tenant per bulan
 
 ---
 
@@ -100,3 +119,5 @@ Sebelum implementasi modul apapun, fondasi berikut harus selesai:
 - Test coverage minimal 80% wajib di setiap fase (Vitest + Playwright)
 - Tech stack: **final** — lihat [TECH_STACK.md](./TECH_STACK.md)
 - Infrastruktur: **final** — Vultr Jakarta, Docker, Coolify, GCS
+- Database schema: **final (core)** — lihat [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
+- Folder structure: **final** — lihat [FOLDER_STRUCTURE.md](./FOLDER_STRUCTURE.md)

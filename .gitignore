@@ -48,8 +48,7 @@ public/workbox-*.js
 # ── Sentry ────────────────────────────────────────────────────────────────────
 .sentryclirc
 
-# ── Boilerplate lama (Play Next.js) — tidak dipakai di Aranya ────────────────
-src/
+# ── Boilerplate lama (Play Next.js) — sudah dihapus, tidak dipakai ───────────
 prisma/
 prisma.config.ts
 schema.json

@@ -55,6 +55,8 @@ Tersedia di semua modul: RBAC, notifikasi (in-app + email), audit trail, konfigu
 - [Architecture Decisions](docs/ARCHITECTURE.md)
 - [Tech Stack](docs/TECH_STACK.md)
 - [Development Roadmap](docs/ROADMAP.md)
+- [Database Schema](docs/DATABASE_SCHEMA.md)
+- [Folder Structure](docs/FOLDER_STRUCTURE.md)
 
 ---
 
