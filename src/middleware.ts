@@ -12,7 +12,8 @@ export default auth((req) => {
   }
 
   // 2FA: jika sudah login tapi belum verify 2FA, redirect ke /2fa
-  if (req.auth && !req.auth.user.isTwoFactorVerified && pathname !== "/2fa") {
+  // startsWith("/2fa") agar sub-routes seperti /2fa/setup tidak terjebak loop
+  if (req.auth && !req.auth.user.isTwoFactorVerified && !pathname.startsWith("/2fa")) {
     const roles = req.auth.user.roles ?? []
     const requires2FA = roles.includes("super_admin") || roles.includes("hr_admin")
     if (requires2FA) {

@@ -1,6 +1,6 @@
 # Aranya HRIS — Development Roadmap
 
-**Versi:** 1.0.0  
+**Versi:** 1.1.0  
 **Tanggal:** 2026-06-06
 
 ---
@@ -43,14 +43,16 @@
 - [ ] Seed data: system roles, permissions, Super Admin user awal
 
 **Auth (Auth.js v5):**
-- [x] Auth.js v5 config skeleton (`src/lib/auth.ts`)
-- [x] Middleware guard + 2FA redirect (`src/middleware.ts`)
-- [ ] Login page + form validation
-- [ ] Password reset flow (email → token → form → update)
-- [ ] 2FA setup: TOTP secret generation, QR code, verify
+- [x] Auth.js v5 config skeleton dengan DrizzleAdapter explicit table mapping
+- [x] Middleware guard + 2FA redirect (path check via `startsWith`)
+- [x] Session timeout per role: super_admin=2h, hr_admin=4h, manager/employee=8h
+- [x] Page stubs: /login, /2fa, /forgot-password, /reset-password, /invite/[token]
+- [ ] Login page + form validation (Zod)
+- [ ] Password reset flow (email → token 24h → form → update + invalidate token)
+- [ ] 2FA setup: TOTP secret generation, QR code display, verify + save
 - [ ] 2FA verify page: token input + backup code fallback
 - [ ] Invitation accept flow: validate token → register → setup employee record
-- [ ] Session timeout per role (2h/4h/8h)
+- [ ] Env var validation at startup
 
 **Tenant Management (Super Admin):**
 - [ ] Create tenant + kirim invite ke HR Admin
