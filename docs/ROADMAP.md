@@ -41,9 +41,11 @@ Urutan perintah yang benar untuk setup local dev pertama kali:
 docker compose -f docker-compose.dev.yml up -d
 
 # 3. Copy .env.example → .env, lalu isi minimal:
-#    DATABASE_URL=postgresql://aranya:aranya_dev_secret@localhost:5432/aranya_dev
-#    AUTH_SECRET=<random 32 char>
+#    DATABASE_URL=postgresql://aranya:aranya_dev_secret@127.0.0.1:5432/aranya_dev
+#    AUTH_SECRET=<random 32 char>      (generate: openssl rand -base64 32)
 #    AUTH_URL=http://localhost:3000
+#    SUPER_ADMIN_EMAIL=<email asli Anda>   (dipakai db:seed)
+#    SUPER_ADMIN_PASSWORD=<password kuat>  (dipakai db:seed)
 
 # 4. Generate Drizzle migration files
 npm run db:generate
@@ -61,11 +63,25 @@ npm run db:seed
 npm run dev
 ```
 
-> **Catatan:** Semua perintah `db:*` menggunakan `DATABASE_URL` dari file `.env`.
-> Pastikan file `.env` sudah ada dan `DATABASE_URL` formatnya benar:
-> `postgresql://user:password@localhost:5432/database`
-> — tidak ada karakter spesial dalam password tanpa URL-encode,
-> — ada `@localhost` sebelum port.
+### Catatan Penting `DATABASE_URL`
+
+Semua perintah `db:*` membaca `DATABASE_URL` dari `.env`. Format yang benar:
+`postgresql://user:password@127.0.0.1:5432/database`
+
+- **Gunakan `127.0.0.1`, BUKAN `localhost`.** Di macOS, `localhost` resolve ke IPv6 (`::1`)
+  lebih dulu. Jika ada PostgreSQL lokal (Postgres.app/Homebrew) yang listen di `[::1]:5432`,
+  koneksi akan nyasar ke sana — bukan ke container Docker — dan muncul error
+  `role "aranya" does not exist`. `127.0.0.1` memaksa IPv4 → langsung ke Docker.
+- Nama database untuk dev adalah **`aranya_dev`** (sesuai `docker-compose.dev.yml`), bukan `aranya`.
+- Jika password mengandung karakter spesial (`@`, `&`, `(`, `#`, `%`), harus di-URL-encode.
+  Untuk dev, gunakan password sederhana `aranya_dev_secret`.
+
+### Cek apa yang listen di port 5432 (jika koneksi bermasalah)
+
+```bash
+lsof -nP -iTCP:5432 -sTCP:LISTEN
+# Jika ada 2 baris (Docker + postgres lokal), pakai 127.0.0.1 di DATABASE_URL.
+```
 
 ---
 

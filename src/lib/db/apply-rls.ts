@@ -11,8 +11,9 @@ async function applyRls() {
 
   console.log("🔒 Applying RLS policies...")
 
-  // Use postgres.js directly — more reliable for DDL than Drizzle
-  const sql = postgres(databaseUrl, { max: 1 })
+  // Use postgres.js directly — more reliable for DDL than Drizzle.
+  // onnotice: suppress harmless NOTICE messages (e.g. "DROP POLICY IF EXISTS ... skipping")
+  const sql = postgres(databaseUrl, { max: 1, onnotice: () => {} })
 
   try {
     const rlsSql = readFileSync(join(process.cwd(), "src/lib/db/rls.sql"), "utf-8")

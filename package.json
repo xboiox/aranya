@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "worker": "tsx src/workers/index.ts",
+    "worker": "tsx --env-file=.env src/workers/index.ts",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest",
@@ -16,8 +16,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "tsx src/lib/db/seed.ts",
-    "db:rls": "tsx src/lib/db/apply-rls.ts"
+    "db:seed": "tsx --env-file=.env src/lib/db/seed.ts",
+    "db:rls": "tsx --env-file=.env src/lib/db/apply-rls.ts"
   },
   "dependencies": {
     "next": "^16.0.10",
