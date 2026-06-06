@@ -22,6 +22,13 @@
       "when": 1780754459452,
       "tag": "0002_giant_nightshade",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780764798132,
+      "tag": "0003_magenta_excalibur",
+      "breakpoints": true
     }
   ]
 }

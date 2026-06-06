@@ -157,7 +157,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] WFH mode pada absensi (skip validasi geofence, tercatat di record)
 - [ ] Offline absensi + sync (finalisasi wiring PWA/Serwist — evaluasi Turbopack support)
 - [ ] Shift & jadwal kerja
-- [ ] Leave Management + approval flow
+- [x] Leave Management + approval flow: ajukan cuti (5 jenis), saldo cuti tahunan
+  (hari kerja Senin–Jumat), inbox approval (direct lead via reporting line / HR fallback),
+  approve/reject + notifikasi, anti self-approve. `/dashboard/leave` + `/approvals`
 - [ ] Overtime pencatatan + approval flow
 - [ ] Slip gaji upload & download
 
