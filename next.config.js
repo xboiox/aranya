@@ -1,10 +1,3 @@
-const withPWA = require("@ducanh2912/next-pwa").default({
-  dest: "public",
-  disable: process.env.NODE_ENV === "development",
-  register: true,
-  skipWaiting: true,
-});
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -40,4 +33,18 @@ const nextConfig = {
   },
 };
 
-module.exports = withPWA(nextConfig);
+// @ducanh2912/next-pwa berbasis webpack. Next.js 16 default ke Turbopack.
+// - Dev: Turbopack + config polos (PWA disabled saat dev — tidak perlu webpack)
+// - Build produksi: webpack (`next build --webpack`) untuk generate service worker
+// Service worker hanya dibutuhkan di production build, jadi PWA wrapper hanya
+// diterapkan saat NODE_ENV=production.
+if (process.env.NODE_ENV === "production") {
+  const withPWA = require("@ducanh2912/next-pwa").default({
+    dest: "public",
+    register: true,
+    skipWaiting: true,
+  });
+  module.exports = withPWA(nextConfig);
+} else {
+  module.exports = nextConfig;
+}
