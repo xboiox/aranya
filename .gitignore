@@ -1,0 +1,64 @@
+# ── Dependencies ─────────────────────────────────────────────────────────────
+node_modules/
+.pnp
+.pnp.js
+
+# ── Build output ──────────────────────────────────────────────────────────────
+.next/
+out/
+dist/
+build/
+
+# ── Environment — JANGAN pernah commit file .env ─────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Secrets & Credentials ─────────────────────────────────────────────────────
+secrets/
+*.pem
+*.key
+*-key.json
+*-service-account.json
+gcs-*.json
+
+# ── Testing ───────────────────────────────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+.playwright/
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+npm-debug.log*
+/var/log/
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.pid
+
+# ── Drizzle ───────────────────────────────────────────────────────────────────
+drizzle/meta/
+
+# ── PWA (auto-generated, bukan source) ───────────────────────────────────────
+public/sw.js
+public/workbox-*.js
+
+# ── Sentry ────────────────────────────────────────────────────────────────────
+.sentryclirc
+
+# ── Boilerplate lama (Play Next.js) — tidak dipakai di Aranya ────────────────
+src/
+prisma/
+prisma.config.ts
+schema.json
+markdown/
+favicon.ico
+nextjs-play.png
+play-nextjs.png
+public/images/
+
+# ── package-lock.json: regenerate dengan `npm install` setelah clone ─────────
+# Uncomment baris di bawah HANYA jika belum ada lock file yang valid.
+# package-lock.json

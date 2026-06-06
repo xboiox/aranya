@@ -1,0 +1,34 @@
+# Development only — spins up dependencies (postgres + redis)
+# Next.js runs locally via `npm run dev`
+#
+# Usage:
+#   docker compose -f docker-compose.dev.yml up -d
+#   npm run dev
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: aranya_dev
+      POSTGRES_USER: aranya
+      POSTGRES_PASSWORD: aranya_dev_secret
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aranya -d aranya_dev"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+
+volumes:
+  postgres_dev_data:
+  redis_dev_data:

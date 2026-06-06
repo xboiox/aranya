@@ -16,6 +16,33 @@ Billing: **per user aktif / bulan × modul yang diaktifkan**
 
 ---
 
+## Tech Stack
+
+| Kategori | Teknologi |
+|----------|-----------|
+| Framework | Next.js 16 (App Router) + TypeScript |
+| Database | PostgreSQL 17 + Drizzle ORM |
+| Auth | NextAuth v4 (multi-tenant RBAC) |
+| UI | Tailwind CSS v4 + shadcn/ui |
+| Background Jobs | BullMQ + Redis |
+| File Storage | Google Cloud Storage |
+| PDF | @react-pdf/renderer |
+| PWA | next-pwa + Workbox |
+| Payments | Stripe |
+| Testing | Vitest + Playwright |
+
+## Infrastructure
+
+| Item | Pilihan |
+|------|---------|
+| VPS | Vultr Jakarta (data residency Indonesia — UU PDP) |
+| Container | Docker + Docker Compose |
+| Deployment | Coolify + GitHub Actions |
+| Proxy | Nginx + Let's Encrypt |
+| Monitoring | Sentry + Uptime Kuma |
+
+---
+
 ## Platform Core
 
 Tersedia di semua modul: RBAC, notifikasi (in-app + email), audit trail, konfigurasi tenant, approval workflow, manajemen rate PPh 21 & BPJS.
@@ -26,13 +53,15 @@ Tersedia di semua modul: RBAC, notifikasi (in-app + email), audit trail, konfigu
 
 - [Product Requirements Document](docs/PRD.md)
 - [Architecture Decisions](docs/ARCHITECTURE.md)
+- [Tech Stack](docs/TECH_STACK.md)
 - [Development Roadmap](docs/ROADMAP.md)
 
 ---
 
 ## Regulasi Indonesia
 
-- PPh 21 (tarif progresif, PTKP)
+- PPh 21 (tarif progresif, PTKP) — dikelola Super Admin
 - BPJS Kesehatan
 - BPJS Ketenagakerjaan (JKK, JKM, JHT, JP)
 - Perhitungan lembur sesuai UU Ketenagakerjaan
+- Data residency sesuai UU PDP No. 27/2022
