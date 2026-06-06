@@ -13,6 +13,7 @@ export const LEAVE_STATUS = {
   PENDING: "pending",
   APPROVED: "approved",
   REJECTED: "rejected",
+  CANCELLED: "cancelled",
 } as const
 
 export const leaveRequests = pgTable("leave_requests", {

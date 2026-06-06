@@ -25,6 +25,18 @@ export async function listMyLeaveRequests(
   })
 }
 
+export async function getLeaveBalanceQuota(tenantId: string): Promise<number> {
+  return withTenantContext(tenantId, async (tx) => {
+    const cfg = await tx.query.tenantConfig.findFirst({
+      where: and(
+        eq(tenantConfig.tenantId, tenantId),
+        eq(tenantConfig.key, ANNUAL_LEAVE_QUOTA_KEY),
+      ),
+    })
+    return cfg ? parseInt(cfg.value, 10) || DEFAULT_ANNUAL_QUOTA : DEFAULT_ANNUAL_QUOTA
+  })
+}
+
 export interface LeaveBalance {
   quota: number
   used: number

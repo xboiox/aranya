@@ -158,8 +158,10 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [ ] Offline absensi + sync (finalisasi wiring PWA/Serwist — evaluasi Turbopack support)
 - [ ] Shift & jadwal kerja
 - [x] Leave Management + approval flow: ajukan cuti (5 jenis), saldo cuti tahunan
-  (hari kerja Senin–Jumat), inbox approval (direct lead via reporting line / HR fallback),
-  approve/reject + notifikasi, anti self-approve. `/dashboard/leave` + `/approvals`
+  (hari kerja Senin–Jumat **minus hari libur**), inbox approval (direct lead via reporting line /
+  HR fallback), approve/reject + notifikasi, anti self-approve. `/dashboard/leave` + `/approvals`
+- [x] Leave correctness: kecualikan hari libur, cegah tumpang tindih, cegah tanggal lampau,
+  pembatalan (pending/approved belum mulai), UI kuota + manajemen hari libur (`/leave/settings`)
 - [ ] Overtime pencatatan + approval flow
 - [ ] Slip gaji upload & download
 

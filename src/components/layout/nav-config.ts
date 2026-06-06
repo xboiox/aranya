@@ -42,6 +42,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { href: "/dashboard/leave/approvals", label: "Persetujuan Cuti", icon: CalendarCheck, roles: ["manager", "hr_admin"] },
       { href: "/dashboard/employees", label: "Karyawan", icon: Users, roles: ["hr_admin"] },
+      { href: "/dashboard/leave/settings", label: "Pengaturan Cuti", icon: CalendarOff, roles: ["hr_admin"] },
       { href: "/dashboard/attendance/settings", label: "Pengaturan Absensi", icon: MapPin, roles: ["hr_admin"] },
       { href: "/dashboard/security", label: "Keamanan", icon: Shield, roles: ["hr_admin", "super_admin"] },
     ],

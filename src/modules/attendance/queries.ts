@@ -7,17 +7,10 @@ import {
   GEOFENCING_ENABLED_KEY,
 } from "@/lib/db/schema"
 import { eq, and, desc } from "drizzle-orm"
+import { todayJakarta } from "@/lib/date"
 
-// Tanggal hari ini dalam zona waktu Asia/Jakarta (sebagai Date di tengah malam UTC)
-export function todayJakarta(): Date {
-  const s = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date())
-  return new Date(`${s}T00:00:00.000Z`)
-}
+// Re-export agar import lama (./queries) tetap berfungsi
+export { todayJakarta }
 
 export async function getEmployeeIdByUser(
   tenantId: string,
