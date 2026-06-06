@@ -147,9 +147,11 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 
 **Target:** Tenant bisa onboarding, kelola karyawan, dan absensi berjalan.
 
-- [ ] Employee Master Data (CRUD lengkap)
-- [ ] Organizational Structure & Org Chart
-- [ ] Reporting Line (direct lead per karyawan)
+- [x] Employee Master Data: list + create (pre-create user + invite aktivasi) + detail/edit
+  (`/dashboard/employees`, tenant-scoped via RLS, authz HR Admin, audit create/update)
+- [x] Reporting Line (direct lead per karyawan) — `reportsToId`, validasi same-tenant + anti self-report
+- [x] Invite flow mendukung aktivasi user yang sudah di-pre-create HR (set password saja)
+- [ ] Organizational Structure & Org Chart (visualisasi hierarki)
 - [ ] Absensi GPS dengan geofencing configurable
 - [ ] WFH mode pada absensi
 - [ ] Offline absensi + sync (finalisasi wiring PWA/Serwist — evaluasi Turbopack support)

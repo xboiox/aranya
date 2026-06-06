@@ -49,45 +49,59 @@ export async function acceptInvitationAction(
     if (!invite) return { error: "Undangan tidak valid atau sudah kedaluwarsa" as string }
     if (!invite.tenantId) return { error: "Undangan tidak memiliki tenant yang valid" }
 
+    const hashedPassword = await bcryptjs.hash(parsed.data.password, 12)
+
     const existingUser = await tx.query.users.findFirst({
       where: eq(users.email, invite.email),
     })
-    if (existingUser) return { error: "Email ini sudah terdaftar. Silakan login." }
 
-    const hashedPassword = await bcryptjs.hash(parsed.data.password, 12)
+    let userId: string
 
-    const [newUser] = await tx.insert(users).values({
-      email:    invite.email,
-      name:     parsed.data.name,
-      password: hashedPassword,
-    }).returning()
+    if (existingUser) {
+      // User sudah di-pre-create oleh HR (employee + role sudah ada) → aktivasi saja
+      if (existingUser.password) {
+        return { error: "Akun ini sudah aktif. Silakan login." }
+      }
+      await tx
+        .update(users)
+        .set({ password: hashedPassword, name: parsed.data.name, updatedAt: new Date() })
+        .where(eq(users.id, existingUser.id))
+      userId = existingUser.id
+    } else {
+      // Undangan tanpa pre-create (mis. onboarding HR Admin) → buat lengkap
+      const [newUser] = await tx
+        .insert(users)
+        .values({ email: invite.email, name: parsed.data.name, password: hashedPassword })
+        .returning()
 
-    await tx.insert(employees).values({
-      userId:   newUser.id,
-      tenantId: invite.tenantId,
-    })
+      await tx.insert(employees).values({
+        userId: newUser.id,
+        tenantId: invite.tenantId,
+      })
 
-    await tx.insert(userRoles).values({
-      userId:   newUser.id,
-      roleId:   invite.roleId,
-      tenantId: invite.tenantId,
-    })
+      await tx.insert(userRoles).values({
+        userId: newUser.id,
+        roleId: invite.roleId,
+        tenantId: invite.tenantId,
+      })
+      userId = newUser.id
+    }
 
     await tx.update(invitations)
       .set({ acceptedAt: new Date() })
       .where(eq(invitations.id, invite.id))
 
-    return { newUser, email: invite.email, tenantId: invite.tenantId }
+    return { userId, email: invite.email, tenantId: invite.tenantId }
   })
 
   if ("error" in result) return { error: result.error }
 
   await logAudit({
     tenantId:   result.tenantId,
-    userId:     result.newUser.id,
+    userId:     result.userId,
     action:     "auth.invite_accepted",
     entityType: "user",
-    entityId:   result.newUser.id,
+    entityId:   result.userId,
   })
 
   // Auto sign-in the new user

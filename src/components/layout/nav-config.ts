@@ -36,7 +36,7 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     title: "Manajemen",
     items: [
-      { href: "/dashboard/employees", label: "Karyawan", icon: Users, roles: ["hr_admin"], disabled: true },
+      { href: "/dashboard/employees", label: "Karyawan", icon: Users, roles: ["hr_admin"] },
       { href: "/dashboard/security", label: "Keamanan", icon: Shield, roles: ["hr_admin", "super_admin"] },
     ],
   },
