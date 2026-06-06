@@ -1,7 +1,7 @@
 # Aranya HRIS — Tech Stack
 
-**Versi:** 1.0.0  
-**Tanggal:** 2026-06-05  
+**Versi:** 1.1.0  
+**Tanggal:** 2026-06-06  
 **Status:** Final
 
 ---
@@ -14,7 +14,7 @@
 | **Language** | TypeScript | Type safety — krusial untuk payroll & BPJS calculation |
 | **Database** | PostgreSQL 17 | RLS support, complex queries payroll |
 | **ORM** | Drizzle ORM | Native SQL support, optimal untuk RLS & window functions payroll |
-| **Auth** | NextAuth v4 | Customized untuk multi-tenant RBAC |
+| **Auth** | Auth.js v5 (next-auth@5) | Self-hosted, UU PDP compliant, multi-tenant RBAC |
 | **UI Framework** | Tailwind CSS v4 + shadcn/ui | Dashboard components: data table, form, dialog |
 | **State — Server** | TanStack Query | Caching, invalidation, optimistic updates |
 | **State — Client** | Zustand | Lightweight global state |
@@ -23,7 +23,7 @@
 | **File Storage** | Google Cloud Storage | Dokumen, slip gaji, bukti klaim |
 | **PDF** | @react-pdf/renderer | Generate slip gaji otomatis |
 | **Geo/Maps** | Leaflet.js + Haversine formula | Visualisasi geofencing + validasi server |
-| **PWA** | next-pwa + Workbox | Offline absensi, installable mobile |
+| **PWA** | @ducanh2912/next-pwa + Workbox | Offline absensi, installable mobile — fork aktif dari next-pwa |
 | **Payments** | Stripe | Subscription SaaS billing |
 | **Testing** | Vitest + Testing Library + Playwright | Unit, integration, E2E |
 | **Monitoring** | Sentry + Uptime Kuma | Error tracking + uptime self-hosted |
@@ -131,3 +131,6 @@ Coolify (webhook trigger)
 | TailGrids | Marketing UI — tidak cocok untuk admin dashboard HRIS |
 | Inngest | Tidak diperlukan karena tidak pakai serverless — BullMQ lebih powerful di VPS |
 | Supabase | GCS sudah dipilih untuk storage; database di VPS lebih hemat dan terkontrol |
+| NextAuth v4 | Vulnerabilities di semua 4.x, tidak ada path fix — digantikan Auth.js v5 |
+| Clerk | Data user disimpan di server US — melanggar UU PDP; biaya naik seiring MAU bertambah |
+| next-pwa | Tidak lagi dirawat, vulnerabilities di serialize-javascript — digantikan @ducanh2912/next-pwa |

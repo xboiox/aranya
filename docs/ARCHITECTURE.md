@@ -1,7 +1,7 @@
 # Aranya HRIS — Architecture Decisions
 
-**Versi:** 1.0.0  
-**Tanggal:** 2026-06-05  
+**Versi:** 1.1.0  
+**Tanggal:** 2026-06-06  
 **Status:** Final
 
 ---
@@ -190,3 +190,36 @@ Angka bonus masuk ke komponen payroll periode berikutnya
 **Security baseline:** SSH key only, UFW firewall (port 22/80/443), Fail2ban, non-root containers, Docker network isolation, daily backup PostgreSQL ke GCS.
 
 Lihat detail lengkap di [TECH_STACK.md](./TECH_STACK.md).
+
+---
+
+## 10. Authentication Strategy
+
+**Keputusan:** Auth.js v5 (`next-auth@5`) self-hosted
+
+**Alternatif yang dievaluasi:**
+
+| | Auth.js v5 | Clerk |
+|---|---|---|
+| Data lokasi | VPS Jakarta (kita kontrol) | Server US (Clerk) |
+| UU PDP compliance | ✅ Sepenuhnya compliant | ⚠️ Risiko — data PII di luar Indonesia |
+| Harga | Gratis | $0–$200+/bulan tergantung MAU |
+| Multi-tenant | Manual (kita build, sudah direncanakan di Fase 0) | Built-in via Organizations |
+| RBAC | Manual (custom sesuai kebutuhan HRIS) | Built-in (tapi tetap perlu custom mapping) |
+| Vendor lock-in | Tidak ada | Tinggi — migrasi sangat painful |
+
+**Alasan memilih Auth.js v5:**
+- Data identitas karyawan (nama, email, session) tersimpan di PostgreSQL kita di Jakarta — UU PDP compliant
+- Tidak ada biaya tambahan seiring jumlah user/tenant bertambah
+- Full control untuk kebutuhan HRIS: tenant context di session, audit trail setiap login, session invalidasi saat karyawan resign
+- Tidak ada vendor dependency
+
+**Package yang digunakan:**
+- `next-auth@^5.0.0` — core Auth.js v5
+- `@auth/drizzle-adapter` — adapter untuk PostgreSQL via Drizzle ORM
+
+**Perbedaan utama Auth.js v5 vs NextAuth v4:**
+- API baru: `auth()` menggantikan `getServerSession()`
+- Config terpusat di `auth.ts` (satu file, bukan `pages/api/auth/[...nextauth].ts`)
+- Native support untuk Next.js App Router & Server Components
+- `middleware.ts` menggunakan `auth` secara langsung

@@ -22,12 +22,12 @@ Billing: **per user aktif / bulan × modul yang diaktifkan**
 |----------|-----------|
 | Framework | Next.js 16 (App Router) + TypeScript |
 | Database | PostgreSQL 17 + Drizzle ORM |
-| Auth | NextAuth v4 (multi-tenant RBAC) |
+| Auth | Auth.js v5 — self-hosted, UU PDP compliant |
 | UI | Tailwind CSS v4 + shadcn/ui |
 | Background Jobs | BullMQ + Redis |
 | File Storage | Google Cloud Storage |
 | PDF | @react-pdf/renderer |
-| PWA | next-pwa + Workbox |
+| PWA | @ducanh2912/next-pwa + Workbox |
 | Payments | Stripe |
 | Testing | Vitest + Playwright |
 
