@@ -3,6 +3,8 @@ import {
   text,
   timestamp,
   integer,
+  boolean,
+  jsonb,
   primaryKey,
 } from "drizzle-orm/pg-core"
 import type { AdapterAccountType } from "next-auth/adapters"
@@ -67,6 +69,7 @@ export const passwordResets = pgTable("password_resets", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 })
 
+// Fix: use proper boolean and jsonb types
 export const userTwoFactor = pgTable("user_two_factor", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id")
@@ -74,8 +77,8 @@ export const userTwoFactor = pgTable("user_two_factor", {
     .unique()
     .references(() => users.id, { onDelete: "cascade" }),
   totpSecret: text("totp_secret").notNull(),
-  isEnabled: text("is_enabled").default("false").notNull(),
-  backupCodes: text("backup_codes").default("[]").notNull(),
+  isEnabled: boolean("is_enabled").default(false).notNull(),
+  backupCodes: jsonb("backup_codes").$type<string[]>().default([]).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 })

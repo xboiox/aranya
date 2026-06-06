@@ -39,7 +39,7 @@ Thumbs.db
 *.pid
 
 # ── Drizzle ───────────────────────────────────────────────────────────────────
-drizzle/meta/
+# drizzle/ harus di-commit — berisi migration files dan meta yang dibutuhkan drizzle-kit
 
 # ── PWA (auto-generated, bukan source) ───────────────────────────────────────
 public/sw.js

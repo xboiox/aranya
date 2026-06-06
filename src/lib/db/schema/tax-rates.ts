@@ -1,4 +1,11 @@
-import { pgTable, text, timestamp, integer, unique } from "drizzle-orm/pg-core"
+import {
+  pgTable,
+  text,
+  timestamp,
+  integer,
+  numeric,
+  unique,
+} from "drizzle-orm/pg-core"
 
 // PPh 21 progressive layers — managed by Super Admin Aranya
 export const taxRateLayers = pgTable(
@@ -8,7 +15,8 @@ export const taxRateLayers = pgTable(
     year: integer("year").notNull(),
     layerFrom: integer("layer_from").notNull(),
     layerTo: integer("layer_to"),
-    rate: text("rate").notNull(),
+    // Fix: numeric for accurate tax calculations (e.g. 5.00, 15.00, 25.00)
+    rate: numeric("rate", { precision: 5, scale: 2 }).notNull(),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
   (t) => [unique().on(t.year, t.layerFrom)],
@@ -34,8 +42,9 @@ export const bpjsRates = pgTable(
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
     year: integer("year").notNull(),
     type: text("type").notNull(),
-    employerRate: text("employer_rate"),
-    employeeRate: text("employee_rate"),
+    // Fix: numeric for accurate rate calculations
+    employerRate: numeric("employer_rate", { precision: 5, scale: 2 }),
+    employeeRate: numeric("employee_rate", { precision: 5, scale: 2 }),
     wageCapAmount: integer("wage_cap_amount"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   },
