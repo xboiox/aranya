@@ -118,7 +118,7 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [ ] Notification engine: in-app + email via Resend
 - [ ] Audit trail: middleware log semua mutasi data
 - [ ] GCS integration: upload, signed URL, delete
-- [ ] PWA: manifest, icons, offline handler
+- [x] PWA fondasi: Serwist + `src/app/sw.ts` (wiring build → Fase 1, lihat TECH_STACK.md)
 - [ ] Billing: track user aktif per tenant per bulan
 
 ---
@@ -132,7 +132,7 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [ ] Reporting Line (direct lead per karyawan)
 - [ ] Absensi GPS dengan geofencing configurable
 - [ ] WFH mode pada absensi
-- [ ] Offline absensi + sync
+- [ ] Offline absensi + sync (finalisasi wiring PWA/Serwist — evaluasi Turbopack support)
 - [ ] Shift & jadwal kerja
 - [ ] Leave Management + approval flow
 - [ ] Overtime pencatatan + approval flow

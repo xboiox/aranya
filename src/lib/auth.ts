@@ -29,7 +29,9 @@ declare module "next-auth" {
   }
 }
 
-declare module "next-auth/jwt" {
+// Augment @auth/core/jwt (modul asli) — next-auth/jwt hanya re-export,
+// augmentasi via re-export tidak ter-merge ke interface JWT yang sebenarnya.
+declare module "@auth/core/jwt" {
   interface JWT {
     id: string
     tenantId?: string | null
@@ -98,11 +100,12 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   callbacks: {
     async jwt({ token, user, trigger, session }) {
       // Fresh sign-in
-      if (user) {
-        token.id = user.id
+      if (user?.id) {
+        const userId = user.id
+        token.id = userId
 
         const employee = await db.query.employees.findFirst({
-          where: eq(employees.userId, user.id),
+          where: eq(employees.userId, userId),
         })
         token.tenantId = employee?.tenantId ?? null
 
@@ -110,7 +113,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           .select({ name: roles.name })
           .from(userRoles)
           .innerJoin(roles, eq(userRoles.roleId, roles.id))
-          .where(eq(userRoles.userId, user.id))
+          .where(eq(userRoles.userId, userId))
 
         token.roles = userRoleRows.map((r) => r.name as RoleName)
         token.isTwoFactorVerified = false

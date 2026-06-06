@@ -27,7 +27,7 @@ Billing: **per user aktif / bulan × modul yang diaktifkan**
 | Background Jobs | BullMQ + Redis |
 | File Storage | Google Cloud Storage |
 | PDF | @react-pdf/renderer |
-| PWA | @ducanh2912/next-pwa + Workbox |
+| PWA | Serwist + Workbox (wiring di Fase 1) |
 | Payments | Stripe |
 | Testing | Vitest + Playwright |
 

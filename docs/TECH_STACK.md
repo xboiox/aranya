@@ -23,7 +23,7 @@
 | **File Storage** | Google Cloud Storage | Dokumen, slip gaji, bukti klaim |
 | **PDF** | @react-pdf/renderer | Generate slip gaji otomatis |
 | **Geo/Maps** | Leaflet.js + Haversine formula | Visualisasi geofencing + validasi server |
-| **PWA** | @ducanh2912/next-pwa + Workbox | Offline absensi, installable mobile — fork aktif dari next-pwa |
+| **PWA** | Serwist (`@serwist/next`) + Workbox | Offline absensi, installable mobile. SW disiapkan di `src/app/sw.ts`; wiring build **ditunda ke Fase 1** (lihat catatan di bawah) |
 | **Payments** | Stripe | Subscription SaaS billing |
 | **Testing** | Vitest + Testing Library + Playwright | Unit, integration, E2E |
 | **Monitoring** | Sentry + Uptime Kuma | Error tracking + uptime self-hosted |
@@ -133,4 +133,34 @@ Coolify (webhook trigger)
 | Supabase | GCS sudah dipilih untuk storage; database di VPS lebih hemat dan terkontrol |
 | NextAuth v4 | Vulnerabilities di semua 4.x, tidak ada path fix — digantikan Auth.js v5 |
 | Clerk | Data user disimpan di server US — melanggar UU PDP; biaya naik seiring MAU bertambah |
-| next-pwa | Tidak lagi dirawat, vulnerabilities di serialize-javascript — digantikan @ducanh2912/next-pwa |
+| next-pwa / @ducanh2912/next-pwa | Berbasis webpack — tidak kompatibel dengan Turbopack (default build Next.js 16). Diganti Serwist |
+
+---
+
+## Catatan Keputusan: PWA & Turbopack (Fase 0)
+
+**Status:** Service worker (`src/app/sw.ts`) sudah disiapkan sebagai fondasi, tapi
+**wiring build-time SW generation ditunda ke Fase 1.**
+
+**Konteks:** Next.js 16 menjadikan Turbopack sebagai bundler default (lebih cepat dari webpack).
+Saat riset PWA ditemukan bahwa per November 2025:
+
+- `next-pwa` dan `@ducanh2912/next-pwa` → **webpack-only**
+- `@serwist/next` (plugin mode default) → **juga webpack-only** (menyuntik webpack config;
+  build Turbopack gagal dengan `WorkerError`)
+- Turbopack + PWA hanya mungkin via `@serwist/turbopack` (**eksperimental**) atau Serwist
+  "configurator mode" (butuh `@serwist/cli` + build SW terpisah — kompleks)
+
+**Keputusan:** Pertahankan **Turbopack** untuk dev & build produksi (cepat, default, masa depan).
+Fitur PWA (offline absensi) baru dibutuhkan di **Fase 1**, jadi:
+
+- Serwist tetap di-install sebagai dependency
+- `src/app/sw.ts` disiapkan (precache + runtime caching via Workbox defaults)
+- `next.config.js` **tidak** membungkus dengan plugin Serwist untuk saat ini (build Turbopack bersih)
+- Wiring SW generation final dilakukan di Fase 1 — evaluasi ulang `@serwist/turbopack`
+  / configurator mode saat itu (kemungkinan sudah lebih matang), atau fallback
+  `next build --webpack` jika offline jadi prioritas mendesak.
+
+**Konsekuensi sekarang:** Aplikasi tetap responsive & dapat diakses via mobile browser
+(requirement Modul 1 terpenuhi). Yang belum aktif: installable PWA + offline support —
+keduanya memang dijadwalkan Fase 1.
