@@ -1,5 +1,8 @@
 // Run with: npm run db:seed
-import { db } from "./index"
+// Seed bootstrap pakai koneksi admin (bukan app role yang dibatasi RLS).
+import { drizzle } from "drizzle-orm/postgres-js"
+import postgres from "postgres"
+import * as schema from "./schema"
 import {
   roles,
   permissions,
@@ -9,6 +12,11 @@ import {
 } from "./schema"
 import bcryptjs from "bcryptjs"
 import { eq, and, isNull } from "drizzle-orm"
+
+const adminUrl = process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL
+if (!adminUrl) throw new Error("ADMIN_DATABASE_URL / DATABASE_URL tidak diset")
+const client = postgres(adminUrl, { max: 1 })
+const db = drizzle(client, { schema })
 
 const SYSTEM_ROLES = [
   { name: "super_admin", description: "Platform administrator Aranya" },

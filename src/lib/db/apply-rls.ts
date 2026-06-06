@@ -6,8 +6,9 @@ import { readFileSync } from "fs"
 import { join } from "path"
 
 async function applyRls() {
-  const databaseUrl = process.env.DATABASE_URL
-  if (!databaseUrl) throw new Error("DATABASE_URL is not set in .env")
+  // DDL (ALTER TABLE, CREATE POLICY, FORCE RLS) butuh hak admin
+  const databaseUrl = process.env.ADMIN_DATABASE_URL ?? process.env.DATABASE_URL
+  if (!databaseUrl) throw new Error("ADMIN_DATABASE_URL / DATABASE_URL is not set in .env")
 
   console.log("🔒 Applying RLS policies...")
 

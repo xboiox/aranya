@@ -14,7 +14,10 @@ CREATE OR REPLACE FUNCTION is_super_admin() RETURNS boolean AS $$
   SELECT current_setting('app.bypass_rls', true) = 'on';
 $$ LANGUAGE sql STABLE;
 
--- ── Enable RLS (idempotent — safe to run if already enabled) ─
+-- ── Enable + FORCE RLS (idempotent) ──────────────────────────
+-- FORCE wajib: tanpanya, table OWNER (user 'aranya' yang dipakai app)
+-- otomatis bypass RLS → policy jadi no-op. FORCE membuat owner pun
+-- tunduk pada RLS, kecuali saat app.bypass_rls='on' (withSuperAdminContext).
 
 ALTER TABLE employees          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules     ENABLE ROW LEVEL SECURITY;
@@ -24,6 +27,15 @@ ALTER TABLE user_roles         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitations        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs         ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE employees          FORCE ROW LEVEL SECURITY;
+ALTER TABLE tenant_modules     FORCE ROW LEVEL SECURITY;
+ALTER TABLE tenant_config      FORCE ROW LEVEL SECURITY;
+ALTER TABLE holidays           FORCE ROW LEVEL SECURITY;
+ALTER TABLE user_roles         FORCE ROW LEVEL SECURITY;
+ALTER TABLE notifications      FORCE ROW LEVEL SECURITY;
+ALTER TABLE invitations        FORCE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs         FORCE ROW LEVEL SECURITY;
 
 -- ── Drop existing policies before recreating (idempotent) ────
 

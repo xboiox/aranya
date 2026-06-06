@@ -1,10 +1,11 @@
 "use server"
-import { db } from "@/lib/db"
+import { withSuperAdminContext } from "@/lib/db"
 import { invitations, users, employees, userRoles } from "@/lib/db/schema"
 import { eq, and, gt, isNull } from "drizzle-orm"
 import { z } from "zod"
 import bcryptjs from "bcryptjs"
 import { signIn } from "@/lib/auth"
+import { logAudit } from "@/lib/audit"
 import { AuthError } from "next-auth"
 
 const schema = z.object({
@@ -34,53 +35,65 @@ export async function acceptInvitationAction(
 
   if (!parsed.success) return { error: parsed.error.errors[0].message }
 
-  const invite = await db.query.invitations.findFirst({
-    where: and(
-      eq(invitations.token, parsed.data.token),
-      gt(invitations.expiresAt, new Date()),
-      isNull(invitations.acceptedAt),
-    ),
+  // invitations adalah tabel RLS dan lookup ini pre-auth & lintas-tenant
+  // (tenant belum diketahui dari token) → seluruh operasi lewat bypass context.
+  const result = await withSuperAdminContext(async (tx) => {
+    const invite = await tx.query.invitations.findFirst({
+      where: and(
+        eq(invitations.token, parsed.data.token),
+        gt(invitations.expiresAt, new Date()),
+        isNull(invitations.acceptedAt),
+      ),
+    })
+
+    if (!invite) return { error: "Undangan tidak valid atau sudah kedaluwarsa" as string }
+    if (!invite.tenantId) return { error: "Undangan tidak memiliki tenant yang valid" }
+
+    const existingUser = await tx.query.users.findFirst({
+      where: eq(users.email, invite.email),
+    })
+    if (existingUser) return { error: "Email ini sudah terdaftar. Silakan login." }
+
+    const hashedPassword = await bcryptjs.hash(parsed.data.password, 12)
+
+    const [newUser] = await tx.insert(users).values({
+      email:    invite.email,
+      name:     parsed.data.name,
+      password: hashedPassword,
+    }).returning()
+
+    await tx.insert(employees).values({
+      userId:   newUser.id,
+      tenantId: invite.tenantId,
+    })
+
+    await tx.insert(userRoles).values({
+      userId:   newUser.id,
+      roleId:   invite.roleId,
+      tenantId: invite.tenantId,
+    })
+
+    await tx.update(invitations)
+      .set({ acceptedAt: new Date() })
+      .where(eq(invitations.id, invite.id))
+
+    return { newUser, email: invite.email, tenantId: invite.tenantId }
   })
 
-  if (!invite) return { error: "Undangan tidak valid atau sudah kedaluwarsa" }
-  if (!invite.tenantId) return { error: "Undangan tidak memiliki tenant yang valid" }
+  if ("error" in result) return { error: result.error }
 
-  const existingUser = await db.query.users.findFirst({
-    where: eq(users.email, invite.email),
+  await logAudit({
+    tenantId:   result.tenantId,
+    userId:     result.newUser.id,
+    action:     "auth.invite_accepted",
+    entityType: "user",
+    entityId:   result.newUser.id,
   })
-  if (existingUser) return { error: "Email ini sudah terdaftar. Silakan login." }
-
-  const hashedPassword = await bcryptjs.hash(parsed.data.password, 12)
-
-  // Create user
-  const [newUser] = await db.insert(users).values({
-    email:    invite.email,
-    name:     parsed.data.name,
-    password: hashedPassword,
-  }).returning()
-
-  // Create employee record linked to tenant
-  await db.insert(employees).values({
-    userId:   newUser.id,
-    tenantId: invite.tenantId,
-  })
-
-  // Assign role
-  await db.insert(userRoles).values({
-    userId:   newUser.id,
-    roleId:   invite.roleId,
-    tenantId: invite.tenantId,
-  })
-
-  // Mark invitation as accepted
-  await db.update(invitations)
-    .set({ acceptedAt: new Date() })
-    .where(eq(invitations.id, invite.id))
 
   // Auto sign-in the new user
   try {
     await signIn("credentials", {
-      email:      invite.email,
+      email:      result.email,
       password:   parsed.data.password,
       redirectTo: "/dashboard",
     })

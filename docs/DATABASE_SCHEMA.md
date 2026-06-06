@@ -11,8 +11,12 @@
 **Multi-tenant:** Shared Database + `tenant_id` + PostgreSQL Row Level Security (RLS)
 
 Setiap tabel yang memiliki data per-tenant memiliki kolom `tenant_id`.  
-RLS policies di `src/lib/db/rls.sql` enforce isolasi di level database.  
+RLS policies + `FORCE ROW LEVEL SECURITY` di `src/lib/db/rls.sql` enforce isolasi di level database.  
 Application code menggunakan `withTenantContext()` atau `withSuperAdminContext()` dari `src/lib/db/index.ts`.
+
+> **Penting:** RLS hanya benar-benar dienforce jika app konek sebagai role **non-superuser**
+> (`aranya_app`, dibuat via `npm run db:setup-role`). Superuser/owner PostgreSQL bypass RLS.
+> Lihat [SECURITY.md](./SECURITY.md) untuk detail arsitektur isolasi tenant.
 
 ---
 

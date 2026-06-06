@@ -5,6 +5,7 @@ import { eq, and, gt, isNull } from "drizzle-orm"
 import { z } from "zod"
 import bcryptjs from "bcryptjs"
 import { redirect } from "next/navigation"
+import { logAudit } from "@/lib/audit"
 
 const schema = z.object({
   token: z.string().min(1),
@@ -51,6 +52,13 @@ export async function resetPasswordAction(
   await db.update(passwordResets)
     .set({ usedAt: new Date() })
     .where(eq(passwordResets.id, resetRecord.id))
+
+  await logAudit({
+    userId:     resetRecord.userId,
+    action:     "auth.password_reset",
+    entityType: "user",
+    entityId:   resetRecord.userId,
+  })
 
   redirect("/login?reset=success")
 }

@@ -3,7 +3,7 @@ import Credentials from "next-auth/providers/credentials"
 import { DrizzleAdapter } from "@auth/drizzle-adapter"
 import { eq } from "drizzle-orm"
 import bcryptjs from "bcryptjs"
-import { db } from "@/lib/db"
+import { db, withSuperAdminContext } from "@/lib/db"
 import {
   users,
   accounts,
@@ -14,6 +14,8 @@ import {
   employees,
 } from "@/lib/db/schema"
 import type { RoleName } from "@/lib/db/schema"
+import { logAudit } from "@/lib/audit"
+import { SESSION_DURATIONS, getHighestPrivilegeRole, hasRole, hasAnyRole } from "@/lib/rbac"
 
 declare module "next-auth" {
   interface Session {
@@ -38,27 +40,6 @@ declare module "@auth/core/jwt" {
     roles: RoleName[]
     isTwoFactorVerified: boolean
   }
-}
-
-const SESSION_DURATIONS: Record<RoleName, number> = {
-  super_admin: 2 * 60 * 60,
-  hr_admin:    4 * 60 * 60,
-  manager:     8 * 60 * 60,
-  employee:    8 * 60 * 60,
-}
-
-const ROLE_PRIORITY: Record<RoleName, number> = {
-  super_admin: 4,
-  hr_admin:    3,
-  manager:     2,
-  employee:    1,
-}
-
-function getHighestPrivilegeRole(userRoles: RoleName[]): RoleName {
-  if (!userRoles.length) return "employee"
-  return userRoles.reduce((highest, role) =>
-    ROLE_PRIORITY[role] > ROLE_PRIORITY[highest] ? role : highest,
-  )
 }
 
 export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
@@ -104,18 +85,27 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         const userId = user.id
         token.id = userId
 
-        const employee = await db.query.employees.findFirst({
-          where: eq(employees.userId, userId),
+        // Bootstrap queries: tenant belum diketahui di titik ini, dan tabel
+        // employees/user_roles kena RLS. Pakai bypass context (operasi sistem).
+        const { tenantId, roleNames } = await withSuperAdminContext(async (tx) => {
+          const employee = await tx.query.employees.findFirst({
+            where: eq(employees.userId, userId),
+          })
+
+          const userRoleRows = await tx
+            .select({ name: roles.name })
+            .from(userRoles)
+            .innerJoin(roles, eq(userRoles.roleId, roles.id))
+            .where(eq(userRoles.userId, userId))
+
+          return {
+            tenantId: employee?.tenantId ?? null,
+            roleNames: userRoleRows.map((r) => r.name as RoleName),
+          }
         })
-        token.tenantId = employee?.tenantId ?? null
 
-        const userRoleRows = await db
-          .select({ name: roles.name })
-          .from(userRoles)
-          .innerJoin(roles, eq(userRoles.roleId, roles.id))
-          .where(eq(userRoles.userId, userId))
-
-        token.roles = userRoleRows.map((r) => r.name as RoleName)
+        token.tenantId = tenantId
+        token.roles = roleNames
         token.isTwoFactorVerified = false
 
         const highestRole = getHighestPrivilegeRole(token.roles)
@@ -146,12 +136,14 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
       return session
     },
   },
+  events: {
+    async signIn({ user }) {
+      if (user?.id) {
+        await logAudit({ userId: user.id, action: "auth.login" })
+      }
+    },
+  },
 })
 
-export function hasRole(userRoles: RoleName[], role: RoleName): boolean {
-  return userRoles.includes(role)
-}
-
-export function hasAnyRole(userRoles: RoleName[], ...checkRoles: RoleName[]): boolean {
-  return checkRoles.some((r) => userRoles.includes(r))
-}
+// Re-export RBAC helpers agar import lama (@/lib/auth) tetap berfungsi
+export { hasRole, hasAnyRole }

@@ -3,6 +3,8 @@ import { auth, unstable_update } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { userTwoFactor } from "@/lib/db/schema"
 import { generateTotpSecret, generateQrCodeDataUrl, verifyTotpToken, generateBackupCodes } from "@/lib/utils/totp"
+import { encrypt, decrypt } from "@/lib/utils/crypto"
+import { logAudit } from "@/lib/audit"
 import { eq } from "drizzle-orm"
 import bcryptjs from "bcryptjs"
 import { redirect } from "next/navigation"
@@ -20,18 +22,21 @@ export async function initTwoFactorSetup(): Promise<{
   const secret = generateTotpSecret()
   const qrCodeDataUrl = await generateQrCodeDataUrl(session.user.email!, secret)
 
+  // Enkripsi secret sebelum disimpan (AES-256-GCM)
+  const encryptedSecret = encrypt(secret)
+
   // Upsert: save secret as disabled until verified
   await db
     .insert(userTwoFactor)
     .values({
       userId: session.user.id,
-      totpSecret: secret, // TODO: encrypt at rest before production
+      totpSecret: encryptedSecret,
       isEnabled: false,
       backupCodes: [],
     })
     .onConflictDoUpdate({
       target: userTwoFactor.userId,
-      set: { totpSecret: secret, isEnabled: false, backupCodes: [] },
+      set: { totpSecret: encryptedSecret, isEnabled: false, backupCodes: [] },
     })
 
   return { qrCodeDataUrl, secret }
@@ -55,7 +60,7 @@ export async function completeTwoFactorSetup(
   })
   if (!record) return { error: "Setup belum dimulai. Muat ulang halaman." }
 
-  const isValid = verifyTotpToken(parsed.data.token, record.totpSecret)
+  const isValid = verifyTotpToken(parsed.data.token, decrypt(record.totpSecret))
   if (!isValid) return { error: "Kode tidak valid. Pastikan waktu perangkat Anda benar." }
 
   const plainBackupCodes = generateBackupCodes(8)
@@ -65,6 +70,14 @@ export async function completeTwoFactorSetup(
     .update(userTwoFactor)
     .set({ isEnabled: true, backupCodes: hashedCodes })
     .where(eq(userTwoFactor.userId, session.user.id))
+
+  await logAudit({
+    tenantId:   session.user.tenantId,
+    userId:     session.user.id,
+    action:     "auth.2fa_enabled",
+    entityType: "user",
+    entityId:   session.user.id,
+  })
 
   // Mark session as 2FA verified
   await unstable_update({ user: { isTwoFactorVerified: true } } as Parameters<typeof unstable_update>[0])
@@ -91,7 +104,7 @@ export async function verifyTwoFactor(
   let isValid = false
 
   if (token) {
-    isValid = verifyTotpToken(token, record.totpSecret)
+    isValid = verifyTotpToken(token, decrypt(record.totpSecret))
   } else if (backupCode) {
     // Check against hashed backup codes
     const storedCodes = record.backupCodes as string[]

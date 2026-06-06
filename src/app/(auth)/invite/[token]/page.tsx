@@ -1,4 +1,4 @@
-import { db } from "@/lib/db"
+import { withSuperAdminContext } from "@/lib/db"
 import { invitations } from "@/lib/db/schema"
 import { eq, and, gt, isNull } from "drizzle-orm"
 import { notFound } from "next/navigation"
@@ -11,13 +11,16 @@ interface Props {
 export default async function InvitePage({ params }: Props) {
   const { token } = await params
 
-  const invite = await db.query.invitations.findFirst({
-    where: and(
-      eq(invitations.token, token),
-      gt(invitations.expiresAt, new Date()),
-      isNull(invitations.acceptedAt),
-    ),
-  })
+  // invitations kena RLS; lookup by token pre-auth & lintas-tenant → bypass context
+  const invite = await withSuperAdminContext((tx) =>
+    tx.query.invitations.findFirst({
+      where: and(
+        eq(invitations.token, token),
+        gt(invitations.expiresAt, new Date()),
+        isNull(invitations.acceptedAt),
+      ),
+    }),
+  )
 
   if (!invite) notFound()
 

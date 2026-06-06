@@ -1,6 +1,3 @@
-import { db } from "@/lib/db"
-import { tenants, tenantModules } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
 import Link from "next/link"
 import { withSuperAdminContext } from "@/lib/db"
 

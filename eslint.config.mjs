@@ -1,20 +1,28 @@
-import { dirname } from "path"
-import { fileURLToPath } from "url"
-import { FlatCompat } from "@eslint/eslintrc"
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-
-const compat = new FlatCompat({ baseDirectory: __dirname })
+import next from "eslint-config-next"
+import tsPlugin from "@typescript-eslint/eslint-plugin"
 
 const eslintConfig = [
-  ...compat.extends("next/core-web-vitals", "next/typescript"),
+  ...next,
   {
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
     rules: {
-      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { argsIgnorePattern: "^_" },
+      ],
       "@typescript-eslint/no-explicit-any": "error",
       "no-console": "warn",
     },
+  },
+  {
+    // CLI scripts & worker — console adalah output yang disengaja
+    files: ["src/lib/db/seed.ts", "src/lib/db/apply-rls.ts", "src/lib/db/setup-role.ts", "src/workers/**"],
+    rules: { "no-console": "off" },
+  },
+  {
+    ignores: [".next/**", "node_modules/**", "drizzle/**", "public/**"],
   },
 ]
 

@@ -41,27 +41,36 @@ Urutan perintah yang benar untuk setup local dev pertama kali:
 docker compose -f docker-compose.dev.yml up -d
 
 # 3. Copy .env.example → .env, lalu isi minimal:
-#    DATABASE_URL=postgresql://aranya:aranya_dev_secret@127.0.0.1:5432/aranya_dev
-#    AUTH_SECRET=<random 32 char>      (generate: openssl rand -base64 32)
+#    DATABASE_URL=postgresql://aranya_app:aranya_app_secret@127.0.0.1:5432/aranya_dev   (app role, RLS)
+#    ADMIN_DATABASE_URL=postgresql://aranya:aranya_dev_secret@127.0.0.1:5432/aranya_dev (superuser)
+#    AUTH_SECRET=<random 32 char>           (generate: openssl rand -base64 32)
+#    AUTH_ENCRYPTION_KEY=<64 char hex>      (generate: openssl rand -hex 32)
 #    AUTH_URL=http://localhost:3000
-#    SUPER_ADMIN_EMAIL=<email asli Anda>   (dipakai db:seed)
-#    SUPER_ADMIN_PASSWORD=<password kuat>  (dipakai db:seed)
+#    SUPER_ADMIN_EMAIL=<email asli Anda>    (dipakai db:seed)
+#    SUPER_ADMIN_PASSWORD=<password kuat>   (dipakai db:seed)
 
 # 4. Generate Drizzle migration files
 npm run db:generate
 
-# 5. Jalankan migration (buat semua tabel)
+# 5. Jalankan migration (buat semua tabel) — pakai ADMIN_DATABASE_URL
 npm run db:migrate
 
-# 6. Apply RLS policies (via Node.js, tidak butuh psql lokal)
+# 6. Buat app role non-superuser (parse dari DATABASE_URL) — agar RLS dienforce
+npm run db:setup-role
+
+# 7. Apply RLS + FORCE policies (via ADMIN, tidak butuh psql lokal)
 npm run db:rls
 
-# 7. Seed: roles, permissions, Super Admin user
+# 8. Seed: roles, permissions, Super Admin user (via ADMIN)
 npm run db:seed
 
-# 8. Jalankan app
+# 9. Jalankan app
 npm run dev
 ```
+
+> **Kenapa dua URL?** PostgreSQL superuser/owner otomatis bypass RLS. App HARUS konek
+> sebagai role non-superuser (`aranya_app`) agar isolasi tenant dienforce. Operasi admin
+> (migrasi/seed/RLS) pakai superuser. Detail: [SECURITY.md](./SECURITY.md).
 
 ### Catatan Penting `DATABASE_URL`
 
@@ -92,18 +101,19 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 
 **Database & Infrastruktur:**
 - [x] Drizzle schema: auth, tenants, rbac, employees, audit, notifications, invitations, tax-rates
-- [x] PostgreSQL RLS policies (`src/lib/db/rls.sql`)
-- [x] `withTenantContext()` + `withSuperAdminContext()` helpers
-- [ ] Jalankan `drizzle-kit migrate` + `rls.sql` di database
+- [x] PostgreSQL RLS policies + **FORCE RLS** (`src/lib/db/rls.sql`) — **terverifikasi enforced**
+- [x] App role non-superuser (`npm run db:setup-role`) — RLS dienforce untuk app runtime
+- [x] `withTenantContext()` + `withSuperAdminContext()` helpers (bootstrap queries pakai bypass)
 - [x] DB seed script (`npm run db:seed`): roles, permissions, role-permissions, Super Admin user
 
 **Auth (Auth.js v5):**
 - [x] Auth.js v5 config + DrizzleAdapter + `unstable_update` export + trigger handling
-- [x] Middleware guard + 2FA redirect (`startsWith`)
+- [x] Middleware/proxy guard + 2FA redirect (`startsWith`)
 - [x] Session timeout per role (super_admin=2h, hr_admin=4h, manager/employee=8h)
 - [x] Login page + Zod validation + Server Action (`useActionState`)
 - [x] Password reset: forgot-password + reset-password pages + actions + email
 - [x] 2FA setup: QR code, TOTP verify, backup codes (8 kode single-use, bcrypt-hashed)
+- [x] **2FA secret dienkripsi at rest (AES-256-GCM)**
 - [x] 2FA verify: token + backup code fallback
 - [x] Invitation accept: validate token → register → employee + role → auto sign-in
 - [ ] Env var validation at startup
@@ -116,9 +126,11 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 
 **Platform Core:**
 - [ ] Notification engine: in-app + email via Resend
-- [ ] Audit trail: middleware log semua mutasi data
-- [ ] GCS integration: upload, signed URL, delete
+- [x] Audit trail: helper `logAudit()` + wired ke login, password reset, invite, 2FA, create tenant
+- [ ] Audit trail: perluas ke semua mutasi data (employee, leave, payroll, dll. di fase berikut)
+- [ ] GCS integration: upload, signed URL, delete (helper `src/lib/gcs.ts` siap)
 - [x] PWA fondasi: Serwist + `src/app/sw.ts` (wiring build → Fase 1, lihat TECH_STACK.md)
+- [x] Testing: Vitest setup + tests crypto/totp/rbac (19 pass); CI lint+typecheck+test
 - [ ] Billing: track user aktif per tenant per bulan
 
 ---
