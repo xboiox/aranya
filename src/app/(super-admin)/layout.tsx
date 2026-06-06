@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation"
-import { auth } from "@/lib/auth"
-import { hasRole } from "@/lib/auth"
+import { auth, hasRole } from "@/lib/auth"
+import { Sidebar } from "@/components/layout/sidebar"
 
 export default async function SuperAdminLayout({
   children,
@@ -14,8 +14,12 @@ export default async function SuperAdminLayout({
 
   return (
     <div className="flex min-h-screen">
-      {/* TODO Fase 0: Super Admin sidebar */}
-      <main className="flex-1 p-6">{children}</main>
+      <Sidebar
+        name={session.user.name}
+        email={session.user.email}
+        roles={session.user.roles}
+      />
+      <main className="flex-1 overflow-x-hidden p-6">{children}</main>
     </div>
   )
 }

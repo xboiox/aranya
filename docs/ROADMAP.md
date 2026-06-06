@@ -115,8 +115,10 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] 2FA setup: QR code, TOTP verify, backup codes (8 kode single-use, bcrypt-hashed)
 - [x] **2FA secret dienkripsi at rest (AES-256-GCM)**
 - [x] 2FA verify: token + backup code fallback
+- [x] **Reset 2FA** oleh HR Admin/Super Admin (`/dashboard/security`) — anti-lockout
 - [x] Invitation accept: validate token → register → employee + role → auto sign-in
-- [ ] Env var validation at startup
+- [x] **Rate limiting** auth (login 5/mnt, forgot-password 3/mnt, 2FA verify 5/mnt — Redis, fail-open)
+- [x] **Env var validation at startup** (`src/lib/env.ts`, Zod, fail-fast)
 
 **Tenant Management (Super Admin):**
 - [x] Tenant list page (`/tenants`)
@@ -124,9 +126,15 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [ ] Edit / deactivate tenant
 - [ ] Manage PPh 21 rates, PTKP values, BPJS rates (`/rates`)
 
+**UI & Shell:**
+- [x] shadcn/ui (Base UI / base-nova preset) + design tokens + Toaster (sonner)
+- [x] Dashboard shell: sidebar role-aware + user menu + logout + role-based quick cards
+- [x] Custom error / not-found / loading pages (branded)
+- [x] Dev email fallback (log link ke console saat RESEND_API_KEY tidak diset)
+
 **Platform Core:**
 - [ ] Notification engine: in-app + email via Resend
-- [x] Audit trail: helper `logAudit()` + wired ke login, password reset, invite, 2FA, create tenant
+- [x] Audit trail: helper `logAudit()` + wired ke login, password reset, invite, 2FA, create tenant, reset 2FA
 - [ ] Audit trail: perluas ke semua mutasi data (employee, leave, payroll, dll. di fase berikut)
 - [ ] GCS integration: upload, signed URL, delete (helper `src/lib/gcs.ts` siap)
 - [x] PWA fondasi: Serwist + `src/app/sw.ts` (wiring build → Fase 1, lihat TECH_STACK.md)

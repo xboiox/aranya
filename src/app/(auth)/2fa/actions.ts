@@ -5,6 +5,7 @@ import { userTwoFactor } from "@/lib/db/schema"
 import { generateTotpSecret, generateQrCodeDataUrl, verifyTotpToken, generateBackupCodes } from "@/lib/utils/totp"
 import { encrypt, decrypt } from "@/lib/utils/crypto"
 import { logAudit } from "@/lib/audit"
+import { rateLimit } from "@/lib/rate-limit"
 import { eq } from "drizzle-orm"
 import bcryptjs from "bcryptjs"
 import { redirect } from "next/navigation"
@@ -92,6 +93,12 @@ export async function verifyTwoFactor(
 ): Promise<{ error?: string }> {
   const session = await auth()
   if (!session) return { error: "Tidak terautentikasi" }
+
+  // Maks 5 percobaan verifikasi 2FA per IP / menit
+  const limit = await rateLimit("2fa-verify", 5, 60)
+  if (!limit.success) {
+    return { error: `Terlalu banyak percobaan. Coba lagi dalam ${limit.resetIn} detik.` }
+  }
 
   const token = (formData.get("token") as string)?.trim()
   const backupCode = (formData.get("backup_code") as string)?.trim()

@@ -2,8 +2,9 @@ import { drizzle } from "drizzle-orm/postgres-js"
 import postgres from "postgres"
 import * as schema from "./schema"
 import { sql } from "drizzle-orm"
+import { env } from "@/lib/env"
 
-const client = postgres(process.env.DATABASE_URL!, { max: 10 })
+const client = postgres(env.DATABASE_URL, { max: 10 })
 export const db = drizzle(client, { schema })
 
 export type Database = typeof db

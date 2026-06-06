@@ -2,6 +2,7 @@
 import { db } from "@/lib/db"
 import { users, passwordResets } from "@/lib/db/schema"
 import { sendPasswordResetEmail } from "@/lib/email"
+import { rateLimit } from "@/lib/rate-limit"
 import { eq } from "drizzle-orm"
 import { z } from "zod"
 import crypto from "crypto"
@@ -14,6 +15,12 @@ export async function forgotPasswordAction(
   _prev: { error?: string; success?: boolean },
   formData: FormData,
 ): Promise<{ error?: string; success?: boolean }> {
+  // Maks 3 permintaan reset per IP / menit
+  const limit = await rateLimit("forgot-password", 3, 60)
+  if (!limit.success) {
+    return { error: `Terlalu banyak permintaan. Coba lagi dalam ${limit.resetIn} detik.` }
+  }
+
   const parsed = schema.safeParse({ email: formData.get("email") })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
 
