@@ -152,8 +152,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Reporting Line (direct lead per karyawan) — `reportsToId`, validasi same-tenant + anti self-report
 - [x] Invite flow mendukung aktivasi user yang sudah di-pre-create HR (set password saja)
 - [ ] Organizational Structure & Org Chart (visualisasi hierarki)
-- [ ] Absensi GPS dengan geofencing configurable
-- [ ] WFH mode pada absensi
+- [x] Absensi GPS dengan geofencing configurable (check-in/out, validasi Haversine server-side,
+  HR config titik + radius + toggle, `/dashboard/attendance` + `/settings`)
+- [x] WFH mode pada absensi (skip validasi geofence, tercatat di record)
 - [ ] Offline absensi + sync (finalisasi wiring PWA/Serwist — evaluasi Turbopack support)
 - [ ] Shift & jadwal kerja
 - [ ] Leave Management + approval flow

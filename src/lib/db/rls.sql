@@ -27,6 +27,8 @@ ALTER TABLE user_roles         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notifications      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitations        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE geofence_locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attendance         ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE employees          FORCE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules     FORCE ROW LEVEL SECURITY;
@@ -36,6 +38,8 @@ ALTER TABLE user_roles         FORCE ROW LEVEL SECURITY;
 ALTER TABLE notifications      FORCE ROW LEVEL SECURITY;
 ALTER TABLE invitations        FORCE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs         FORCE ROW LEVEL SECURITY;
+ALTER TABLE geofence_locations FORCE ROW LEVEL SECURITY;
+ALTER TABLE attendance         FORCE ROW LEVEL SECURITY;
 
 -- ── Drop existing policies before recreating (idempotent) ────
 
@@ -47,6 +51,8 @@ DROP POLICY IF EXISTS tenant_isolation ON user_roles;
 DROP POLICY IF EXISTS tenant_isolation ON notifications;
 DROP POLICY IF EXISTS tenant_isolation ON invitations;
 DROP POLICY IF EXISTS tenant_isolation ON audit_logs;
+DROP POLICY IF EXISTS tenant_isolation ON geofence_locations;
+DROP POLICY IF EXISTS tenant_isolation ON attendance;
 
 -- ── Create policies ───────────────────────────────────────────
 
@@ -73,3 +79,9 @@ CREATE POLICY tenant_isolation ON invitations
 
 CREATE POLICY tenant_isolation ON audit_logs
   USING (tenant_id IS NULL OR tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON geofence_locations
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON attendance
+  USING (tenant_id = current_tenant_id() OR is_super_admin());

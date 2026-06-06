@@ -6,6 +6,7 @@ import {
   Users,
   Shield,
   Building2,
+  MapPin,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -28,7 +29,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Self-Service",
     items: [
       { href: "/dashboard", label: "Dashboard", icon: Home },
-      { href: "/dashboard/attendance", label: "Absensi", icon: Clock, disabled: true },
+      { href: "/dashboard/attendance", label: "Absensi", icon: Clock },
       { href: "/dashboard/leave", label: "Cuti", icon: CalendarOff, disabled: true },
       { href: "/dashboard/payslip", label: "Slip Gaji", icon: FileText, disabled: true },
     ],
@@ -37,6 +38,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Manajemen",
     items: [
       { href: "/dashboard/employees", label: "Karyawan", icon: Users, roles: ["hr_admin"] },
+      { href: "/dashboard/attendance/settings", label: "Pengaturan Absensi", icon: MapPin, roles: ["hr_admin"] },
       { href: "/dashboard/security", label: "Keamanan", icon: Shield, roles: ["hr_admin", "super_admin"] },
     ],
   },
