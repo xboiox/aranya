@@ -1,9 +1,21 @@
 -- ══════════════════════════════════════════════════════════════
 -- Aranya HRIS — PostgreSQL Row Level Security Policies
--- Jalankan setelah migrasi Drizzle pertama kali.
+-- Idempotent: aman dijalankan berulang kali (DROP IF EXISTS)
+-- Jalankan setelah: npm run db:migrate
 -- ══════════════════════════════════════════════════════════════
 
--- ── Enable RLS pada semua tabel tenant-scoped ─────────────────
+-- ── Helper functions (OR REPLACE = idempotent) ───────────────
+
+CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS text AS $$
+  SELECT current_setting('app.current_tenant', true);
+$$ LANGUAGE sql STABLE;
+
+CREATE OR REPLACE FUNCTION is_super_admin() RETURNS boolean AS $$
+  SELECT current_setting('app.bypass_rls', true) = 'on';
+$$ LANGUAGE sql STABLE;
+
+-- ── Enable RLS (idempotent — safe to run if already enabled) ─
+
 ALTER TABLE employees          ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tenant_config      ENABLE ROW LEVEL SECURITY;
@@ -13,16 +25,19 @@ ALTER TABLE notifications      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE invitations        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs         ENABLE ROW LEVEL SECURITY;
 
--- ── Helper function: baca tenant context dari session ─────────
-CREATE OR REPLACE FUNCTION current_tenant_id() RETURNS text AS $$
-  SELECT current_setting('app.current_tenant', true);
-$$ LANGUAGE sql STABLE;
+-- ── Drop existing policies before recreating (idempotent) ────
 
-CREATE OR REPLACE FUNCTION is_super_admin() RETURNS boolean AS $$
-  SELECT current_setting('app.bypass_rls', true) = 'on';
-$$ LANGUAGE sql STABLE;
+DROP POLICY IF EXISTS tenant_isolation ON employees;
+DROP POLICY IF EXISTS tenant_isolation ON tenant_modules;
+DROP POLICY IF EXISTS tenant_isolation ON tenant_config;
+DROP POLICY IF EXISTS tenant_isolation ON holidays;
+DROP POLICY IF EXISTS tenant_isolation ON user_roles;
+DROP POLICY IF EXISTS tenant_isolation ON notifications;
+DROP POLICY IF EXISTS tenant_isolation ON invitations;
+DROP POLICY IF EXISTS tenant_isolation ON audit_logs;
 
--- ── Policies ──────────────────────────────────────────────────
+-- ── Create policies ───────────────────────────────────────────
+
 CREATE POLICY tenant_isolation ON employees
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 

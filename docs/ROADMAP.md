@@ -30,6 +30,45 @@
 
 ---
 
+## Local Development Setup
+
+Urutan perintah yang benar untuk setup local dev pertama kali:
+
+```bash
+# 1. Pastikan Docker Desktop sudah berjalan
+
+# 2. Jalankan PostgreSQL + Redis via Docker (local dev only)
+docker compose -f docker-compose.dev.yml up -d
+
+# 3. Copy .env.example → .env, lalu isi minimal:
+#    DATABASE_URL=postgresql://aranya:aranya_dev_secret@localhost:5432/aranya_dev
+#    AUTH_SECRET=<random 32 char>
+#    AUTH_URL=http://localhost:3000
+
+# 4. Generate Drizzle migration files
+npm run db:generate
+
+# 5. Jalankan migration (buat semua tabel)
+npm run db:migrate
+
+# 6. Apply RLS policies (via Node.js, tidak butuh psql lokal)
+npm run db:rls
+
+# 7. Seed: roles, permissions, Super Admin user
+npm run db:seed
+
+# 8. Jalankan app
+npm run dev
+```
+
+> **Catatan:** Semua perintah `db:*` menggunakan `DATABASE_URL` dari file `.env`.
+> Pastikan file `.env` sudah ada dan `DATABASE_URL` formatnya benar:
+> `postgresql://user:password@localhost:5432/database`
+> — tidak ada karakter spesial dalam password tanpa URL-encode,
+> — ada `@localhost` sebelum port.
+
+---
+
 ## Fase 0 — Foundation (Platform Core)
 
 > Schema, folder structure, dan skeleton sudah dibuat pada 2026-06-06.
