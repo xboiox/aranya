@@ -9,6 +9,7 @@ import {
   Building2,
   MapPin,
   Bell,
+  Network,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -34,6 +35,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/notifications", label: "Notifikasi", icon: Bell },
       { href: "/dashboard/attendance", label: "Absensi", icon: Clock },
       { href: "/dashboard/leave", label: "Cuti", icon: CalendarOff },
+      { href: "/dashboard/organization", label: "Struktur Organisasi", icon: Network },
       { href: "/dashboard/payslip", label: "Slip Gaji", icon: FileText, disabled: true },
     ],
   },
