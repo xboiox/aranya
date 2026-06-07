@@ -11,6 +11,7 @@ import {
   Bell,
   Network,
   Timer,
+  Wallet,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -20,6 +21,7 @@ export interface NavItem {
   label: string
   icon: LucideIcon
   roles?: RoleName[] // undefined = semua role
+  module?: string // jika diisi, hanya tampil bila modul aktif untuk tenant
   disabled?: boolean // fitur belum dibangun (fase berikut)
 }
 
@@ -54,6 +56,12 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    title: "Payroll & Performa",
+    items: [
+      { href: "/dashboard/payroll", label: "Payroll", icon: Wallet, roles: ["hr_admin"], module: "MODULE_2" },
+    ],
+  },
+  {
     title: "Platform",
     items: [
       { href: "/tenants", label: "Tenant", icon: Building2, roles: ["super_admin"] },
@@ -61,9 +69,16 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ]
 
-export function visibleSections(roles: RoleName[]): NavSection[] {
+export function visibleSections(
+  roles: RoleName[],
+  activeModules: string[] = [],
+): NavSection[] {
   return NAV_SECTIONS.map((s) => ({
     ...s,
-    items: s.items.filter((i) => !i.roles || i.roles.some((r) => roles.includes(r))),
+    items: s.items.filter(
+      (i) =>
+        (!i.roles || i.roles.some((r) => roles.includes(r))) &&
+        (!i.module || activeModules.includes(i.module)),
+    ),
   })).filter((s) => s.items.length > 0)
 }

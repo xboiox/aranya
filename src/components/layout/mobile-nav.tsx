@@ -9,10 +9,11 @@ interface Props {
   name?: string | null
   email?: string | null
   roles: RoleName[]
+  activeModules?: string[]
   unreadCount?: number
 }
 
-export function MobileNav({ name, email, roles, unreadCount = 0 }: Props) {
+export function MobileNav({ name, email, roles, activeModules = [], unreadCount = 0 }: Props) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -45,7 +46,7 @@ export function MobileNav({ name, email, roles, unreadCount = 0 }: Props) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto">
-              <NavList roles={roles} unreadCount={unreadCount} onNavigate={() => setOpen(false)} />
+              <NavList roles={roles} activeModules={activeModules} unreadCount={unreadCount} onNavigate={() => setOpen(false)} />
             </div>
             <div className="border-t pt-3">
               <UserMenu name={name} email={email} />

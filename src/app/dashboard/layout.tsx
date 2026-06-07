@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MobileNav } from "@/components/layout/mobile-nav"
 import { countUnread } from "@/modules/notifications/queries"
+import { getActiveModules } from "@/lib/modules"
 import { db } from "@/lib/db"
 import { tenants } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -33,9 +34,12 @@ export default async function DashboardLayout({
     }
   }
 
-  const unreadCount = session.user.tenantId
-    ? await countUnread(session.user.tenantId, session.user.id)
-    : 0
+  const [unreadCount, activeModules] = session.user.tenantId
+    ? await Promise.all([
+        countUnread(session.user.tenantId, session.user.id),
+        getActiveModules(session.user.tenantId),
+      ])
+    : [0, [] as string[]]
 
   return (
     <div className="flex min-h-screen">
@@ -43,6 +47,7 @@ export default async function DashboardLayout({
         name={session.user.name}
         email={session.user.email}
         roles={session.user.roles}
+        activeModules={activeModules}
         unreadCount={unreadCount}
       />
       <div className="flex min-w-0 flex-1 flex-col">
@@ -50,6 +55,7 @@ export default async function DashboardLayout({
           name={session.user.name}
           email={session.user.email}
           roles={session.user.roles}
+          activeModules={activeModules}
           unreadCount={unreadCount}
         />
         <main className="flex-1 overflow-x-hidden p-4 md:p-6">{children}</main>

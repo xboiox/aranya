@@ -9,13 +9,14 @@ const NOTIF_HREF = "/dashboard/notifications"
 
 interface Props {
   roles: RoleName[]
+  activeModules?: string[]
   unreadCount?: number
   onNavigate?: () => void
 }
 
-export function NavList({ roles, unreadCount = 0, onNavigate }: Props) {
+export function NavList({ roles, activeModules = [], unreadCount = 0, onNavigate }: Props) {
   const pathname = usePathname()
-  const sections = visibleSections(roles)
+  const sections = visibleSections(roles, activeModules)
 
   return (
     <nav className="space-y-4">
