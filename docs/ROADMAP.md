@@ -187,7 +187,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Training & Development: catat pelatihan & sertifikasi per karyawan, tracking masa berlaku
   (badge kedaluwarsa/segera berakhir), HR kelola, karyawan lihat. `/dashboard/training` + `/manage`
   (ter-gate MODULE_2)
-- [ ] Asset Management: pencatatan, linked ke karyawan, integrasi offboarding
+- [x] Asset Management: catat aset perusahaan (laptop/HP/kendaraan/kartu/lainnya), pinjamkan/
+  kembalikan ke karyawan, hapus; karyawan lihat aset yang dipinjam. `/dashboard/assets` + `/manage`
+  (ter-gate MODULE_2; integrasi offboarding = follow-up)
 - [ ] KPI management: indikator, input, approval, score history
 - [ ] Onboarding checklist
 - [ ] Offboarding checklist (termasuk serah terima aset)
