@@ -16,6 +16,7 @@ import {
   CalendarClock,
   GraduationCap,
   Package,
+  Target,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -69,6 +70,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/training/manage", label: "Kelola Training", icon: GraduationCap, roles: ["hr_admin"], module: "MODULE_2" },
       { href: "/dashboard/assets", label: "Aset Saya", icon: Package, module: "MODULE_2" },
       { href: "/dashboard/assets/manage", label: "Kelola Aset", icon: Package, roles: ["hr_admin"], module: "MODULE_2" },
+      { href: "/dashboard/kpi", label: "Penilaian KPI", icon: Target, module: "MODULE_2" },
+      { href: "/dashboard/kpi/approvals", label: "Persetujuan KPI", icon: Target, roles: ["manager", "hr_admin"], module: "MODULE_2" },
     ],
   },
   {

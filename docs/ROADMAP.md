@@ -190,7 +190,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Asset Management: catat aset perusahaan (laptop/HP/kendaraan/kartu/lainnya), pinjamkan/
   kembalikan ke karyawan, hapus; karyawan lihat aset yang dipinjam. `/dashboard/assets` + `/manage`
   (ter-gate MODULE_2; integrasi offboarding = follow-up)
-- [ ] KPI management: indikator, input, approval, score history
+- [x] KPI management: penilaian per periode (kuartal), pengajuan karyawan, approval atasan/HR
+  (anti-self-approve, fallback HR), score history, ajuan ulang bila ditolak. `/dashboard/kpi` +
+  `/approvals` (ter-gate MODULE_2; indikator berbobot = follow-up)
 - [ ] Onboarding checklist
 - [ ] Offboarding checklist (termasuk serah terima aset)
 - [ ] HR Analytics Dashboard

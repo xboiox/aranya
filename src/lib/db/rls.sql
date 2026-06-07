@@ -35,6 +35,7 @@ ALTER TABLE payslips           ENABLE ROW LEVEL SECURITY;
 ALTER TABLE shifts             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE training_records   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assets             ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_evaluations    ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE employees          FORCE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules     FORCE ROW LEVEL SECURITY;
@@ -52,6 +53,7 @@ ALTER TABLE payslips           FORCE ROW LEVEL SECURITY;
 ALTER TABLE shifts             FORCE ROW LEVEL SECURITY;
 ALTER TABLE training_records   FORCE ROW LEVEL SECURITY;
 ALTER TABLE assets             FORCE ROW LEVEL SECURITY;
+ALTER TABLE kpi_evaluations    FORCE ROW LEVEL SECURITY;
 
 -- ── Drop existing policies before recreating (idempotent) ────
 
@@ -71,6 +73,7 @@ DROP POLICY IF EXISTS tenant_isolation ON payslips;
 DROP POLICY IF EXISTS tenant_isolation ON shifts;
 DROP POLICY IF EXISTS tenant_isolation ON training_records;
 DROP POLICY IF EXISTS tenant_isolation ON assets;
+DROP POLICY IF EXISTS tenant_isolation ON kpi_evaluations;
 
 -- ── Create policies ───────────────────────────────────────────
 
@@ -120,4 +123,7 @@ CREATE POLICY tenant_isolation ON training_records
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 
 CREATE POLICY tenant_isolation ON assets
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON kpi_evaluations
   USING (tenant_id = current_tenant_id() OR is_super_admin());
