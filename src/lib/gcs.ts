@@ -7,6 +7,17 @@ const EXPIRY_MINUTES = parseInt(
   process.env.GCS_SIGNED_URL_EXPIRY_MINUTES ?? "15",
 )
 
+// GCS dianggap dikonfigurasi jika credentials & bucket terisi (bukan placeholder)
+export function isGcsConfigured(): boolean {
+  const cred = process.env.GCS_CREDENTIALS_BASE64
+  const bucket = process.env.GCS_BUCKET_NAME
+  return (
+    !!cred &&
+    !cred.includes("BASE64_ENCODED") &&
+    !!bucket
+  )
+}
+
 // Lazy init — tidak crash saat startup jika GCS belum dikonfigurasi (e.g. local dev)
 function getStorage(): Storage {
   if (!_storage) {
@@ -42,6 +53,11 @@ export async function uploadFile(
   contentType: string,
 ): Promise<void> {
   await getBucket().file(filePath).save(buffer, { contentType })
+}
+
+export async function downloadFile(filePath: string): Promise<Buffer> {
+  const [buf] = await getBucket().file(filePath).download()
+  return buf
 }
 
 export async function deleteFile(filePath: string): Promise<void> {

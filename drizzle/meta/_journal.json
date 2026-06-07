@@ -36,6 +36,13 @@
       "when": 1780806558497,
       "tag": "0004_cold_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1780807614632,
+      "tag": "0005_perfect_nomad",
+      "breakpoints": true
     }
   ]
 }

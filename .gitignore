@@ -63,3 +63,6 @@ public/images/
 # ── package-lock.json: regenerate dengan `npm install` setelah clone ─────────
 # Uncomment baris di bawah HANYA jika belum ada lock file yang valid.
 # package-lock.json
+
+# Local file storage (dev fallback untuk GCS)
+.uploads/

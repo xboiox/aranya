@@ -168,7 +168,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
   lewat tengah malam), inbox approval (direct lead/HR), approve/reject + notifikasi, cancel,
   anti self-approve, cegah tanggal masa depan. `/dashboard/overtime` + `/approvals`
   (perhitungan bayaran lembur = Modul 2)
-- [ ] Slip gaji upload & download
+- [x] Slip gaji upload (HR) & download (karyawan): storage abstraction (GCS prod / FS lokal dev),
+  download lewat route terotentikasi (cek kepemilikan / HR), validasi PDF + maks 5MB, notifikasi.
+  `/dashboard/payslip` + `/manage` (generate otomatis dari payroll = Modul 2)
 
 ---
 
