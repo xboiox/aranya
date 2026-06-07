@@ -139,7 +139,8 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [ ] Audit trail: perluas ke semua mutasi data (employee, leave, payroll, dll. di fase berikut)
 - [ ] GCS integration: upload, signed URL, delete (helper `src/lib/gcs.ts` siap)
 - [x] PWA fondasi: Serwist + `src/app/sw.ts` (wiring build → Fase 1, lihat TECH_STACK.md)
-- [x] Testing: Vitest setup + tests crypto/totp/rbac (19 pass); CI lint+typecheck+test
+- [x] Testing: unit (64) + **integration vs DB nyata** (RLS isolation + leave balance) + demo seed
+  (`npm run test:integration`, `npm run db:seed:demo`) — lihat [TESTING.md](./TESTING.md)
 - [ ] Billing: track user aktif per tenant per bulan
 
 ---

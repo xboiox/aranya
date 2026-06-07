@@ -18,7 +18,7 @@ const eslintConfig = [
   },
   {
     // CLI scripts & worker — console adalah output yang disengaja
-    files: ["src/lib/db/seed.ts", "src/lib/db/apply-rls.ts", "src/lib/db/setup-role.ts", "src/workers/**"],
+    files: ["src/lib/db/seed.ts", "src/lib/db/seed-demo.ts", "src/lib/db/apply-rls.ts", "src/lib/db/setup-role.ts", "src/workers/**"],
     rules: { "no-console": "off" },
   },
   {
