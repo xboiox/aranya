@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { Sidebar } from "@/components/layout/sidebar"
+import { MobileNav } from "@/components/layout/mobile-nav"
 import { countUnread } from "@/modules/notifications/queries"
 import { db } from "@/lib/db"
 import { tenants } from "@/lib/db/schema"
@@ -44,7 +45,15 @@ export default async function DashboardLayout({
         roles={session.user.roles}
         unreadCount={unreadCount}
       />
-      <main className="flex-1 overflow-x-hidden p-6">{children}</main>
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileNav
+          name={session.user.name}
+          email={session.user.email}
+          roles={session.user.roles}
+          unreadCount={unreadCount}
+        />
+        <main className="flex-1 overflow-x-hidden p-4 md:p-6">{children}</main>
+      </div>
     </div>
   )
 }
