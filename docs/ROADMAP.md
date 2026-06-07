@@ -123,7 +123,8 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 **Tenant Management (Super Admin):**
 - [x] Tenant list page (`/tenants`)
 - [x] Create tenant form + activate modules + send invite HR Admin (`/tenants/new`)
-- [ ] Edit / deactivate tenant
+- [x] Detail tenant: resend invitation, deactivate/activate (enforced di dashboard), hapus permanen
+  (cascade + cleanup user yatim + audit_logs, konfirmasi ketik-nama)
 - [ ] Manage PPh 21 rates, PTKP values, BPJS rates (`/rates`)
 
 **UI & Shell:**

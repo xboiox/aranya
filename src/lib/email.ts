@@ -1,7 +1,9 @@
 import { Resend } from "resend"
 
 const apiKey = process.env.RESEND_API_KEY
-const resend = apiKey ? new Resend(apiKey) : null
+// Anggap "tidak dikonfigurasi" jika kosong atau masih placeholder (mengandung CHANGE_THIS)
+const isConfigured = !!apiKey && !apiKey.includes("CHANGE_THIS")
+const resend = isConfigured ? new Resend(apiKey) : null
 
 const FROM = `${process.env.EMAIL_FROM_NAME ?? "Aranya HRIS"} <${process.env.EMAIL_FROM ?? "noreply@aranya.app"}>`
 
@@ -9,23 +11,31 @@ interface SendArgs {
   to: string
   subject: string
   html: string
-  /** Link penting untuk fallback dev (di-log ke console saat Resend tidak dikonfigurasi) */
+  /** Link penting untuk fallback (di-log ke console saat email gagal/tak terkirim) */
   devLink?: string
 }
 
-// Kirim email via Resend. Jika RESEND_API_KEY tidak diset (dev), log link ke console
-// agar alur auth tetap bisa dites tanpa mengirim email sungguhan.
+function logFallback(reason: string, to: string, subject: string, devLink?: string) {
+  // eslint-disable-next-line no-console
+  console.warn(
+    `\n📧 [EMAIL] ${reason}\n` +
+      `   To: ${to}\n   Subject: ${subject}\n` +
+      (devLink ? `   Link: ${devLink}\n` : ""),
+  )
+}
+
+// Kirim email via Resend. Kegagalan TIDAK pernah senyap:
+// - key belum dikonfigurasi → log link ke console (dev fallback)
+// - Resend mengembalikan error (key salah / domain belum verified / dll) → log alasan + link
 async function send({ to, subject, html, devLink }: SendArgs): Promise<void> {
   if (!resend) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `\n📧 [DEV] RESEND_API_KEY tidak diset — email tidak dikirim.\n` +
-        `   To: ${to}\n   Subject: ${subject}\n` +
-        (devLink ? `   Link: ${devLink}\n` : ""),
-    )
+    logFallback("RESEND_API_KEY belum dikonfigurasi — email tidak dikirim.", to, subject, devLink)
     return
   }
-  await resend.emails.send({ from: FROM, to, subject, html })
+  const { error } = await resend.emails.send({ from: FROM, to, subject, html })
+  if (error) {
+    logFallback(`Resend gagal: ${error.message}`, to, subject, devLink)
+  }
 }
 
 export async function sendPasswordResetEmail(email: string, resetUrl: string) {

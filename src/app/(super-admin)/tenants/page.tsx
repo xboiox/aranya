@@ -40,8 +40,12 @@ export default async function TenantsPage() {
               </tr>
             ) : (
               allTenants.map((t) => (
-                <tr key={t.id}>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">{t.name}</td>
+                <tr key={t.id} className="hover:bg-muted/30">
+                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                    <Link href={`/tenants/${t.id}`} className="hover:underline">
+                      {t.name}
+                    </Link>
+                  </td>
                   <td className="px-6 py-4 text-sm text-gray-500 font-mono">{t.slug}</td>
                   <td className="px-6 py-4">
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
