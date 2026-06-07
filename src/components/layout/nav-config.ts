@@ -12,6 +12,7 @@ import {
   Network,
   Timer,
   Wallet,
+  ScrollText,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -53,6 +54,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/leave/settings", label: "Pengaturan Cuti", icon: CalendarOff, roles: ["hr_admin"] },
       { href: "/dashboard/attendance/settings", label: "Pengaturan Absensi", icon: MapPin, roles: ["hr_admin"] },
       { href: "/dashboard/security", label: "Keamanan", icon: Shield, roles: ["hr_admin", "super_admin"] },
+      { href: "/dashboard/audit", label: "Audit Log", icon: ScrollText, roles: ["hr_admin", "super_admin"] },
     ],
   },
   {
