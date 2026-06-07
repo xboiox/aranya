@@ -10,16 +10,15 @@ export default async function PayrollPage() {
     redirect("/dashboard")
   }
 
-  // Gating: fitur Payroll butuh Modul 2 aktif untuk tenant ini
-  const active = await isModuleActive(session.user.tenantId, "MODULE_2")
-  if (!active) return <ModuleLocked moduleCode="MODULE_2" />
+  // Gating: fitur Payroll butuh Modul 3 aktif untuk tenant ini
+  const active = await isModuleActive(session.user.tenantId, "MODULE_3")
+  if (!active) return <ModuleLocked moduleCode="MODULE_3" />
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
       <h1 className="text-2xl font-bold">Payroll</h1>
       <p className="text-sm text-muted-foreground">
-        Kalkulator payroll (PPh 21, BPJS), KPI, bonus, dan slip gaji otomatis — segera hadir
-        di Modul 2.
+        Kalkulator payroll (PPh 21 TER, BPJS) & slip gaji otomatis — segera hadir di Modul 3.
       </p>
     </div>
   )

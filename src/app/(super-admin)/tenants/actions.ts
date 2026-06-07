@@ -74,9 +74,10 @@ export async function createTenantAction(
       subscriptionStatus: "trial",
     }).returning()
 
+    // Modul 2 & 3 add-on independen (cukup butuh Modul 1) — aktivasi bebas
     const modulesToActivate = ["MODULE_1"]
     if (parsed.data.module2 === "on") modulesToActivate.push("MODULE_2")
-    if (parsed.data.module3 === "on" && parsed.data.module2 === "on") modulesToActivate.push("MODULE_3")
+    if (parsed.data.module3 === "on") modulesToActivate.push("MODULE_3")
 
     await tx.insert(tenantModules).values(
       modulesToActivate.map((moduleCode) => ({

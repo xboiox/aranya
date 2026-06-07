@@ -4,8 +4,8 @@ import { eq, and } from "drizzle-orm"
 
 export const MODULE_LABELS: Record<string, string> = {
   MODULE_1: "Core HR & Employee Self-Service",
-  MODULE_2: "Payroll & Performance Management",
-  MODULE_3: "HR Operations & Development",
+  MODULE_2: "HR Operations & Performance Development",
+  MODULE_3: "Payroll & Compliance",
 }
 
 export async function getActiveModules(tenantId: string): Promise<string[]> {

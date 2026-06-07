@@ -53,18 +53,18 @@ src/
 │   │   ├── employees/          ← Master data karyawan
 │   │   ├── organization/       ← Org chart + reporting line
 │   │   │
-│   │   ├── ── Modul 2 (add-on) ─────────────────────
-│   │   ├── payroll/            ← Payroll calculator
+│   │   ├── ── Modul 2: HR Ops & Performance (add-on) ──
 │   │   ├── kpi/                ← KPI management
-│   │   ├── claims/             ← Medical + reimbursement
 │   │   ├── bonus/              ← Bonus calculation
+│   │   ├── training/           ← Training & sertifikasi
+│   │   ├── assets/             ← Asset management
+│   │   ├── onboarding/         ← Onboarding/offboarding
 │   │   ├── discipline/         ← SP1/SP2/SP3
+│   │   ├── analytics/          ← HR analytics dashboard
 │   │   │
-│   │   └── ── Modul 3 (add-on) ─────────────────────
-│   │       ├── training/
-│   │       ├── assets/
-│   │       ├── onboarding/
-│   │       └── analytics/
+│   │   └── ── Modul 3: Payroll & Compliance (add-on) ──
+│   │       ├── payroll/        ← Payroll calculator (PPh21 TER + BPJS)
+│   │       └── claims/         ← Medical + reimbursement
 │   │
 │   ├── (super-admin)/          ← Super Admin area
 │   │   ├── layout.tsx          ← Guard: role = super_admin
@@ -107,7 +107,7 @@ src/
 │
 ├── workers/
 │   ├── index.ts                ← Worker entry point (npm run worker)
-│   ├── payroll.worker.ts       ← Payroll batch calculation (Fase 2)
+│   ├── payroll.worker.ts       ← Payroll batch calculation (Fase 3)
 │   ├── pdf.worker.ts           ← Slip gaji PDF generation (Fase 2)
 │   └── email.worker.ts         ← Email notifications (Fase 0)
 │
@@ -133,10 +133,16 @@ src/
 
 ## Module Guard
 
-Halaman Modul 2 dan 3 perlu cek apakah tenant sudah aktifkan modul tersebut:
+Halaman Modul 2/3 cek apakah tenant sudah aktifkan modul tersebut (`src/lib/modules.ts`):
 
 ```typescript
-// Di layout.tsx atau page.tsx modul 2/3
-const isModuleActive = await checkTenantModule(tenantId, "MODULE_2")
-if (!isModuleActive) notFound()
+import { isModuleActive } from "@/lib/modules"
+import { ModuleLocked } from "@/components/module-locked"
+
+// contoh: halaman payroll = Modul 3
+const active = await isModuleActive(tenantId, "MODULE_3")
+if (!active) return <ModuleLocked moduleCode="MODULE_3" />
 ```
+
+Nav juga otomatis tersaring: `NavItem.module` + `visibleSections(roles, activeModules)`.
+

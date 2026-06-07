@@ -61,9 +61,9 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
-    title: "Payroll & Performa",
+    title: "Payroll (Modul 3)",
     items: [
-      { href: "/dashboard/payroll", label: "Payroll", icon: Wallet, roles: ["hr_admin"], module: "MODULE_2" },
+      { href: "/dashboard/payroll", label: "Payroll", icon: Wallet, roles: ["hr_admin"], module: "MODULE_3" },
     ],
   },
   {

@@ -73,12 +73,11 @@ export default function NewTenantPage() {
             </label>
             <label className="flex items-center gap-2">
               <input type="checkbox" id="module2" name="module2" value="on" className="h-4 w-4 rounded border-gray-300 text-blue-600" />
-              <span className="text-sm text-gray-700">Modul 2 — Payroll & Performance Management</span>
+              <span className="text-sm text-gray-700">Modul 2 — HR Operations & Performance Development</span>
             </label>
             <label className="flex items-center gap-2">
               <input type="checkbox" id="module3" name="module3" value="on" className="h-4 w-4 rounded border-gray-300 text-blue-600" />
-              <span className="text-sm text-gray-700">Modul 3 — HR Operations & Development</span>
-              <span className="text-xs text-gray-400">(membutuhkan Modul 2)</span>
+              <span className="text-sm text-gray-700">Modul 3 — Payroll & Compliance</span>
             </label>
           </div>
         </div>

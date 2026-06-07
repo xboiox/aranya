@@ -44,19 +44,13 @@ const ALL_PERMISSIONS = [
   { code: "overtime:approve",    description: "Approve / reject lembur bawahan" },
   { code: "payslip:read",        description: "Download slip gaji sendiri" },
   { code: "payslip:manage",      description: "Upload dan kelola semua slip gaji" },
-  // Payroll & Performance — Modul 2
-  { code: "claims:read",         description: "Lihat pengajuan klaim" },
-  { code: "claims:request",      description: "Ajukan klaim" },
-  { code: "claims:approve",      description: "Approve / reject klaim bawahan" },
+  // HR Operations & Performance Development — Modul 2
   { code: "kpi:read",            description: "Lihat data KPI" },
   { code: "kpi:write",           description: "Isi nilai KPI" },
   { code: "kpi:approve",         description: "Approve / reject KPI bawahan" },
-  { code: "payroll:read",        description: "Lihat kalkulasi payroll" },
-  { code: "payroll:manage",      description: "Proses dan finalisasi payroll" },
   { code: "bonus:manage",        description: "Kelola formula dan kalkulasi bonus" },
   { code: "discipline:read",     description: "Lihat catatan disiplin" },
   { code: "discipline:manage",   description: "Buat SP dan catatan disiplin" },
-  // HR Operations — Modul 3
   { code: "training:read",       description: "Lihat rencana training" },
   { code: "training:manage",     description: "Kelola training dan sertifikasi" },
   { code: "assets:read",         description: "Lihat aset perusahaan" },
@@ -64,6 +58,12 @@ const ALL_PERMISSIONS = [
   { code: "onboarding:manage",   description: "Kelola proses onboarding / offboarding" },
   { code: "analytics:read",      description: "Lihat HR analytics dashboard" },
   { code: "integrations:manage", description: "Kelola integrasi pihak ketiga" },
+  // Payroll & Compliance — Modul 3
+  { code: "claims:read",         description: "Lihat pengajuan klaim" },
+  { code: "claims:request",      description: "Ajukan klaim" },
+  { code: "claims:approve",      description: "Approve / reject klaim bawahan" },
+  { code: "payroll:read",        description: "Lihat kalkulasi payroll" },
+  { code: "payroll:manage",      description: "Proses dan finalisasi payroll" },
   // Admin
   { code: "tenants:manage",      description: "Kelola tenant (Super Admin only)" },
   { code: "rates:manage",        description: "Kelola tarif PPh21 / BPJS (Super Admin only)" },

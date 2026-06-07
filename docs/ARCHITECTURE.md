@@ -154,10 +154,11 @@ Angka bonus masuk ke komponen payroll periode berikutnya
 
 **Model:** Per user aktif / bulan × modul yang diaktifkan
 
-**Aturan:**
-- Modul 1 wajib untuk semua tenant
-- Modul 2 dapat diaktifkan tanpa Modul 3
-- Modul 3 membutuhkan Modul 2 aktif
+**Aturan (struktur final, lihat [MODULES.md](./MODULES.md)):**
+- Modul 1 (Core HR) wajib untuk semua tenant
+- Modul 2 (HR Operations & Performance Development) — add-on **independen**
+- Modul 3 (Payroll & Compliance) — add-on **independen**
+- Tidak ada dependency antar add-on: M2 & M3 masing-masing cukup butuh M1
 
 **Tabel yang diperlukan:**
 - `tenant_modules`: modul apa yang aktif per tenant

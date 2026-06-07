@@ -27,15 +27,16 @@ Aranya adalah platform HRIS (Human Resource Information System) berbasis SaaS un
 
 ## 3. Model Lisensi
 
-Modul 1 bersifat **wajib**. Client dapat menambahkan Modul 2 dan/atau Modul 3 sebagai add-on.
+Modul 1 bersifat **wajib**. Modul 2 & 3 adalah add-on **independen** — masing-masing hanya
+butuh Modul 1 (tidak ada dependency antar add-on). Lihat [MODULES.md](./MODULES.md).
 
 **Billing:** Per user aktif / bulan × modul yang diaktifkan.
 
 | Tier | Modul | Deskripsi |
 |------|-------|-----------|
 | Wajib | Modul 1 | Core HR & Employee Self-Service |
-| Add-on | Modul 2 | Payroll & Performance Management |
-| Add-on | Modul 3 | HR Operations & Development (requires Modul 2) |
+| Add-on | Modul 2 | HR Operations & Performance Development |
+| Add-on | Modul 3 | Payroll & Compliance |
 
 ---
 
@@ -89,88 +90,95 @@ Fitur ini tersedia di semua modul dan tidak dijual terpisah:
 - Pengajuan lembur oleh karyawan (jam mulai, jam selesai, keterangan)
 - Approval oleh direct lead
 - Riwayat lembur tercatat di profil karyawan
-- *Catatan: perhitungan bayaran lembur ada di Modul 2*
+- *Catatan: perhitungan bayaran lembur ada di Modul 3*
 
 ### 5.7 Slip Gaji — Download
 - HR Admin upload file PDF slip gaji per karyawan per periode
 - Karyawan dapat mendownload slip gaji miliknya
-- *Catatan: generate otomatis slip gaji ada di Modul 2*
+- *Catatan: generate otomatis slip gaji ada di Modul 3*
 
 ---
 
-## 6. Modul 2 — Payroll & Performance Management
+## 6. Modul 2 — HR Operations & Performance Development
 
-### 6.1 Overtime — Perhitungan Bayaran
-- Kalkulasi uang lembur berdasarkan jam lembur yang sudah diapprove
-- Formula lembur sesuai regulasi ketenagakerjaan Indonesia
-- Output terintegrasi ke komponen payroll
+Fokus pada **orang**: kinerja, pengembangan, operasi HR. (Add-on independen, butuh Modul 1.)
 
-### 6.2 Claim Management
-- Medical claim: pengajuan dengan bukti struk/faktur (upload ke GCS)
-- Reimbursement business trip: pengajuan dengan detail perjalanan dan bukti
-- Approval oleh direct lead
-- Status tracking: pending → approved/rejected → dibayar
-
-### 6.3 KPI Management
+### 6.1 KPI Management
 - HR Admin atau Manager membuat indikator KPI per jabatan/divisi
 - Karyawan mengisi nilai KPI sesuai periode (bulanan/kuartalan/tahunan)
 - Approval oleh direct lead
 - Score KPI tersimpan dan dapat dijadikan referensi perhitungan bonus
 
-### 6.4 Bonus Management
+### 6.2 Bonus Management
 - HR Admin mengkonfigurasi formula bonus per perusahaan/divisi/jabatan
 - HR Admin secara manual men-trigger kalkulasi bonus pada periode tertentu
 - Sistem menggunakan formula + referensi KPI score → menghasilkan angka bonus
-- HR Admin review dan approve sebelum angka bonus masuk ke payroll
+- HR Admin review dan approve sebelum angka bonus disepakati
 - Formula contoh: `Bonus = Gaji Pokok × Persentase × (KPI Score / 100)`
+- *Jika Modul 3 (Payroll) aktif, angka bonus dapat mengalir ke komponen payroll*
 
-### 6.5 Payroll Calculator
-- Komponen gaji: gaji pokok, tunjangan, potongan, lembur, bonus, klaim
-- Perhitungan PPh 21 otomatis (tarif progresif, PTKP per karyawan)
-- Perhitungan BPJS Kesehatan (4% employer + 1% employee, dengan cap)
-- Perhitungan BPJS Ketenagakerjaan: JKK, JKM, JHT, JP
-- Rate PPh 21 dan BPJS dikelola oleh Super Admin Aranya
-
-### 6.6 Slip Gaji — Generate Otomatis
-- Generate PDF slip gaji dari hasil kalkulasi payroll
-- Format slip gaji dapat dikustomisasi per tenant
-- Karyawan otomatis dapat mengakses slip gaji setelah payroll diproses
-
-### 6.7 Discipline & Warning Management
-- Pencatatan Surat Peringatan: SP1, SP2, SP3
-- Riwayat pelanggaran per karyawan
-- Eskalasi otomatis jika sudah SP3
-
----
-
-## 7. Modul 3 — HR Operations & Development
-
-### 7.1 Training & Development
+### 6.3 Training & Development
 - Rencana pelatihan per karyawan
 - Tracking sertifikasi dan masa berlaku
 - Riwayat training
 
-### 7.2 Asset Management
+### 6.4 Asset Management
 - Pencatatan aset perusahaan yang dipinjamkan (laptop, HP, kendaraan, kartu akses)
 - Linked ke profil karyawan
 - Status aset: aktif / dikembalikan
 - Integrasi dengan proses offboarding
 
-### 7.3 Onboarding & Offboarding
+### 6.5 Onboarding & Offboarding
 - Checklist onboarding karyawan baru: dokumen, akses sistem, equipment
 - Proses offboarding: serah terima aset, clearance form, exit interview
 - Status tracking per item checklist
 
-### 7.4 HR Analytics Dashboard
+### 6.6 Discipline & Warning Management
+- Pencatatan Surat Peringatan: SP1, SP2, SP3
+- Riwayat pelanggaran per karyawan
+- Eskalasi otomatis jika sudah SP3
+
+### 6.7 HR Analytics Dashboard
 - Headcount report, turnover rate, absensi rate
 - Distribusi usia, masa kerja, level pendidikan
 - Laporan lembur dan klaim per divisi
 - Visualisasi data untuk C-level dan HRD
 
-### 7.5 Integrasi Pihak Ketiga
+### 6.8 Integrasi Pihak Ketiga
 - Webhook dan REST API untuk integrasi sistem eksternal
 - Konektor ATS (Applicant Tracking System): sinkronisasi data karyawan baru dari ATS ke Aranya
 - Dokumentasi API publik untuk integrasi custom
+
+---
+
+## 7. Modul 3 — Payroll & Compliance
+
+Fokus pada **uang & kepatuhan**: penggajian, pajak, BPJS. **Risiko tertinggi** — dikerjakan
+paling akhir dengan persiapan & pengujian matang. (Add-on independen, butuh Modul 1.)
+
+### 7.1 Overtime — Perhitungan Bayaran
+- Kalkulasi uang lembur berdasarkan jam lembur yang sudah diapprove (Modul 1)
+- Formula lembur sesuai regulasi ketenagakerjaan Indonesia
+- Output terintegrasi ke komponen payroll
+
+### 7.2 Claim Management
+- Medical claim: pengajuan dengan bukti struk/faktur (upload ke GCS)
+- Reimbursement business trip: pengajuan dengan detail perjalanan dan bukti
+- Approval oleh direct lead
+- Status tracking: pending → approved/rejected → dibayar
+
+### 7.3 Payroll Calculator
+- Komponen gaji: gaji pokok, tunjangan, potongan, lembur, bonus (jika M2 aktif), klaim
+- **PPh 21 metode TER** (Tarif Efektif Rata-rata, PP 58/2023 — wajib sejak Jan 2024) untuk
+  perhitungan bulanan + rekonsiliasi progresif (UU HPP) di akhir tahun
+- Perhitungan BPJS Kesehatan (employer + employee, dengan cap upah)
+- Perhitungan BPJS Ketenagakerjaan: JKK (per risiko), JKM, JHT, JP
+- Rate TER/PTKP/BPJS dikelola oleh Super Admin Aranya (regulasi nasional)
+
+### 7.4 Slip Gaji — Generate Otomatis
+- Generate PDF slip gaji dari hasil kalkulasi payroll
+- Format slip gaji dapat dikustomisasi per tenant
+- Karyawan otomatis dapat mengakses slip gaji setelah payroll diproses
 
 ---
 

@@ -169,40 +169,50 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Overtime pencatatan + approval flow: ajukan lembur (jam mulai/selesai, durasi otomatis +
   lewat tengah malam), inbox approval (direct lead/HR), approve/reject + notifikasi, cancel,
   anti self-approve, cegah tanggal masa depan. `/dashboard/overtime` + `/approvals`
-  (perhitungan bayaran lembur = Modul 2)
+  (perhitungan bayaran lembur = Modul 3)
 - [x] Slip gaji upload (HR) & download (karyawan): storage abstraction (GCS prod / FS lokal dev),
   download lewat route terotentikasi (cek kepemilikan / HR), validasi PDF + maks 5MB, notifikasi.
-  `/dashboard/payslip` + `/manage` (generate otomatis dari payroll = Modul 2)
+  `/dashboard/payslip` + `/manage` (generate otomatis dari payroll = Modul 3)
 
 ---
 
-## Fase 2 — Modul 2: Payroll & Performance Management
+## Fase 2 — Modul 2: HR Operations & Performance Development
 
-**Target:** Penggajian end-to-end berjalan lengkap dengan PPh 21 dan BPJS.
+> Struktur modul ditukar pada 2026-06-07 (lihat [MODULES.md](./MODULES.md)).
+> Modul 2 kini = HR Ops & Performance (risiko rendah, dikerjakan dulu).
+> Add-on independen — cukup butuh Modul 1.
 
-- [ ] Overtime perhitungan bayaran → integrasi payroll
-- [ ] Claim management (medical + reimbursement) + approval
-- [ ] KPI management: input, approval, score history
-- [ ] Bonus: konfigurasi formula, trigger kalkulasi, approval HR
-- [ ] Payroll calculator: gaji pokok + tunjangan + lembur + bonus + klaim
-- [ ] Perhitungan PPh 21 otomatis
-- [ ] Perhitungan BPJS Kesehatan & Ketenagakerjaan
-- [ ] Generate slip gaji PDF otomatis
-- [ ] Discipline & Warning (SP1/2/3)
-
----
-
-## Fase 3 — Modul 3: HR Operations & Development
-
-**Target:** Lengkapi siklus HR dari onboarding sampai offboarding dan analytics.
+**Target:** Lengkapi manajemen kinerja, pengembangan, dan operasi HR.
 
 - [ ] Training & Development: rencana, tracking sertifikasi
-- [ ] Asset Management: pencatatan, linked ke karyawan
+- [ ] Asset Management: pencatatan, linked ke karyawan, integrasi offboarding
+- [ ] KPI management: indikator, input, approval, score history
 - [ ] Onboarding checklist
 - [ ] Offboarding checklist (termasuk serah terima aset)
 - [ ] HR Analytics Dashboard
+- [ ] Bonus: konfigurasi formula, trigger kalkulasi, approval HR (memakai KPI score)
+- [ ] Discipline & Warning (SP1/2/3)
 - [ ] API publik & webhook untuk integrasi pihak ketiga
 - [ ] Konektor ATS (sinkronisasi karyawan baru)
+
+---
+
+## Fase 3 — Modul 3: Payroll & Compliance
+
+> **Risiko tertinggi** (uang, pajak, regulasi). Dikerjakan paling akhir dengan design doc +
+> spesifikasi pajak yang benar (PPh 21 TER) + pengujian habis-habisan. Add-on independen.
+
+**Target:** Penggajian end-to-end dengan PPh 21 (TER) dan BPJS.
+
+- [ ] Rate management UI + seed (TER/PTKP/BPJS, dikelola Super Admin) — prasyarat
+- [ ] Field gaji & PTKP di form karyawan — prasyarat
+- [ ] Design doc data model payroll (payroll_run, payroll_item)
+- [ ] Overtime perhitungan bayaran → integrasi payroll
+- [ ] Claim management (medical + reimbursement) + approval
+- [ ] Payroll calculator: gaji pokok + tunjangan + lembur + bonus + klaim
+- [ ] Perhitungan PPh 21 metode TER + rekonsiliasi progresif akhir tahun
+- [ ] Perhitungan BPJS Kesehatan & Ketenagakerjaan
+- [ ] Generate slip gaji PDF otomatis
 
 ---
 

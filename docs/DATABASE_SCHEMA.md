@@ -83,7 +83,7 @@ user_roles: { userId, roleId: employee_role_id, tenantId }
 - `userId` — FK ke `users.id` (unique — satu user = satu employee record)
 - `tenantId` — FK ke `tenants.id`
 - `reportsToId` — self-referential FK ke `employees.id` (NULL untuk top of hierarchy)
-- `baseSalary`, `ptkpStatus` — digunakan Modul 2 (Payroll)
+- `baseSalary`, `ptkpStatus` — digunakan Modul 3 (Payroll & Compliance)
 
 **Approval chain:** Saat karyawan A mengajukan cuti, sistem lookup `employees.reportsToId` untuk menentukan approver.  
 **Constraint:** `approver_id ≠ requester_id` di-enforce di application layer.

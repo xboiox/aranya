@@ -18,6 +18,8 @@ export const tenants = pgTable("tenants", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 })
 
+// MODULE_1 = Core HR (wajib) · MODULE_2 = HR Operations & Performance Development
+// · MODULE_3 = Payroll & Compliance. M2 & M3 add-on independen (cukup butuh M1).
 export const MODULE_CODES = {
   MODULE_1: "MODULE_1",
   MODULE_2: "MODULE_2",

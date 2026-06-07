@@ -6,8 +6,8 @@ import TenantActionsPanel from "./_actions-panel"
 
 const MODULE_LABEL: Record<string, string> = {
   MODULE_1: "Core HR",
-  MODULE_2: "Payroll & Performance",
-  MODULE_3: "HR Operations",
+  MODULE_2: "HR Operations & Performance",
+  MODULE_3: "Payroll & Compliance",
 }
 
 interface Props {

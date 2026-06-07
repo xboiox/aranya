@@ -8,11 +8,13 @@ Platform Human Resource Information System (HRIS) berbasis SaaS untuk pasar Indo
 
 | # | Modul | Tier | Fitur Utama |
 |---|-------|------|-------------|
-| 1 | Core HR & Employee Self-Service | Wajib | Master data, org structure, absensi GPS, cuti, overtime, slip gaji |
-| 2 | Payroll & Performance Management | Add-on | Payroll, PPh 21, BPJS, KPI, bonus, klaim, disiplin |
-| 3 | HR Operations & Development | Add-on | Training, aset, onboarding/offboarding, analytics, integrasi |
+| 1 | Core HR & Employee Self-Service | Wajib | Master data, org chart, absensi GPS, shift, cuti, overtime, slip gaji |
+| 2 | HR Operations & Performance Development | Add-on | KPI, bonus, training, aset, onboarding/offboarding, disiplin, analytics, integrasi |
+| 3 | Payroll & Compliance | Add-on | Payroll (PPh 21 TER, BPJS), overtime pay, klaim, slip gaji otomatis |
 
-Billing: **per user aktif / bulan × modul yang diaktifkan**
+Billing: **per user aktif / bulan × modul yang diaktifkan**. Modul 2 & 3 add-on **independen** (cukup butuh Modul 1).
+
+Detail: [docs/MODULES.md](docs/MODULES.md)
 
 ---
 
@@ -52,6 +54,7 @@ Tersedia di semua modul: RBAC, notifikasi (in-app + email), audit trail, konfigu
 ## Dokumentasi
 
 - [Product Requirements Document](docs/PRD.md)
+- [Struktur Modul & Lisensi](docs/MODULES.md)
 - [Architecture Decisions](docs/ARCHITECTURE.md)
 - [Tech Stack](docs/TECH_STACK.md)
 - [Development Roadmap](docs/ROADMAP.md)
