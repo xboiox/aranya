@@ -196,7 +196,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Onboarding/Offboarding checklist: HR kelola tugas per karyawan (tambah/centang/hapus +
   template standar), karyawan lihat progres. `/dashboard/onboarding` + `/manage` (ter-gate MODULE_2;
   auto-link ke serah terima aset = follow-up)
-- [ ] HR Analytics Dashboard
+- [x] HR Analytics Dashboard: headcount aktif/nonaktif, hadir & cuti hari ini, antrian persetujuan
+  (cuti+lembur+KPI), karyawan baru bln ini, rata-rata KPI; breakdown per departemen/kontrak/gender.
+  `/dashboard/analytics` (HR-only, ter-gate MODULE_2)
 - [ ] Bonus: konfigurasi formula, trigger kalkulasi, approval HR (memakai KPI score)
 - [ ] Discipline & Warning (SP1/2/3)
 - [ ] API publik & webhook untuk integrasi pihak ketiga

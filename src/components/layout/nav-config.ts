@@ -18,6 +18,7 @@ import {
   Package,
   Target,
   ListChecks,
+  BarChart3,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -75,6 +76,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/kpi/approvals", label: "Persetujuan KPI", icon: Target, roles: ["manager", "hr_admin"], module: "MODULE_2" },
       { href: "/dashboard/onboarding", label: "Checklist Saya", icon: ListChecks, module: "MODULE_2" },
       { href: "/dashboard/onboarding/manage", label: "Onboarding/Offboarding", icon: ListChecks, roles: ["hr_admin"], module: "MODULE_2" },
+      { href: "/dashboard/analytics", label: "HR Analytics", icon: BarChart3, roles: ["hr_admin"], module: "MODULE_2" },
     ],
   },
   {
