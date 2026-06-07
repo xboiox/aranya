@@ -3,6 +3,7 @@ import { auth, hasRole } from "@/lib/auth"
 import { withTenantContext } from "@/lib/db"
 import {
   attendance,
+  employees,
   geofenceLocations,
   tenantConfig,
   GEOFENCING_ENABLED_KEY,
@@ -11,10 +12,78 @@ import { logAudit } from "@/lib/audit"
 import { coordsSchema, geofenceLocationSchema, type CoordsInput } from "./schema"
 import { evaluateAttendance } from "./geofence"
 import { getEmployeeIdByUser, getGeofenceConfig, todayJakarta } from "./queries"
+import { parseDateOnly } from "@/lib/date"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 type State = { error?: string; success?: string }
+
+// Bangun timestamp dari tanggal + "HH:MM" di zona Asia/Jakarta (UTC+7)
+function buildJakartaTimestamp(dateStr: string, time: string): Date | null {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) return null
+  const d = new Date(`${dateStr}T${time}:00+07:00`)
+  return isNaN(d.getTime()) ? null : d
+}
+
+// HR: koreksi absensi karyawan untuk tanggal tertentu (mis. lupa check-out)
+export async function correctAttendance(
+  employeeId: string,
+  dateStr: string,
+  checkIn: string,
+  checkOut: string,
+): Promise<State> {
+  const session = await auth()
+  if (!session) return { error: "Tidak terautentikasi" }
+  const tenantId = session.user.tenantId
+  if (!hasRole(session.user.roles, "hr_admin") || !tenantId) {
+    return { error: "Hanya HR Admin yang dapat mengoreksi absensi" }
+  }
+
+  const date = parseDateOnly(dateStr)
+  if (!date) return { error: "Tanggal tidak valid" }
+
+  const checkInAt = checkIn ? buildJakartaTimestamp(dateStr, checkIn) : null
+  const checkOutAt = checkOut ? buildJakartaTimestamp(dateStr, checkOut) : null
+  if (checkIn && !checkInAt) return { error: "Jam masuk tidak valid" }
+  if (checkOut && !checkOutAt) return { error: "Jam keluar tidak valid" }
+  if (checkInAt && checkOutAt && checkOutAt <= checkInAt) {
+    return { error: "Jam keluar harus setelah jam masuk" }
+  }
+
+  const result = await withTenantContext(tenantId, async (tx) => {
+    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, employeeId) })
+    if (!emp) return { error: "Karyawan tidak ditemukan" as string }
+
+    await tx
+      .insert(attendance)
+      .values({
+        tenantId,
+        employeeId,
+        date,
+        checkInAt,
+        checkOutAt,
+      })
+      .onConflictDoUpdate({
+        target: [attendance.employeeId, attendance.date],
+        set: { checkInAt, checkOutAt, updatedAt: new Date() },
+      })
+    return { ok: true }
+  })
+
+  if ("error" in result) return { error: result.error }
+
+  await logAudit({
+    tenantId,
+    userId: session.user.id,
+    action: "attendance.correct",
+    entityType: "attendance",
+    entityId: employeeId,
+    newValues: { date: dateStr, checkIn, checkOut },
+  })
+
+  revalidatePath("/dashboard/attendance/team")
+  return { success: "Absensi dikoreksi" }
+}
 
 async function resolveEmployee(): Promise<
   | { error: string }

@@ -2,11 +2,12 @@ import { withTenantContext } from "@/lib/db"
 import {
   employees,
   attendance,
+  users,
   geofenceLocations,
   tenantConfig,
   GEOFENCING_ENABLED_KEY,
 } from "@/lib/db/schema"
-import { eq, and, desc } from "drizzle-orm"
+import { eq, and, desc, asc } from "drizzle-orm"
 import { todayJakarta } from "@/lib/date"
 
 // Re-export agar import lama (./queries) tetap berfungsi
@@ -91,5 +92,36 @@ export async function listRecentAttendance(
       .where(eq(attendance.employeeId, employeeId))
       .orderBy(desc(attendance.date))
       .limit(limit)
+  })
+}
+
+export interface TeamAttendanceRow {
+  employeeId: string
+  name: string | null
+  checkInAt: Date | null
+  checkOutAt: Date | null
+}
+
+// Absensi seluruh karyawan aktif untuk satu tanggal (untuk HR)
+export async function listTeamAttendance(
+  tenantId: string,
+  date: Date,
+): Promise<TeamAttendanceRow[]> {
+  return withTenantContext(tenantId, async (tx) => {
+    return tx
+      .select({
+        employeeId: employees.id,
+        name: users.name,
+        checkInAt: attendance.checkInAt,
+        checkOutAt: attendance.checkOutAt,
+      })
+      .from(employees)
+      .innerJoin(users, eq(users.id, employees.userId))
+      .leftJoin(
+        attendance,
+        and(eq(attendance.employeeId, employees.id), eq(attendance.date, date)),
+      )
+      .where(eq(employees.isActive, true))
+      .orderBy(asc(users.name))
   })
 }
