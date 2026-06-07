@@ -193,8 +193,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] KPI management: penilaian per periode (kuartal), pengajuan karyawan, approval atasan/HR
   (anti-self-approve, fallback HR), score history, ajuan ulang bila ditolak. `/dashboard/kpi` +
   `/approvals` (ter-gate MODULE_2; indikator berbobot = follow-up)
-- [ ] Onboarding checklist
-- [ ] Offboarding checklist (termasuk serah terima aset)
+- [x] Onboarding/Offboarding checklist: HR kelola tugas per karyawan (tambah/centang/hapus +
+  template standar), karyawan lihat progres. `/dashboard/onboarding` + `/manage` (ter-gate MODULE_2;
+  auto-link ke serah terima aset = follow-up)
 - [ ] HR Analytics Dashboard
 - [ ] Bonus: konfigurasi formula, trigger kalkulasi, approval HR (memakai KPI score)
 - [ ] Discipline & Warning (SP1/2/3)

@@ -71,6 +71,13 @@
       "when": 1780830893494,
       "tag": "0009_thankful_midnight",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780831299183,
+      "tag": "0010_panoramic_bastion",
+      "breakpoints": true
     }
   ]
 }
