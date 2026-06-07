@@ -47,6 +47,7 @@ export interface EmployeeDetail {
   joinDate: Date | null
   reportsToId: string | null
   reportsToName: string | null
+  defaultShiftId: string | null
   nik: string | null
   npwp: string | null
   phone: string | null
@@ -80,6 +81,7 @@ export async function getEmployee(
         joinDate: employees.joinDate,
         reportsToId: employees.reportsToId,
         reportsToName: leadUser.name,
+        defaultShiftId: employees.defaultShiftId,
         nik: employees.nik,
         npwp: employees.npwp,
         phone: employees.phone,

@@ -13,6 +13,7 @@ import {
   Timer,
   Wallet,
   ScrollText,
+  CalendarClock,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -53,6 +54,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/payslip/manage", label: "Kelola Slip Gaji", icon: FileText, roles: ["hr_admin"] },
       { href: "/dashboard/leave/settings", label: "Pengaturan Cuti", icon: CalendarOff, roles: ["hr_admin"] },
       { href: "/dashboard/attendance/team", label: "Absensi Tim", icon: Clock, roles: ["hr_admin"] },
+      { href: "/dashboard/attendance/shifts", label: "Shift Kerja", icon: CalendarClock, roles: ["hr_admin"] },
       { href: "/dashboard/attendance/settings", label: "Pengaturan Absensi", icon: MapPin, roles: ["hr_admin"] },
       { href: "/dashboard/security", label: "Keamanan", icon: Shield, roles: ["hr_admin", "super_admin"] },
       { href: "/dashboard/audit", label: "Audit Log", icon: ScrollText, roles: ["hr_admin", "super_admin"] },

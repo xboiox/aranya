@@ -44,6 +44,7 @@ export const attendance = pgTable(
     checkInAccuracy: doublePrecision("check_in_accuracy"),
     checkInWfh: boolean("check_in_wfh").default(false).notNull(),
     checkInWithinGeofence: boolean("check_in_within_geofence"),
+    isLate: boolean("is_late"), // null = tidak ada shift / tidak dihitung
 
     checkOutAt: timestamp("check_out_at", { mode: "date" }),
     checkOutLat: doublePrecision("check_out_lat"),

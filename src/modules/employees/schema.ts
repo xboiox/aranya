@@ -41,6 +41,7 @@ export const employeeUpdateSchema = z.object({
     .or(z.literal("").transform(() => undefined)),
   joinDate: optionalString,
   reportsToId: optionalString,
+  defaultShiftId: optionalString,
   nik: optionalString,
   npwp: optionalString,
   phone: optionalString,

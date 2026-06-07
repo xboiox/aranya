@@ -158,7 +158,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
   HR config titik + radius + toggle, `/dashboard/attendance` + `/settings`)
 - [x] WFH mode pada absensi (skip validasi geofence, tercatat di record)
 - [ ] Offline absensi + sync (finalisasi wiring PWA/Serwist — evaluasi Turbopack support)
-- [ ] Shift & jadwal kerja
+- [x] Shift & jadwal kerja: HR definisikan shift (jam + toleransi), assign ke karyawan,
+  deteksi terlambat otomatis saat check-in. `/dashboard/attendance/shifts` + assign di edit karyawan
+  (roster per-tanggal = follow-up)
 - [x] Leave Management + approval flow: ajukan cuti (5 jenis), saldo cuti tahunan
   (hari kerja Senin–Jumat **minus hari libur**), inbox approval (direct lead via reporting line /
   HR fallback), approve/reject + notifikasi, anti self-approve. `/dashboard/leave` + `/approvals`

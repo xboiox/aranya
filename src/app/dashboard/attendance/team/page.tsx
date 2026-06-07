@@ -82,6 +82,7 @@ export default async function TeamAttendancePage({ searchParams }: Props) {
                   dateStr={dateStr}
                   initialCheckIn={toHHMM(r.checkInAt)}
                   initialCheckOut={toHHMM(r.checkOutAt)}
+                  isLate={r.isLate}
                 />
               ))
             )}

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest"
-import { parseTimeToMinutes, computeDurationMinutes, formatMinutes } from "./time"
+import { parseTimeToMinutes, computeDurationMinutes, formatMinutes, lateMinutes } from "./time"
 
 describe("parseTimeToMinutes", () => {
   it("parse jam valid", () => {
@@ -35,5 +35,23 @@ describe("formatMinutes", () => {
     expect(formatMinutes(150)).toBe("2j 30m")
     expect(formatMinutes(120)).toBe("2j")
     expect(formatMinutes(45)).toBe("45m")
+  })
+})
+
+describe("lateMinutes", () => {
+  it("tepat waktu → 0", () => {
+    expect(lateMinutes("08:00", "08:00", 0)).toBe(0)
+  })
+  it("lebih awal → 0", () => {
+    expect(lateMinutes("07:45", "08:00", 0)).toBe(0)
+  })
+  it("terlambat melebihi toleransi", () => {
+    expect(lateMinutes("08:20", "08:00", 15)).toBe(5) // 20 - (0+15) = 5
+  })
+  it("masih dalam toleransi → 0", () => {
+    expect(lateMinutes("08:10", "08:00", 15)).toBe(0)
+  })
+  it("input tidak valid → 0", () => {
+    expect(lateMinutes("xx", "08:00", 0)).toBe(0)
   })
 })

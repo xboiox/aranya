@@ -4,6 +4,7 @@ import { withTenantContext } from "@/lib/db"
 import {
   attendance,
   employees,
+  shifts,
   geofenceLocations,
   tenantConfig,
   GEOFENCING_ENABLED_KEY,
@@ -13,6 +14,7 @@ import { coordsSchema, geofenceLocationSchema, type CoordsInput } from "./schema
 import { evaluateAttendance } from "./geofence"
 import { getEmployeeIdByUser, getGeofenceConfig, todayJakarta } from "./queries"
 import { parseDateOnly } from "@/lib/date"
+import { lateMinutes, nowJakartaHHMM } from "@/lib/time"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -126,6 +128,20 @@ export async function checkIn(input: CoordsInput): Promise<State> {
     })
     if (existing?.checkInAt) return { error: "Anda sudah check-in hari ini" as string }
 
+    // Deteksi terlambat berdasarkan shift default karyawan
+    let isLate: boolean | null = null
+    const emp = await tx.query.employees.findFirst({
+      where: eq(employees.id, ctx.employeeId),
+    })
+    if (emp?.defaultShiftId) {
+      const shift = await tx.query.shifts.findFirst({
+        where: eq(shifts.id, emp.defaultShiftId),
+      })
+      if (shift) {
+        isLate = lateMinutes(nowJakartaHHMM(), shift.startTime, shift.lateToleranceMinutes) > 0
+      }
+    }
+
     await tx.insert(attendance).values({
       tenantId: ctx.tenantId,
       employeeId: ctx.employeeId,
@@ -136,6 +152,7 @@ export async function checkIn(input: CoordsInput): Promise<State> {
       checkInAccuracy: accuracy,
       checkInWfh: isWfh,
       checkInWithinGeofence: geo.within,
+      isLate,
     })
     return { ok: true }
   })

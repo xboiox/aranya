@@ -32,6 +32,7 @@ ALTER TABLE attendance         ENABLE ROW LEVEL SECURITY;
 ALTER TABLE leave_requests     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE overtime_requests  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE payslips           ENABLE ROW LEVEL SECURITY;
+ALTER TABLE shifts             ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE employees          FORCE ROW LEVEL SECURITY;
 ALTER TABLE tenant_modules     FORCE ROW LEVEL SECURITY;
@@ -46,6 +47,7 @@ ALTER TABLE attendance         FORCE ROW LEVEL SECURITY;
 ALTER TABLE leave_requests     FORCE ROW LEVEL SECURITY;
 ALTER TABLE overtime_requests  FORCE ROW LEVEL SECURITY;
 ALTER TABLE payslips           FORCE ROW LEVEL SECURITY;
+ALTER TABLE shifts             FORCE ROW LEVEL SECURITY;
 
 -- ── Drop existing policies before recreating (idempotent) ────
 
@@ -62,6 +64,7 @@ DROP POLICY IF EXISTS tenant_isolation ON attendance;
 DROP POLICY IF EXISTS tenant_isolation ON leave_requests;
 DROP POLICY IF EXISTS tenant_isolation ON overtime_requests;
 DROP POLICY IF EXISTS tenant_isolation ON payslips;
+DROP POLICY IF EXISTS tenant_isolation ON shifts;
 
 -- ── Create policies ───────────────────────────────────────────
 
@@ -102,4 +105,7 @@ CREATE POLICY tenant_isolation ON overtime_requests
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 
 CREATE POLICY tenant_isolation ON payslips
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON shifts
   USING (tenant_id = current_tenant_id() OR is_super_admin());

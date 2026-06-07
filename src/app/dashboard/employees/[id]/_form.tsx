@@ -20,6 +20,13 @@ interface Lead {
   position: string | null
 }
 
+interface Shift {
+  id: string
+  name: string
+  startTime: string
+  endTime: string
+}
+
 const selectClass =
   "mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 
@@ -31,9 +38,11 @@ function dateValue(d: Date | null): string {
 export default function EmployeeEditForm({
   employee,
   leads,
+  shifts,
 }: {
   employee: EmployeeDetail
   leads: Lead[]
+  shifts: Shift[]
 }) {
   const action = updateEmployee.bind(null, employee.id)
   const [state, formAction, isPending] = useActionState(action, {})
@@ -82,6 +91,17 @@ export default function EmployeeEditForm({
           <div className="space-y-2">
             <Label htmlFor="joinDate">Tanggal Bergabung</Label>
             <Input id="joinDate" name="joinDate" type="date" defaultValue={dateValue(employee.joinDate)} />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="defaultShiftId">Shift Kerja</Label>
+            <select id="defaultShiftId" name="defaultShiftId" className={selectClass} defaultValue={employee.defaultShiftId ?? ""}>
+              <option value="">— Tidak ada —</option>
+              {shifts.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.startTime}–{s.endTime})
+                </option>
+              ))}
+            </select>
           </div>
         </CardContent>
       </Card>

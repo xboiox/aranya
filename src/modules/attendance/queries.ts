@@ -100,6 +100,7 @@ export interface TeamAttendanceRow {
   name: string | null
   checkInAt: Date | null
   checkOutAt: Date | null
+  isLate: boolean | null
 }
 
 // Absensi seluruh karyawan aktif untuk satu tanggal (untuk HR)
@@ -114,6 +115,7 @@ export async function listTeamAttendance(
         name: users.name,
         checkInAt: attendance.checkInAt,
         checkOutAt: attendance.checkOutAt,
+        isLate: attendance.isLate,
       })
       .from(employees)
       .innerJoin(users, eq(users.id, employees.userId))

@@ -93,8 +93,13 @@ export default async function AttendancePage() {
                     <td className="px-4 py-2 text-sm">{dateLabel(r.date)}</td>
                     <td className="px-4 py-2 text-sm">{timeLabel(r.checkInAt)}</td>
                     <td className="px-4 py-2 text-sm">{timeLabel(r.checkOutAt)}</td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
-                      {r.checkInWfh ? "WFH" : "WFO"}
+                    <td className="px-4 py-2 text-xs">
+                      <span className="text-muted-foreground">{r.checkInWfh ? "WFH" : "WFO"}</span>
+                      {r.isLate && (
+                        <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 font-medium text-red-700">
+                          Terlambat
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))

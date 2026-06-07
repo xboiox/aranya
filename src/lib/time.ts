@@ -23,6 +23,32 @@ export function computeDurationMinutes(start: string, end: string): number | nul
   return dur
 }
 
+/**
+ * Menit keterlambatan check-in terhadap jam mulai shift + toleransi.
+ * 0 jika tepat waktu, lebih awal, atau input tidak valid.
+ */
+export function lateMinutes(
+  checkInHHMM: string,
+  shiftStartHHMM: string,
+  toleranceMinutes: number,
+): number {
+  const ci = parseTimeToMinutes(checkInHHMM)
+  const ss = parseTimeToMinutes(shiftStartHHMM)
+  if (ci == null || ss == null) return 0
+  const late = ci - (ss + toleranceMinutes)
+  return late > 0 ? late : 0
+}
+
+/** Jam saat ini "HH:MM" di zona Asia/Jakarta. */
+export function nowJakartaHHMM(): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date())
+}
+
 /** Format menit → "Hj Mm" (mis. 150 → "2j 30m"). */
 export function formatMinutes(min: number): string {
   const h = Math.floor(min / 60)

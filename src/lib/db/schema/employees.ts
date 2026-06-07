@@ -9,6 +9,7 @@ import {
 } from "drizzle-orm/pg-core"
 import { users } from "./auth"
 import { tenants } from "./tenants"
+import { shifts } from "./shift"
 
 export const CONTRACT_TYPES = {
   PKWT: "PKWT",
@@ -56,6 +57,9 @@ export const employees = pgTable("employees", {
   joinDate: date("join_date", { mode: "date" }),
   contractType: text("contract_type"),
   contractEndDate: date("contract_end_date", { mode: "date" }),
+  defaultShiftId: text("default_shift_id").references(() => shifts.id, {
+    onDelete: "set null",
+  }),
 
   // Bank & BPJS
   bankName: text("bank_name"),

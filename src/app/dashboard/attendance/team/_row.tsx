@@ -12,6 +12,7 @@ interface Props {
   dateStr: string
   initialCheckIn: string
   initialCheckOut: string
+  isLate: boolean | null
 }
 
 export default function AttendanceCorrectionRow({
@@ -20,6 +21,7 @@ export default function AttendanceCorrectionRow({
   dateStr,
   initialCheckIn,
   initialCheckOut,
+  isLate,
 }: Props) {
   const [checkIn, setCheckIn] = useState(initialCheckIn)
   const [checkOut, setCheckOut] = useState(initialCheckOut)
@@ -41,7 +43,14 @@ export default function AttendanceCorrectionRow({
 
   return (
     <tr>
-      <td className="px-4 py-2 text-sm">{name ?? "—"}</td>
+      <td className="px-4 py-2 text-sm">
+        {name ?? "—"}
+        {isLate && (
+          <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
+            Terlambat
+          </span>
+        )}
+      </td>
       <td className="px-4 py-2">
         <Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-28" />
       </td>

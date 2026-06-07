@@ -2,6 +2,7 @@ import Link from "next/link"
 import { redirect, notFound } from "next/navigation"
 import { auth, hasRole } from "@/lib/auth"
 import { getEmployee, listLeadCandidates } from "@/modules/employees/queries"
+import { listActiveShifts } from "@/modules/shift/queries"
 import EmployeeEditForm from "./_form"
 
 interface Props {
@@ -19,7 +20,10 @@ export default async function EmployeeDetailPage({ params }: Props) {
   const employee = await getEmployee(session.user.tenantId, id)
   if (!employee) notFound()
 
-  const leads = await listLeadCandidates(session.user.tenantId, id)
+  const [leads, shifts] = await Promise.all([
+    listLeadCandidates(session.user.tenantId, id),
+    listActiveShifts(session.user.tenantId),
+  ])
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -34,7 +38,7 @@ export default async function EmployeeDetailPage({ params }: Props) {
         </p>
       </div>
 
-      <EmployeeEditForm employee={employee} leads={leads} />
+      <EmployeeEditForm employee={employee} leads={leads} shifts={shifts} />
     </div>
   )
 }
