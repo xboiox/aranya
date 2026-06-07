@@ -14,6 +14,7 @@ import {
   Wallet,
   ScrollText,
   CalendarClock,
+  GraduationCap,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -58,6 +59,13 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/attendance/settings", label: "Pengaturan Absensi", icon: MapPin, roles: ["hr_admin"] },
       { href: "/dashboard/security", label: "Keamanan", icon: Shield, roles: ["hr_admin", "super_admin"] },
       { href: "/dashboard/audit", label: "Audit Log", icon: ScrollText, roles: ["hr_admin", "super_admin"] },
+    ],
+  },
+  {
+    title: "HR Ops & Performance (Modul 2)",
+    items: [
+      { href: "/dashboard/training", label: "Training & Sertifikasi", icon: GraduationCap, module: "MODULE_2" },
+      { href: "/dashboard/training/manage", label: "Kelola Training", icon: GraduationCap, roles: ["hr_admin"], module: "MODULE_2" },
     ],
   },
   {

@@ -50,6 +50,13 @@
       "when": 1780816359280,
       "tag": "0006_yummy_slipstream",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780826184811,
+      "tag": "0007_redundant_black_widow",
+      "breakpoints": true
     }
   ]
 }

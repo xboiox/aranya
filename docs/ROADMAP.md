@@ -184,7 +184,9 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 
 **Target:** Lengkapi manajemen kinerja, pengembangan, dan operasi HR.
 
-- [ ] Training & Development: rencana, tracking sertifikasi
+- [x] Training & Development: catat pelatihan & sertifikasi per karyawan, tracking masa berlaku
+  (badge kedaluwarsa/segera berakhir), HR kelola, karyawan lihat. `/dashboard/training` + `/manage`
+  (ter-gate MODULE_2)
 - [ ] Asset Management: pencatatan, linked ke karyawan, integrasi offboarding
 - [ ] KPI management: indikator, input, approval, score history
 - [ ] Onboarding checklist
