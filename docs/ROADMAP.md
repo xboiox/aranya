@@ -164,7 +164,10 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
   HR fallback), approve/reject + notifikasi, anti self-approve. `/dashboard/leave` + `/approvals`
 - [x] Leave correctness: kecualikan hari libur, cegah tumpang tindih, cegah tanggal lampau,
   pembatalan (pending/approved belum mulai), UI kuota + manajemen hari libur (`/leave/settings`)
-- [ ] Overtime pencatatan + approval flow
+- [x] Overtime pencatatan + approval flow: ajukan lembur (jam mulai/selesai, durasi otomatis +
+  lewat tengah malam), inbox approval (direct lead/HR), approve/reject + notifikasi, cancel,
+  anti self-approve, cegah tanggal masa depan. `/dashboard/overtime` + `/approvals`
+  (perhitungan bayaran lembur = Modul 2)
 - [ ] Slip gaji upload & download
 
 ---

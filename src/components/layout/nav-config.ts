@@ -10,6 +10,7 @@ import {
   MapPin,
   Bell,
   Network,
+  Timer,
   type LucideIcon,
 } from "lucide-react"
 import type { RoleName } from "@/lib/db/schema"
@@ -35,6 +36,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/notifications", label: "Notifikasi", icon: Bell },
       { href: "/dashboard/attendance", label: "Absensi", icon: Clock },
       { href: "/dashboard/leave", label: "Cuti", icon: CalendarOff },
+      { href: "/dashboard/overtime", label: "Lembur", icon: Timer },
       { href: "/dashboard/organization", label: "Struktur Organisasi", icon: Network },
       { href: "/dashboard/payslip", label: "Slip Gaji", icon: FileText, disabled: true },
     ],
@@ -43,6 +45,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Manajemen",
     items: [
       { href: "/dashboard/leave/approvals", label: "Persetujuan Cuti", icon: CalendarCheck, roles: ["manager", "hr_admin"] },
+      { href: "/dashboard/overtime/approvals", label: "Persetujuan Lembur", icon: Timer, roles: ["manager", "hr_admin"] },
       { href: "/dashboard/employees", label: "Karyawan", icon: Users, roles: ["hr_admin"] },
       { href: "/dashboard/leave/settings", label: "Pengaturan Cuti", icon: CalendarOff, roles: ["hr_admin"] },
       { href: "/dashboard/attendance/settings", label: "Pengaturan Absensi", icon: MapPin, roles: ["hr_admin"] },

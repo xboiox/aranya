@@ -29,6 +29,13 @@
       "when": 1780764798132,
       "tag": "0003_magenta_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1780806558497,
+      "tag": "0004_cold_norrin_radd",
+      "breakpoints": true
     }
   ]
 }
