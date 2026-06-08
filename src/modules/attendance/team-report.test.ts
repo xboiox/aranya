@@ -3,7 +3,6 @@ import {
   filterTeamRows,
   teamRowsToCsv,
   attendanceStatus,
-  csvCell,
   isTeamStatus,
   buildTeamGrid,
   eachDateInRange,
@@ -42,14 +41,6 @@ describe("filterTeamRows", () => {
   })
   it("status all + tanpa q mengembalikan semua", () => {
     expect(filterTeamRows(rows, {})).toHaveLength(3)
-  })
-})
-
-describe("csvCell", () => {
-  it("membungkus sel dengan koma/kutip", () => {
-    expect(csvCell("a,b")).toBe('"a,b"')
-    expect(csvCell('he said "hi"')).toBe('"he said ""hi"""')
-    expect(csvCell("plain")).toBe("plain")
   })
 })
 

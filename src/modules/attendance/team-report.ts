@@ -1,4 +1,5 @@
 import { toYMD } from "@/lib/date"
+import { buildCsv } from "@/lib/csv"
 import type { TeamAttendanceRow } from "./queries"
 
 export type TeamStatus = "all" | "present" | "absent" | "late"
@@ -115,28 +116,17 @@ function hhmm(d: Date | null): string {
   }).format(new Date(d))
 }
 
-/** Membungkus sel CSV bila mengandung koma/kutip/baris baru (RFC 4180). */
-export function csvCell(value: string): string {
-  if (/[",\n\r]/.test(value)) {
-    return `"${value.replace(/"/g, '""')}"`
-  }
-  return value
-}
-
 /** Membangun konten CSV absensi tim (satu baris per karyawan per tanggal). */
 export function teamRowsToCsv(rows: TeamAttendanceRow[]): string {
-  const header = ["Tanggal", "Nama", "Departemen", "Masuk", "Keluar", "Status"]
-  const lines = rows.map((r) =>
-    [
+  return buildCsv(
+    ["Tanggal", "Nama", "Departemen", "Masuk", "Keluar", "Status"],
+    rows.map((r) => [
       toYMD(r.date),
       r.name ?? "",
       r.department ?? "",
       hhmm(r.checkInAt),
       hhmm(r.checkOutAt),
       statusText(r),
-    ]
-      .map((c) => csvCell(c))
-      .join(","),
+    ]),
   )
-  return [header.join(","), ...lines].join("\r\n")
 }

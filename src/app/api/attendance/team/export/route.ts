@@ -6,6 +6,7 @@ import {
   teamRowsToCsv,
   isTeamStatus,
 } from "@/modules/attendance/team-report"
+import { CSV_BOM } from "@/lib/csv"
 import { todayJakarta, toYMD, parseDateOnly } from "@/lib/date"
 
 export async function GET(req: Request) {
@@ -36,8 +37,7 @@ export async function GET(req: Request) {
     department,
   })
   const filtered = filterTeamRows(grid, { q, status })
-  // BOM agar Excel mengenali UTF-8.
-  const csv = "﻿" + teamRowsToCsv(filtered)
+  const csv = CSV_BOM + teamRowsToCsv(filtered)
 
   const suffix = toYMD(startDate) === toYMD(endDate)
     ? toYMD(startDate)

@@ -11,8 +11,11 @@ import {
 } from "@/modules/attendance/team-report"
 import { todayJakarta, toYMD, parseDateOnly } from "@/lib/date"
 import { Button } from "@/components/ui/button"
+import { Pagination } from "@/components/pagination"
 import { Download } from "lucide-react"
 import AttendanceCorrectionRow from "./_row"
+
+const PAGE_SIZE = 50
 
 const STATUS_OPTIONS: { value: TeamStatus; label: string }[] = [
   { value: "all", label: "Semua" },
@@ -50,6 +53,7 @@ interface Props {
     q?: string
     status?: string
     department?: string
+    page?: string
   }>
 }
 
@@ -80,6 +84,10 @@ export default async function TeamAttendancePage({ searchParams }: Props) {
   const rows = filterTeamRows(allRows, { q, status })
   const present = rows.filter((r) => r.checkInAt).length
   const isFiltered = Boolean(q) || status !== "all" || Boolean(department)
+
+  const page = Math.max(0, parseInt(sp.page ?? "0", 10) || 0)
+  const pageRows = rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE)
+  const hasNext = (page + 1) * PAGE_SIZE < rows.length
 
   const exportParams = new URLSearchParams({
     startDate: toYMD(startDate),
@@ -150,14 +158,14 @@ export default async function TeamAttendancePage({ searchParams }: Props) {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {rows.length === 0 ? (
+            {pageRows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
                   Tidak ada data untuk filter ini.
                 </td>
               </tr>
             ) : (
-              rows.map((r) => (
+              pageRows.map((r) => (
                 <AttendanceCorrectionRow
                   key={`${r.employeeId}-${toYMD(r.date)}`}
                   employeeId={r.employeeId}
@@ -174,6 +182,21 @@ export default async function TeamAttendancePage({ searchParams }: Props) {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        basePath="/dashboard/attendance/team"
+        params={{
+          startDate: toYMD(startDate),
+          endDate: toYMD(endDate),
+          status,
+          department,
+          q,
+        }}
+        page={page}
+        hasNext={hasNext}
+        total={rows.length}
+        pageSize={PAGE_SIZE}
+      />
     </div>
   )
 }

@@ -1,6 +1,6 @@
-import { withTenantContext } from "@/lib/db"
+import { withTenantContext, type Database } from "@/lib/db"
 import { employees, users } from "@/lib/db/schema"
-import { eq, asc } from "drizzle-orm"
+import { eq, asc, count } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 
 export interface EmployeeListItem {
@@ -9,30 +9,64 @@ export interface EmployeeListItem {
   email: string
   position: string | null
   department: string | null
+  managerName: string | null
   isActive: boolean
   isActivated: boolean // sudah set password (bisa login)
 }
 
+// Query dasar daftar karyawan (+ nama atasan langsung via self-join).
+function selectEmployees(tx: Database) {
+  const manager = alias(employees, "manager")
+  const managerUser = alias(users, "manager_user")
+  return tx
+    .select({
+      id: employees.id,
+      name: users.name,
+      email: users.email,
+      position: employees.position,
+      department: employees.department,
+      managerName: managerUser.name,
+      isActive: employees.isActive,
+      password: users.password,
+    })
+    .from(employees)
+    .innerJoin(users, eq(users.id, employees.userId))
+    .leftJoin(manager, eq(manager.id, employees.reportsToId))
+    .leftJoin(managerUser, eq(managerUser.id, manager.userId))
+    .orderBy(asc(users.name))
+}
+
+function mapEmployeeRow({
+  password,
+  ...r
+}: { password: string | null } & Omit<EmployeeListItem, "isActivated">): EmployeeListItem {
+  return { ...r, isActivated: Boolean(password) }
+}
+
 export async function listEmployees(tenantId: string): Promise<EmployeeListItem[]> {
   return withTenantContext(tenantId, async (tx) => {
-    const rows = await tx
-      .select({
-        id: employees.id,
-        name: users.name,
-        email: users.email,
-        position: employees.position,
-        department: employees.department,
-        isActive: employees.isActive,
-        password: users.password,
-      })
-      .from(employees)
-      .innerJoin(users, eq(users.id, employees.userId))
-      .orderBy(asc(users.name))
+    const rows = await selectEmployees(tx)
+    return rows.map(mapEmployeeRow)
+  })
+}
 
-    return rows.map(({ password, ...r }) => ({
-      ...r,
-      isActivated: Boolean(password),
-    }))
+export interface PaginatedEmployees {
+  items: EmployeeListItem[]
+  total: number
+}
+
+export async function listEmployeesPaginated(
+  tenantId: string,
+  page: number,
+  pageSize: number,
+): Promise<PaginatedEmployees> {
+  return withTenantContext(tenantId, async (tx) => {
+    const rows = await selectEmployees(tx).limit(pageSize).offset(page * pageSize)
+    const [totalRow] = await tx.select({ value: count() }).from(employees)
+    return {
+      items: rows.map(mapEmployeeRow),
+      total: Number(totalRow?.value ?? 0),
+    }
   })
 }
 
