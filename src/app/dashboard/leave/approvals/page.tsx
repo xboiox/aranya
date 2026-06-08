@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation"
 import { auth, hasAnyRole, hasRole } from "@/lib/auth"
 import { getEmployeeIdByUser } from "@/modules/attendance/queries"
-import { listPendingApprovals } from "@/modules/leave/queries"
+import { listPendingApprovals, listDecidedApprovals } from "@/modules/leave/queries"
 import { leaveTypeLabel } from "@/modules/leave/schema"
+import { ApprovalHistory } from "@/components/approval-history"
 import ApprovalInbox from "./_inbox"
 
 function dateLabel(d: Date): string {
@@ -10,6 +11,16 @@ function dateLabel(d: Date): string {
     timeZone: "Asia/Jakarta",
     day: "2-digit",
     month: "short",
+  })
+}
+
+function decidedLabel(d: Date | null): string | null {
+  if (!d) return null
+  return new Date(d).toLocaleDateString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
   })
 }
 
@@ -23,7 +34,10 @@ export default async function ApprovalsPage() {
 
   const employeeId = (await getEmployeeIdByUser(tenantId, session.user.id)) ?? ""
   const isHr = hasRole(session.user.roles, "hr_admin")
-  const pending = await listPendingApprovals(tenantId, employeeId, isHr)
+  const [pending, decided] = await Promise.all([
+    listPendingApprovals(tenantId, employeeId, isHr),
+    listDecidedApprovals(tenantId, employeeId, isHr),
+  ])
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -42,6 +56,17 @@ export default async function ApprovalsPage() {
           range: `${dateLabel(p.startDate)} – ${dateLabel(p.endDate)}`,
           totalDays: p.totalDays,
           reason: p.reason,
+        }))}
+      />
+
+      <ApprovalHistory
+        items={decided.map((d) => ({
+          id: d.id,
+          requesterName: d.requesterName ?? "—",
+          detail: `${leaveTypeLabel(d.type)} · ${dateLabel(d.startDate)} – ${dateLabel(d.endDate)} · ${d.totalDays} hari`,
+          status: d.status,
+          decidedAt: decidedLabel(d.decidedAt),
+          rejectionReason: d.rejectionReason,
         }))}
       />
     </div>

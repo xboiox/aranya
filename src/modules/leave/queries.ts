@@ -7,7 +7,7 @@ import {
   ANNUAL_LEAVE_QUOTA_KEY,
   DEFAULT_ANNUAL_QUOTA,
 } from "@/lib/db/schema"
-import { eq, and, desc, sql } from "drizzle-orm"
+import { eq, and, desc, sql, inArray } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 
 export type LeaveRequestRow = typeof leaveRequests.$inferSelect
@@ -121,5 +121,51 @@ export async function listPendingApprovals(
         eq(requester.reportsToId, approverEmployeeId),
       ),
     )
+  })
+}
+
+export interface DecidedApproval extends PendingApproval {
+  status: string
+  decidedAt: Date | null
+  rejectionReason: string | null
+}
+
+// Riwayat approval (disetujui/ditolak) dalam cakupan approver yang sama
+// dengan listPendingApprovals. Dibatasi agar tidak unbounded.
+export async function listDecidedApprovals(
+  tenantId: string,
+  approverEmployeeId: string,
+  isHrAdmin: boolean,
+  limit = 50,
+): Promise<DecidedApproval[]> {
+  return withTenantContext(tenantId, async (tx) => {
+    const requester = alias(employees, "requester")
+    const requesterUser = alias(users, "requester_user")
+
+    const base = tx
+      .select({
+        id: leaveRequests.id,
+        requesterName: requesterUser.name,
+        type: leaveRequests.type,
+        startDate: leaveRequests.startDate,
+        endDate: leaveRequests.endDate,
+        totalDays: leaveRequests.totalDays,
+        reason: leaveRequests.reason,
+        createdAt: leaveRequests.createdAt,
+        status: leaveRequests.status,
+        decidedAt: leaveRequests.decidedAt,
+        rejectionReason: leaveRequests.rejectionReason,
+      })
+      .from(leaveRequests)
+      .innerJoin(requester, eq(requester.id, leaveRequests.employeeId))
+      .innerJoin(requesterUser, eq(requesterUser.id, requester.userId))
+      .orderBy(desc(leaveRequests.decidedAt))
+      .limit(limit)
+
+    const decided = inArray(leaveRequests.status, ["approved", "rejected"])
+    if (isHrAdmin) {
+      return base.where(decided)
+    }
+    return base.where(and(decided, eq(requester.reportsToId, approverEmployeeId)))
   })
 }
