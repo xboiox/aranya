@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -24,14 +25,16 @@ export function UserMenu({ name, email }: Props) {
         <Avatar className="size-8">
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
-        <div className="flex-1 overflow-hidden text-sm">
-          <p className="truncate font-medium">{name ?? "Pengguna"}</p>
-          <p className="truncate text-xs text-muted-foreground">{email}</p>
-        </div>
+        <span className="flex-1 overflow-hidden text-sm">
+          <span className="block truncate font-medium">{name ?? "Pengguna"}</span>
+          <span className="block truncate text-xs text-muted-foreground">{email}</span>
+        </span>
         <ChevronsUpDown className="size-4 text-muted-foreground" />
       </DropdownMenuTrigger>
       <DropdownMenuContent side="top" align="start" className="w-56">
-        <DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
+        <DropdownMenuGroup>
+          <DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
+        </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <form action={signOutAction}>
           <button
