@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation"
 import { auth } from "@/lib/auth"
 import { listNotifications } from "@/modules/notifications/queries"
+import { notificationHref } from "@/modules/notifications/links"
 import NotificationList from "./_list"
 
 export default async function NotificationsPage() {
@@ -24,6 +25,7 @@ export default async function NotificationsPage() {
           title: i.title,
           body: i.body,
           isRead: i.isRead,
+          href: notificationHref(i.type),
           createdAt: new Date(i.createdAt).toLocaleString("id-ID", {
             timeZone: "Asia/Jakarta",
             dateStyle: "medium",
