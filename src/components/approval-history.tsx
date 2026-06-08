@@ -14,6 +14,7 @@ export interface ApprovalHistoryItem {
   detail: string
   status: string
   decidedAt: string | null
+  decidedBy: string | null
   rejectionReason: string | null
 }
 
@@ -54,6 +55,9 @@ export function ApprovalHistory({
                 </span>
                 {it.decidedAt && (
                   <p className="mt-1 text-xs text-muted-foreground">{it.decidedAt}</p>
+                )}
+                {it.decidedBy && (
+                  <p className="text-xs text-muted-foreground">oleh {it.decidedBy}</p>
                 )}
               </div>
             </li>

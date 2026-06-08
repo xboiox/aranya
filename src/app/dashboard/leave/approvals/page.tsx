@@ -66,6 +66,7 @@ export default async function ApprovalsPage() {
           detail: `${leaveTypeLabel(d.type)} · ${dateLabel(d.startDate)} – ${dateLabel(d.endDate)} · ${d.totalDays} hari`,
           status: d.status,
           decidedAt: decidedLabel(d.decidedAt),
+          decidedBy: d.approverName,
           rejectionReason: d.rejectionReason,
         }))}
       />

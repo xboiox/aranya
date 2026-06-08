@@ -69,6 +69,7 @@ export default async function OvertimeApprovalsPage() {
           detail: `${dateLabel(d.date)} · ${d.startTime}–${d.endTime} · ${formatMinutes(d.durationMinutes)}`,
           status: d.status,
           decidedAt: decidedLabel(d.decidedAt),
+          decidedBy: d.approverName,
           rejectionReason: d.rejectionReason,
         }))}
       />

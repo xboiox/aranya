@@ -68,6 +68,7 @@ export interface DecidedOvertime extends PendingOvertime {
   status: string
   decidedAt: Date | null
   rejectionReason: string | null
+  approverName: string | null
 }
 
 // Riwayat approval lembur (disetujui/ditolak) dalam cakupan approver yang sama.
@@ -80,6 +81,7 @@ export async function listDecidedOvertimeApprovals(
   return withTenantContext(tenantId, async (tx) => {
     const requester = alias(employees, "requester")
     const requesterUser = alias(users, "requester_user")
+    const approverUser = alias(users, "approver_user")
 
     const base = tx
       .select({
@@ -93,10 +95,12 @@ export async function listDecidedOvertimeApprovals(
         status: overtimeRequests.status,
         decidedAt: overtimeRequests.decidedAt,
         rejectionReason: overtimeRequests.rejectionReason,
+        approverName: approverUser.name,
       })
       .from(overtimeRequests)
       .innerJoin(requester, eq(requester.id, overtimeRequests.employeeId))
       .innerJoin(requesterUser, eq(requesterUser.id, requester.userId))
+      .leftJoin(approverUser, eq(approverUser.id, overtimeRequests.approverId))
       .orderBy(desc(overtimeRequests.decidedAt))
       .limit(limit)
 

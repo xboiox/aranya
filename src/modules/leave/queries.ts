@@ -128,6 +128,7 @@ export interface DecidedApproval extends PendingApproval {
   status: string
   decidedAt: Date | null
   rejectionReason: string | null
+  approverName: string | null
 }
 
 // Riwayat approval (disetujui/ditolak) dalam cakupan approver yang sama
@@ -141,6 +142,7 @@ export async function listDecidedApprovals(
   return withTenantContext(tenantId, async (tx) => {
     const requester = alias(employees, "requester")
     const requesterUser = alias(users, "requester_user")
+    const approverUser = alias(users, "approver_user")
 
     const base = tx
       .select({
@@ -155,10 +157,12 @@ export async function listDecidedApprovals(
         status: leaveRequests.status,
         decidedAt: leaveRequests.decidedAt,
         rejectionReason: leaveRequests.rejectionReason,
+        approverName: approverUser.name,
       })
       .from(leaveRequests)
       .innerJoin(requester, eq(requester.id, leaveRequests.employeeId))
       .innerJoin(requesterUser, eq(requesterUser.id, requester.userId))
+      .leftJoin(approverUser, eq(approverUser.id, leaveRequests.approverId))
       .orderBy(desc(leaveRequests.decidedAt))
       .limit(limit)
 
