@@ -5,6 +5,7 @@ import { users, employees, userRoles, roles, invitations } from "@/lib/db/schema
 import { sendInvitationEmail } from "@/lib/email"
 import { logAudit } from "@/lib/audit"
 import { employeeCreateSchema, employeeUpdateSchema } from "./schema"
+import { parseEmployeeCsv, type BulkEmployeeRow } from "./bulk"
 import { eq, and, isNull } from "drizzle-orm"
 import { redirect } from "next/navigation"
 import crypto from "crypto"
@@ -209,4 +210,131 @@ export async function updateEmployee(
   })
 
   redirect(`/dashboard/employees/${id}`)
+}
+
+// --- Bulk import via CSV ---
+
+export interface BulkImportResult {
+  error?: string
+  created?: number
+  failures?: { ref: string; reason: string }[]
+}
+
+// Membuat satu karyawan dari baris CSV (resolve atasan via email). Tanpa redirect.
+async function createOneEmployee(
+  tenantId: string,
+  actorId: string,
+  actorName: string,
+  row: BulkEmployeeRow,
+): Promise<{ error?: string }> {
+  const token = crypto.randomBytes(32).toString("hex")
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
+  const result = await withTenantContext(tenantId, async (tx) => {
+    const existingUser = await tx.query.users.findFirst({
+      where: eq(users.email, row.email),
+    })
+    if (existingUser) return { error: "Email sudah terdaftar" as string }
+
+    const role = await tx.query.roles.findFirst({
+      where: and(eq(roles.name, row.role), isNull(roles.tenantId)),
+    })
+    if (!role) return { error: `Role ${row.role} tidak ditemukan. Jalankan seed.` }
+
+    let reportsToId: string | null = null
+    if (row.reportsToEmail) {
+      const lead = await tx
+        .select({ id: employees.id })
+        .from(employees)
+        .innerJoin(users, eq(users.id, employees.userId))
+        .where(eq(users.email, row.reportsToEmail))
+        .limit(1)
+      if (lead.length === 0) {
+        return { error: `Atasan (${row.reportsToEmail}) tidak ditemukan di tenant` }
+      }
+      reportsToId = lead[0].id
+    }
+
+    const [user] = await tx
+      .insert(users)
+      .values({ email: row.email, name: row.name })
+      .returning()
+
+    const [employee] = await tx
+      .insert(employees)
+      .values({
+        userId: user.id,
+        tenantId,
+        position: row.position ?? null,
+        department: row.department ?? null,
+        contractType: row.contractType ?? null,
+        joinDate: toDate(row.joinDate),
+        reportsToId,
+      })
+      .returning()
+
+    await tx.insert(userRoles).values({ userId: user.id, roleId: role.id, tenantId })
+    await tx.insert(invitations).values({
+      tenantId,
+      email: row.email,
+      roleId: role.id,
+      invitedById: actorId,
+      token,
+      expiresAt,
+    })
+
+    return { employee }
+  })
+
+  if ("error" in result) return { error: result.error }
+
+  await logAudit({
+    tenantId,
+    userId: actorId,
+    action: "employee.bulk_create",
+    entityType: "employee",
+    entityId: result.employee.id,
+    newValues: { email: row.email, name: row.name, role: row.role },
+  })
+
+  const inviteUrl = `${process.env.AUTH_URL}/invite/${token}`
+  await sendInvitationEmail(row.email, inviteUrl, "perusahaan Anda", actorName)
+  return {}
+}
+
+export async function bulkCreateEmployees(
+  _prev: BulkImportResult,
+  formData: FormData,
+): Promise<BulkImportResult> {
+  const session = await auth()
+  if (!session) return { error: "Tidak terautentikasi" }
+  const tenantId = session.user.tenantId
+  if (!hasRole(session.user.roles, "hr_admin") || !tenantId) {
+    return { error: "Hanya HR Admin yang dapat impor karyawan" }
+  }
+
+  const file = formData.get("file")
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Pilih file CSV terlebih dahulu" }
+  }
+
+  const text = await file.text()
+  const { valid, errors, headerError } = parseEmployeeCsv(text)
+  if (headerError) return { error: headerError }
+
+  const failures: { ref: string; reason: string }[] = errors.map((e) => ({
+    ref: `Baris ${e.line}`,
+    reason: e.message,
+  }))
+
+  // Proses berurutan agar atasan yang dibuat di baris awal bisa dirujuk baris berikutnya.
+  let created = 0
+  const actorName = session.user.name ?? "HR Admin"
+  for (const row of valid) {
+    const res = await createOneEmployee(tenantId, session.user.id, actorName, row)
+    if (res.error) failures.push({ ref: row.email, reason: res.error })
+    else created++
+  }
+
+  return { created, failures }
 }

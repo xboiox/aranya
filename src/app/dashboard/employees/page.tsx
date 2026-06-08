@@ -4,12 +4,12 @@ import { auth, hasRole } from "@/lib/auth"
 import { listEmployeesPaginated } from "@/modules/employees/queries"
 import { Button } from "@/components/ui/button"
 import { Pagination } from "@/components/pagination"
-import { Download } from "lucide-react"
+import { Download, Upload } from "lucide-react"
 
 const PAGE_SIZE = 25
 
 interface Props {
-  searchParams: Promise<{ page?: string }>
+  searchParams: Promise<{ page?: string; q?: string }>
 }
 
 export default async function EmployeesPage({ searchParams }: Props) {
@@ -19,12 +19,13 @@ export default async function EmployeesPage({ searchParams }: Props) {
     redirect("/dashboard")
   }
 
-  const { page: pageParam } = await searchParams
+  const { page: pageParam, q } = await searchParams
   const page = Math.max(0, parseInt(pageParam ?? "0", 10) || 0)
   const { items: employees, total } = await listEmployeesPaginated(
     session.user.tenantId,
     page,
     PAGE_SIZE,
+    q,
   )
   const hasNext = (page + 1) * PAGE_SIZE < total
 
@@ -35,16 +36,36 @@ export default async function EmployeesPage({ searchParams }: Props) {
           <h1 className="text-2xl font-bold">Karyawan</h1>
           <p className="text-sm text-muted-foreground">{total} karyawan terdaftar</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" render={<a href="/api/employees/export" />}>
             <Download className="size-4" />
             Export CSV
+          </Button>
+          <Button variant="outline" render={<Link href="/dashboard/employees/import" />}>
+            <Upload className="size-4" />
+            Import CSV
           </Button>
           <Button render={<Link href="/dashboard/employees/new" />}>
             + Tambah Karyawan
           </Button>
         </div>
       </div>
+
+      <form method="get" className="flex gap-2">
+        <input
+          type="search"
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Cari nama atau email…"
+          className="block w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm"
+        />
+        <Button type="submit" variant="outline" size="sm">Cari</Button>
+        {q && (
+          <Button variant="ghost" size="sm" render={<Link href="/dashboard/employees" />}>
+            Reset
+          </Button>
+        )}
+      </form>
 
       <div className="overflow-hidden rounded-xl border">
         <table className="min-w-full divide-y">
@@ -102,6 +123,7 @@ export default async function EmployeesPage({ searchParams }: Props) {
 
       <Pagination
         basePath="/dashboard/employees"
+        params={{ q }}
         page={page}
         hasNext={hasNext}
         total={total}

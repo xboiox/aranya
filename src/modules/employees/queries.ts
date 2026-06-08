@@ -1,6 +1,6 @@
 import { withTenantContext, type Database } from "@/lib/db"
 import { employees, users } from "@/lib/db/schema"
-import { eq, asc, count } from "drizzle-orm"
+import { eq, asc, count, or, ilike, type SQL } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 
 export interface EmployeeListItem {
@@ -15,10 +15,10 @@ export interface EmployeeListItem {
 }
 
 // Query dasar daftar karyawan (+ nama atasan langsung via self-join).
-function selectEmployees(tx: Database) {
+function selectEmployees(tx: Database, where?: SQL) {
   const manager = alias(employees, "manager")
   const managerUser = alias(users, "manager_user")
-  return tx
+  const q = tx
     .select({
       id: employees.id,
       name: users.name,
@@ -33,7 +33,15 @@ function selectEmployees(tx: Database) {
     .innerJoin(users, eq(users.id, employees.userId))
     .leftJoin(manager, eq(manager.id, employees.reportsToId))
     .leftJoin(managerUser, eq(managerUser.id, manager.userId))
-    .orderBy(asc(users.name))
+  return (where ? q.where(where) : q).orderBy(asc(users.name))
+}
+
+// Filter pencarian berdasarkan nama atau email (case-insensitive).
+function searchWhere(q?: string): SQL | undefined {
+  const needle = q?.trim()
+  if (!needle) return undefined
+  const pattern = `%${needle}%`
+  return or(ilike(users.name, pattern), ilike(users.email, pattern))
 }
 
 function mapEmployeeRow({
@@ -59,10 +67,20 @@ export async function listEmployeesPaginated(
   tenantId: string,
   page: number,
   pageSize: number,
+  q?: string,
 ): Promise<PaginatedEmployees> {
   return withTenantContext(tenantId, async (tx) => {
-    const rows = await selectEmployees(tx).limit(pageSize).offset(page * pageSize)
-    const [totalRow] = await tx.select({ value: count() }).from(employees)
+    const where = searchWhere(q)
+    const rows = await selectEmployees(tx, where)
+      .limit(pageSize)
+      .offset(page * pageSize)
+
+    const countQuery = tx
+      .select({ value: count() })
+      .from(employees)
+      .innerJoin(users, eq(users.id, employees.userId))
+    const [totalRow] = await (where ? countQuery.where(where) : countQuery)
+
     return {
       items: rows.map(mapEmployeeRow),
       total: Number(totalRow?.value ?? 0),
