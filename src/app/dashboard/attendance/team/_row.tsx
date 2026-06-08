@@ -9,7 +9,9 @@ import { Input } from "@/components/ui/input"
 interface Props {
   employeeId: string
   name: string | null
+  department: string | null
   dateStr: string
+  dateDisplay: string
   initialCheckIn: string
   initialCheckOut: string
   isLate: boolean | null
@@ -18,7 +20,9 @@ interface Props {
 export default function AttendanceCorrectionRow({
   employeeId,
   name,
+  department,
   dateStr,
+  dateDisplay,
   initialCheckIn,
   initialCheckOut,
   isLate,
@@ -43,6 +47,7 @@ export default function AttendanceCorrectionRow({
 
   return (
     <tr>
+      <td className="px-4 py-2 text-sm whitespace-nowrap text-muted-foreground">{dateDisplay}</td>
       <td className="px-4 py-2 text-sm">
         {name ?? "—"}
         {isLate && (
@@ -51,6 +56,7 @@ export default function AttendanceCorrectionRow({
           </span>
         )}
       </td>
+      <td className="px-4 py-2 text-sm text-muted-foreground">{department ?? "—"}</td>
       <td className="px-4 py-2">
         <Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-28" />
       </td>

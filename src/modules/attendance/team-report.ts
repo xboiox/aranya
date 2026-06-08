@@ -1,6 +1,68 @@
+import { toYMD } from "@/lib/date"
 import type { TeamAttendanceRow } from "./queries"
 
 export type TeamStatus = "all" | "present" | "absent" | "late"
+
+const MAX_RANGE_DAYS = 92
+
+export interface GridEmployee {
+  employeeId: string
+  name: string | null
+  department: string | null
+}
+
+export interface GridAttendance {
+  employeeId: string
+  date: Date
+  checkInAt: Date | null
+  checkOutAt: Date | null
+  isLate: boolean | null
+}
+
+/** Daftar tanggal (UTC midnight) dari start s.d. end inklusif, dibatasi MAX_RANGE_DAYS. */
+export function eachDateInRange(start: Date, end: Date): Date[] {
+  const dates: Date[] = []
+  const cur = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate()))
+  const last = new Date(Date.UTC(end.getUTCFullYear(), end.getUTCMonth(), end.getUTCDate()))
+  while (cur <= last && dates.length < MAX_RANGE_DAYS) {
+    dates.push(new Date(cur))
+    cur.setUTCDate(cur.getUTCDate() + 1)
+  }
+  return dates
+}
+
+/**
+ * Membangun grid (karyawan × tanggal): satu baris per karyawan per tanggal,
+ * mencocokkan record absensi bila ada. Urut tanggal lalu nama.
+ */
+export function buildTeamGrid(
+  employees: GridEmployee[],
+  attendance: GridAttendance[],
+  dates: Date[],
+): TeamAttendanceRow[] {
+  const byKey = new Map<string, GridAttendance>()
+  for (const a of attendance) {
+    byKey.set(`${a.employeeId}|${toYMD(a.date)}`, a)
+  }
+
+  const rows: TeamAttendanceRow[] = []
+  for (const date of dates) {
+    const ymd = toYMD(date)
+    for (const emp of employees) {
+      const a = byKey.get(`${emp.employeeId}|${ymd}`)
+      rows.push({
+        employeeId: emp.employeeId,
+        name: emp.name,
+        department: emp.department,
+        date,
+        checkInAt: a?.checkInAt ?? null,
+        checkOutAt: a?.checkOutAt ?? null,
+        isLate: a?.isLate ?? null,
+      })
+    }
+  }
+  return rows
+}
 
 export function isTeamStatus(v: unknown): v is TeamStatus {
   return v === "all" || v === "present" || v === "absent" || v === "late"
@@ -61,11 +123,18 @@ export function csvCell(value: string): string {
   return value
 }
 
-/** Membangun konten CSV absensi tim untuk satu tanggal. */
-export function teamRowsToCsv(rows: TeamAttendanceRow[], dateStr: string): string {
-  const header = ["Tanggal", "Nama", "Masuk", "Keluar", "Status"]
+/** Membangun konten CSV absensi tim (satu baris per karyawan per tanggal). */
+export function teamRowsToCsv(rows: TeamAttendanceRow[]): string {
+  const header = ["Tanggal", "Nama", "Departemen", "Masuk", "Keluar", "Status"]
   const lines = rows.map((r) =>
-    [dateStr, r.name ?? "", hhmm(r.checkInAt), hhmm(r.checkOutAt), statusText(r)]
+    [
+      toYMD(r.date),
+      r.name ?? "",
+      r.department ?? "",
+      hhmm(r.checkInAt),
+      hhmm(r.checkOutAt),
+      statusText(r),
+    ]
       .map((c) => csvCell(c))
       .join(","),
   )

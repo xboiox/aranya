@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { auth, hasRole } from "@/lib/auth"
-import { listTeamAttendance } from "@/modules/attendance/queries"
+import { listTeamAttendanceRange } from "@/modules/attendance/queries"
 import {
   filterTeamRows,
   teamRowsToCsv,
@@ -18,21 +18,35 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url)
-  const dateStr = url.searchParams.get("date") ?? toYMD(todayJakarta())
-  const date = parseDateOnly(dateStr) ?? todayJakarta()
+  const today = toYMD(todayJakarta())
+  const startStr = url.searchParams.get("startDate") ?? today
+  const endStr = url.searchParams.get("endDate") ?? startStr
+  let startDate = parseDateOnly(startStr) ?? todayJakarta()
+  let endDate = parseDateOnly(endStr) ?? startDate
+  if (startDate > endDate) [startDate, endDate] = [endDate, startDate]
+
+  const department = url.searchParams.get("department") || undefined
   const q = url.searchParams.get("q") ?? undefined
   const statusParam = url.searchParams.get("status")
   const status = isTeamStatus(statusParam) ? statusParam : "all"
 
-  const rows = await listTeamAttendance(session.user.tenantId, date)
-  const filtered = filterTeamRows(rows, { q, status })
+  const grid = await listTeamAttendanceRange(session.user.tenantId, {
+    startDate,
+    endDate,
+    department,
+  })
+  const filtered = filterTeamRows(grid, { q, status })
   // BOM agar Excel mengenali UTF-8.
-  const csv = "﻿" + teamRowsToCsv(filtered, dateStr)
+  const csv = "﻿" + teamRowsToCsv(filtered)
+
+  const suffix = toYMD(startDate) === toYMD(endDate)
+    ? toYMD(startDate)
+    : `${toYMD(startDate)}_sd_${toYMD(endDate)}`
 
   return new NextResponse(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="absensi-tim-${dateStr}.csv"`,
+      "Content-Disposition": `attachment; filename="absensi-tim-${suffix}.csv"`,
       "Cache-Control": "private, no-store",
     },
   })

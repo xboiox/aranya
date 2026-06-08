@@ -7,8 +7,9 @@ import {
   tenantConfig,
   GEOFENCING_ENABLED_KEY,
 } from "@/lib/db/schema"
-import { eq, and, desc, asc } from "drizzle-orm"
+import { eq, and, desc, asc, gte, lte } from "drizzle-orm"
 import { todayJakarta } from "@/lib/date"
+import { buildTeamGrid, eachDateInRange } from "./team-report"
 
 // Re-export agar import lama (./queries) tetap berfungsi
 export { todayJakarta }
@@ -98,32 +99,68 @@ export async function listRecentAttendance(
 export interface TeamAttendanceRow {
   employeeId: string
   name: string | null
+  department: string | null
+  date: Date
   checkInAt: Date | null
   checkOutAt: Date | null
   isLate: boolean | null
 }
 
-// Absensi seluruh karyawan aktif untuk satu tanggal (untuk HR)
-export async function listTeamAttendance(
+export interface TeamAttendanceFilter {
+  startDate: Date
+  endDate: Date
+  department?: string
+}
+
+// Grid absensi karyawan aktif untuk rentang tanggal (untuk HR).
+// Opsional difilter per departemen. Satu baris per (karyawan × tanggal).
+export async function listTeamAttendanceRange(
   tenantId: string,
-  date: Date,
+  { startDate, endDate, department }: TeamAttendanceFilter,
 ): Promise<TeamAttendanceRow[]> {
   return withTenantContext(tenantId, async (tx) => {
-    return tx
+    const emps = await tx
       .select({
         employeeId: employees.id,
         name: users.name,
+        department: employees.department,
+      })
+      .from(employees)
+      .innerJoin(users, eq(users.id, employees.userId))
+      .where(
+        department
+          ? and(eq(employees.isActive, true), eq(employees.department, department))
+          : eq(employees.isActive, true),
+      )
+      .orderBy(asc(users.name))
+
+    const records = await tx
+      .select({
+        employeeId: attendance.employeeId,
+        date: attendance.date,
         checkInAt: attendance.checkInAt,
         checkOutAt: attendance.checkOutAt,
         isLate: attendance.isLate,
       })
-      .from(employees)
-      .innerJoin(users, eq(users.id, employees.userId))
-      .leftJoin(
-        attendance,
-        and(eq(attendance.employeeId, employees.id), eq(attendance.date, date)),
+      .from(attendance)
+      .where(
+        and(gte(attendance.date, startDate), lte(attendance.date, endDate)),
       )
+
+    return buildTeamGrid(emps, records, eachDateInRange(startDate, endDate))
+  })
+}
+
+// Daftar departemen unik karyawan aktif (untuk filter dropdown).
+export async function listDepartments(tenantId: string): Promise<string[]> {
+  return withTenantContext(tenantId, async (tx) => {
+    const rows = await tx
+      .selectDistinct({ department: employees.department })
+      .from(employees)
       .where(eq(employees.isActive, true))
-      .orderBy(asc(users.name))
+      .orderBy(asc(employees.department))
+    return rows
+      .map((r) => r.department)
+      .filter((d): d is string => d != null && d.trim() !== "")
   })
 }
