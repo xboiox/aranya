@@ -1,15 +1,19 @@
 "use server"
 import { auth, hasRole } from "@/lib/auth"
 import { withTenantContext } from "@/lib/db"
-import { kpiEvaluations, employees, userRoles, roles } from "@/lib/db/schema"
+import { kpiEvaluations, employees } from "@/lib/db/schema"
 import { logAudit } from "@/lib/audit"
 import { notify } from "@/lib/notifications"
 import { isModuleActive } from "@/lib/modules"
+import {
+  resolveApprovers,
+  decideApproval,
+  type ActionState,
+  type ApprovalDecision,
+} from "@/lib/approval"
 import { submitKpiSchema } from "./schema"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
-
-type State = { error?: string; success?: string }
 
 async function ctx() {
   const session = await auth()
@@ -22,27 +26,7 @@ async function ctx() {
   return { session, tenantId }
 }
 
-async function resolveApprovers(tenantId: string, requesterEmployeeId: string): Promise<string[]> {
-  return withTenantContext(tenantId, async (tx) => {
-    const requester = await tx.query.employees.findFirst({
-      where: eq(employees.id, requesterEmployeeId),
-    })
-    if (requester?.reportsToId) {
-      const lead = await tx.query.employees.findFirst({
-        where: eq(employees.id, requester.reportsToId),
-      })
-      if (lead) return [lead.userId]
-    }
-    const hrUsers = await tx
-      .select({ userId: userRoles.userId })
-      .from(userRoles)
-      .innerJoin(roles, eq(roles.id, userRoles.roleId))
-      .where(and(eq(userRoles.tenantId, tenantId), eq(roles.name, "hr_admin")))
-    return hrUsers.map((u) => u.userId)
-  })
-}
-
-export async function submitKpi(_prev: State, formData: FormData): Promise<State> {
+export async function submitKpi(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const { session, tenantId } = c
@@ -137,80 +121,44 @@ export async function submitKpi(_prev: State, formData: FormData): Promise<State
 
 async function decide(
   id: string,
-  decision: "approved" | "rejected",
+  decision: ApprovalDecision,
   rejectionReason?: string,
-): Promise<State> {
+): Promise<ActionState> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const { session, tenantId } = c
-  const isHr = hasRole(session.user.roles, "hr_admin")
 
-  const result = await withTenantContext(tenantId, async (tx) => {
-    const ev = await tx.query.kpiEvaluations.findFirst({
-      where: eq(kpiEvaluations.id, id),
-    })
-    if (!ev) return { error: "Penilaian tidak ditemukan" as string }
-    if (ev.status !== "pending") return { error: "Penilaian sudah diproses" }
-
-    const requester = await tx.query.employees.findFirst({
-      where: eq(employees.id, ev.employeeId),
-    })
-    if (!requester) return { error: "Data pemohon tidak ditemukan" }
-
-    const me = await tx.query.employees.findFirst({
-      where: eq(employees.userId, session.user.id),
-    })
-    const isDirectLead = me && requester.reportsToId === me.id
-    if (!isDirectLead && !isHr) return { error: "Anda tidak berwenang memproses penilaian ini" }
-    if (requester.userId === session.user.id) {
-      return { error: "Anda tidak dapat menyetujui penilaian sendiri" }
-    }
-
-    await tx
-      .update(kpiEvaluations)
-      .set({
-        status: decision,
-        approverId: session.user.id,
-        decidedAt: new Date(),
-        rejectionReason: decision === "rejected" ? (rejectionReason ?? null) : null,
-        updatedAt: new Date(),
-      })
-      .where(eq(kpiEvaluations.id, id))
-
-    return { ev, requesterUserId: requester.userId }
-  })
-
-  if ("error" in result) return { error: result.error }
-
-  await logAudit({
+  return decideApproval({
     tenantId,
-    userId: session.user.id,
-    action: decision === "approved" ? "kpi.approve" : "kpi.reject",
+    actor: { userId: session.user.id, isHr: hasRole(session.user.roles, "hr_admin") },
+    id,
+    decision,
+    rejectionReason,
     entityType: "kpi_evaluation",
-    entityId: id,
+    auditAction: { approved: "kpi.approve", rejected: "kpi.reject" },
+    successMessage: { approved: "KPI disetujui", rejected: "KPI ditolak" },
+    revalidate: ["/dashboard/kpi/approvals", "/dashboard/kpi"],
+    load: (tx, recordId) =>
+      tx.query.kpiEvaluations.findFirst({ where: eq(kpiEvaluations.id, recordId) }),
+    update: async (tx, recordId, patch) => {
+      await tx.update(kpiEvaluations).set(patch).where(eq(kpiEvaluations.id, recordId))
+    },
+    notification: (ev, dec, reason) => ({
+      type: `kpi_${dec}`,
+      title: dec === "approved" ? "KPI disetujui" : "KPI ditolak",
+      body:
+        dec === "approved"
+          ? `Penilaian KPI ${ev.period} Anda disetujui (nilai ${ev.score}).`
+          : `Penilaian KPI ${ev.period} Anda ditolak.${reason ? ` Alasan: ${reason}` : ""}`,
+      data: { kpiEvaluationId: ev.id },
+    }),
   })
-
-  await notify({
-    tenantId,
-    userId: result.requesterUserId,
-    type: `kpi_${decision}`,
-    title: decision === "approved" ? "KPI disetujui" : "KPI ditolak",
-    body:
-      decision === "approved"
-        ? `Penilaian KPI ${result.ev.period} Anda disetujui (nilai ${result.ev.score}).`
-        : `Penilaian KPI ${result.ev.period} Anda ditolak.${rejectionReason ? ` Alasan: ${rejectionReason}` : ""}`,
-    data: { kpiEvaluationId: id },
-  })
-
-  revalidatePath("/dashboard/kpi/approvals")
-  revalidatePath("/dashboard/kpi")
-  return { success: decision === "approved" ? "KPI disetujui" : "KPI ditolak" }
 }
 
-export async function approveKpi(id: string): Promise<State> {
+export async function approveKpi(id: string): Promise<ActionState> {
   return decide(id, "approved")
 }
 
-export async function rejectKpi(id: string, reason: string): Promise<State> {
+export async function rejectKpi(id: string, reason: string): Promise<ActionState> {
   return decide(id, "rejected", reason)
 }
