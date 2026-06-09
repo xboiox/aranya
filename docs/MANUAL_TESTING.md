@@ -137,7 +137,9 @@ perlu diverifikasi.
 - [ ] **Klik notifikasi pengajuan** (mis. "Pengajuan cuti baru") → diarahkan ke
       **inbox persetujuan** terkait + notifikasi jadi terbaca
 - [ ] **Klik notifikasi keputusan** (mis. "Cuti disetujui") → diarahkan ke halaman
-      **pemohon** (cuti/lembur/KPI)
+      **pemohon** (cuti/lembur)
+- [ ] 🆕 **Notifikasi KPI**: "KPI baru menunggu persetujuan" → `/dashboard/kpi`;
+      "KPI disetujui/minta revisi" → `/dashboard/kpi/team`
 - [ ] Notifikasi tanpa tujuan (mis. sistem) tidak menampilkan "Lihat detail →"
 - [ ] **Tandai semua dibaca** berfungsi
 
@@ -154,11 +156,44 @@ perlu diverifikasi.
 - [ ] HR (`/assets/manage`): tambah aset → **pinjamkan** ke karyawan → karyawan
       melihat aset di "Aset Saya" → **kembalikan** aset → hilang dari karyawan
 
-### KPI (`/dashboard/kpi`)
-- [ ] Karyawan: ajukan nilai KPI per kuartal → "Menunggu"
-- [ ] Manager/HR (`/kpi/approvals`): setujui / tolak
-- [ ] Ajukan ulang periode yang ditolak → bisa
-- [ ] Ajukan dua kali periode sama (belum ditolak) → ditolak duplikat
+### KPI — Performance Management Fase A 🆕
+
+> Modul KPI dirombak total (lihat `docs/KPI_DESIGN.md`). Alur baru = siklus goal
+> setting 3 peran. Uji **end-to-end** dengan urutan di bawah. Butuh minimal 1
+> manajer + 1 bawahan langsung (mis. demo: Manager → Budi).
+
+**Fase A — Perencanaan (HR) — `/dashboard/kpi/periods`**
+- [ ] HR: **Buat Periode** (nama, tipe Kuartalan/Tahunan, tanggal mulai–selesai)
+      → muncul di daftar berstatus **Perencanaan**
+- [ ] Tanggal selesai sebelum mulai → ditolak dengan pesan
+- [ ] Klik **Kelola →** periode → halaman detail
+- [ ] **Target Perusahaan**: tambah 1–2 target (referensi) → muncul; hapus salah satu
+- [ ] **Aktifkan periode** saat belum ada KPI / bobot belum 100% → **ditolak** dengan
+      pesan masalah (mis. "Budi: total bobot 0% (harus 100%)")
+
+**Penyusunan KPI (Manajer) — `/dashboard/kpi/team`**
+- [ ] Login **Manager** → buka KPI Tim → pilih periode (status Perencanaan)
+- [ ] **Tambah KPI** untuk bawahan langsung (judul, bobot, target) → muncul sebagai **Draf**
+- [ ] Tambah beberapa KPI hingga **total bobot per karyawan = 100%** (indikator
+      hijau saat 100%, kuning bila belum)
+- [ ] **Ubah** KPI draf → tersimpan; **Hapus** KPI draf → hilang
+- [ ] **Kirim** KPI → status berubah **Menunggu persetujuan**
+- [ ] Manajer **tidak bisa** membuat KPI untuk karyawan yang bukan bawahannya
+      (dropdown hanya berisi bawahan langsung; HR bisa untuk semua)
+
+**Goal Agreement (Karyawan) — `/dashboard/kpi`**
+- [ ] Login **Budi** → KPI Saya → KPI berstatus **Menunggu persetujuan** terlihat
+- [ ] **Setujui** satu KPI → status jadi **Disetujui** + notifikasi ke manajer
+- [ ] **Minta revisi** KPI lain (+ catatan) → status **Minta revisi** + notifikasi ke manajer
+- [ ] Manajer melihat catatan revisi di KPI Tim → **Ubah** lalu **Kirim** ulang →
+      karyawan menyetujui
+
+**Aktivasi (HR)**
+- [ ] Setelah semua KPI tiap karyawan **bobot 100% & Disetujui**, HR **Aktifkan periode**
+      → status jadi **Berjalan**; form & tombol KPI terkunci (tidak bisa diubah)
+- [ ] Coba akses `/dashboard/kpi/periods` sebagai **Karyawan** (non-HR) → diarahkan keluar
+
+> Catatan: progres/bukti, penilaian akhir & kalibrasi = Fase B & C (belum ada).
 
 ### Onboarding/Offboarding (`/dashboard/onboarding`)
 - [ ] HR (`/onboarding/manage`): pilih karyawan + tipe → **Terapkan checklist standar**
@@ -166,9 +201,10 @@ perlu diverifikasi.
 - [ ] Karyawan: "Checklist Saya" menampilkan progres (read-only)
 
 ### HR Analytics (`/dashboard/analytics`)
-- [ ] HR: kartu statistik (aktif, hadir hari ini, cuti hari ini, antrian persetujuan,
-      karyawan baru, rata-rata KPI) tampil
+- [ ] HR: kartu statistik (aktif, hadir hari ini, cuti hari ini, antrian persetujuan
+      = cuti+lembur, karyawan baru, nonaktif) tampil
 - [ ] Breakdown per Departemen / Tipe Kontrak / Gender tampil dengan bar
+- [ ] Catatan: kartu "rata-rata KPI" sengaja **tidak ada** (kembali saat KPI Fase C)
 
 ---
 
