@@ -78,6 +78,20 @@
       "when": 1780831299183,
       "tag": "0010_panoramic_bastion",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1781011820235,
+      "tag": "0011_curious_ricochet",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1781011830411,
+      "tag": "0012_shiny_bloodstrike",
+      "breakpoints": true
     }
   ]
 }

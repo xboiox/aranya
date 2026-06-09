@@ -9,8 +9,6 @@ export function notificationHref(type: string): string | null {
       return "/dashboard/leave/approvals"
     case "overtime_request":
       return "/dashboard/overtime/approvals"
-    case "kpi_submit":
-      return "/dashboard/kpi/approvals"
 
     // Keputusan → halaman pemohon
     case "leave_approved":
@@ -19,9 +17,6 @@ export function notificationHref(type: string): string | null {
     case "overtime_approved":
     case "overtime_rejected":
       return "/dashboard/overtime"
-    case "kpi_approved":
-    case "kpi_rejected":
-      return "/dashboard/kpi"
 
     case "payslip":
       return "/dashboard/payslip"

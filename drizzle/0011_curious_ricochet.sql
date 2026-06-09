@@ -1,0 +1,1 @@
+DROP TABLE "kpi_evaluations" CASCADE;

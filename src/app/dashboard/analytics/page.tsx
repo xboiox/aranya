@@ -77,14 +77,9 @@ export default async function AnalyticsPage() {
         <StatCard label="Karyawan Aktif" value={a.totalActive} hint={`${headcount} total terdaftar`} />
         <StatCard label="Hadir Hari Ini" value={a.presentToday} hint={`${attendanceRate}% dari aktif`} />
         <StatCard label="Cuti Hari Ini" value={a.onLeaveToday} />
-        <StatCard label="Menunggu Persetujuan" value={a.pendingApprovals} hint="cuti + lembur + KPI" />
+        <StatCard label="Menunggu Persetujuan" value={a.pendingApprovals} hint="cuti + lembur" />
         <StatCard label="Karyawan Baru (bln ini)" value={a.newHiresThisMonth} />
         <StatCard label="Nonaktif" value={a.totalInactive} />
-        <StatCard
-          label="Rata-rata KPI"
-          value={a.avgKpiScore ?? "—"}
-          hint="penilaian disetujui"
-        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

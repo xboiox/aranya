@@ -4,10 +4,9 @@ import {
   leaveRequests,
   overtimeRequests,
   attendance,
-  kpiEvaluations,
 } from "@/lib/db/schema"
 import { todayJakarta } from "@/lib/date"
-import { and, eq, gte, lte, isNotNull, count, avg } from "drizzle-orm"
+import { and, eq, gte, lte, isNotNull, count } from "drizzle-orm"
 import { GENDER_LABEL, toBreakdown, type Breakdown } from "./transform"
 
 export type { Breakdown }
@@ -19,7 +18,6 @@ export interface HrAnalytics {
   presentToday: number
   onLeaveToday: number
   pendingApprovals: number
-  avgKpiScore: number | null
   byDepartment: Breakdown[]
   byContractType: Breakdown[]
   byGender: Breakdown[]
@@ -38,8 +36,6 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
       onLeaveRow,
       leavePendingRow,
       overtimePendingRow,
-      kpiPendingRow,
-      avgKpiRow,
       deptRows,
       contractRows,
       genderRows,
@@ -70,14 +66,6 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
         .from(overtimeRequests)
         .where(eq(overtimeRequests.status, "pending")),
       tx
-        .select({ value: count() })
-        .from(kpiEvaluations)
-        .where(eq(kpiEvaluations.status, "pending")),
-      tx
-        .select({ value: avg(kpiEvaluations.score) })
-        .from(kpiEvaluations)
-        .where(eq(kpiEvaluations.status, "approved")),
-      tx
         .select({ key: employees.department, value: count() })
         .from(employees)
         .where(eq(employees.isActive, true))
@@ -94,9 +82,6 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
         .groupBy(employees.gender),
     ])
 
-    const avgRaw = avgKpiRow[0]?.value
-    const avgKpiScore = avgRaw == null ? null : Math.round(Number(avgRaw) * 10) / 10
-
     return {
       totalActive: Number(activeRow[0]?.value ?? 0),
       totalInactive: Number(inactiveRow[0]?.value ?? 0),
@@ -105,9 +90,7 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
       onLeaveToday: Number(onLeaveRow[0]?.value ?? 0),
       pendingApprovals:
         Number(leavePendingRow[0]?.value ?? 0) +
-        Number(overtimePendingRow[0]?.value ?? 0) +
-        Number(kpiPendingRow[0]?.value ?? 0),
-      avgKpiScore,
+        Number(overtimePendingRow[0]?.value ?? 0),
       byDepartment: toBreakdown(deptRows),
       byContractType: toBreakdown(contractRows),
       byGender: toBreakdown(genderRows, GENDER_LABEL),

@@ -1,8 +1,25 @@
 import { describe, it, expect, afterAll } from "vitest"
 import { db, withTenantContext, withSuperAdminContext } from "@/lib/db"
-import { assets, kpiEvaluations, onboardingTasks } from "@/lib/db/schema"
+import { assets, kpiPeriods, kpis, onboardingTasks } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { createTestTenant, createTestEmployee, cleanupTenants } from "./helpers"
+
+// Buat periode KPI ephemeral (bypass) untuk dirujuk oleh kpis.
+async function createTestPeriod(tenantId: string) {
+  return withSuperAdminContext(async (tx) => {
+    const [p] = await tx
+      .insert(kpiPeriods)
+      .values({
+        tenantId,
+        name: "Periode Test",
+        type: "quarterly",
+        startDate: new Date("2026-01-01"),
+        endDate: new Date("2026-03-31"),
+      })
+      .returning()
+    return p
+  })
+}
 
 const created: string[] = []
 afterAll(() => cleanupTenants(created))
@@ -54,49 +71,49 @@ describe("RLS isolasi tabel Modul 2 (DB nyata, app role)", () => {
     })
   })
 
-  describe("kpi_evaluations", () => {
-    it("baca: tenant hanya lihat penilaiannya sendiri; tanpa context kosong; bypass lihat semua", async () => {
+  describe("kpis", () => {
+    it("baca: tenant hanya lihat KPI-nya sendiri; tanpa context kosong; bypass lihat semua", async () => {
       const { t1, t2, e1, e2 } = await twoTenants("kpi")
+      const p1 = await createTestPeriod(t1.id)
+      const p2 = await createTestPeriod(t2.id)
 
       const [k1] = await withTenantContext(t1.id, (tx) =>
         tx
-          .insert(kpiEvaluations)
-          .values({ tenantId: t1.id, employeeId: e1.id, period: "2026-Q1", score: 80 })
+          .insert(kpis)
+          .values({ tenantId: t1.id, periodId: p1.id, employeeId: e1.id, managerId: "m1", title: "KPI T1", weight: 100 })
           .returning(),
       )
       const [k2] = await withTenantContext(t2.id, (tx) =>
         tx
-          .insert(kpiEvaluations)
-          .values({ tenantId: t2.id, employeeId: e2.id, period: "2026-Q1", score: 90 })
+          .insert(kpis)
+          .values({ tenantId: t2.id, periodId: p2.id, employeeId: e2.id, managerId: "m2", title: "KPI T2", weight: 100 })
           .returning(),
       )
 
       const idsT1 = (
-        await withTenantContext(t1.id, (tx) => tx.select({ id: kpiEvaluations.id }).from(kpiEvaluations))
+        await withTenantContext(t1.id, (tx) => tx.select({ id: kpis.id }).from(kpis))
       ).map((r) => r.id)
       expect(idsT1).toContain(k1.id)
       expect(idsT1).not.toContain(k2.id)
 
-      const noCtx = await db
-        .select({ id: kpiEvaluations.id })
-        .from(kpiEvaluations)
-        .where(eq(kpiEvaluations.id, k1.id))
+      const noCtx = await db.select({ id: kpis.id }).from(kpis).where(eq(kpis.id, k1.id))
       expect(noCtx).toHaveLength(0)
 
       const bypass = await withSuperAdminContext((tx) =>
-        tx.select({ id: kpiEvaluations.id }).from(kpiEvaluations).where(eq(kpiEvaluations.id, k2.id)),
+        tx.select({ id: kpis.id }).from(kpis).where(eq(kpis.id, k2.id)),
       )
       expect(bypass).toHaveLength(1)
     })
 
-    it("tulis: konteks t1 tidak bisa insert penilaian milik t2 (WITH CHECK)", async () => {
+    it("tulis: konteks t1 tidak bisa insert KPI milik t2 (WITH CHECK)", async () => {
       const { t1, t2, e1 } = await twoTenants("kpiw")
-      // employeeId valid milik t1 → penolakan murni dari RLS WITH CHECK pada tenant_id
+      const p1 = await createTestPeriod(t1.id)
+      // employeeId & periodId valid milik t1 → penolakan murni dari RLS WITH CHECK pada tenant_id
       await expect(
         withTenantContext(t1.id, (tx) =>
           tx
-            .insert(kpiEvaluations)
-            .values({ tenantId: t2.id, employeeId: e1.id, period: "2026-Q2", score: 70 }),
+            .insert(kpis)
+            .values({ tenantId: t2.id, periodId: p1.id, employeeId: e1.id, managerId: "m1", title: "Selundup", weight: 100 }),
         ),
       ).rejects.toThrow()
     })

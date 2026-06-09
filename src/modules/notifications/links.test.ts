@@ -5,14 +5,12 @@ describe("notificationHref", () => {
   it("mengarahkan pengajuan masuk ke inbox persetujuan", () => {
     expect(notificationHref("leave_request")).toBe("/dashboard/leave/approvals")
     expect(notificationHref("overtime_request")).toBe("/dashboard/overtime/approvals")
-    expect(notificationHref("kpi_submit")).toBe("/dashboard/kpi/approvals")
   })
 
   it("mengarahkan keputusan ke halaman pemohon", () => {
     expect(notificationHref("leave_approved")).toBe("/dashboard/leave")
     expect(notificationHref("leave_rejected")).toBe("/dashboard/leave")
     expect(notificationHref("overtime_approved")).toBe("/dashboard/overtime")
-    expect(notificationHref("kpi_rejected")).toBe("/dashboard/kpi")
   })
 
   it("mengembalikan null untuk tipe tanpa halaman terkait", () => {
