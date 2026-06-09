@@ -6,6 +6,9 @@
 Dua tier test + demo seed untuk menutup blind spot verifikasi (bug yang lolos ke
 pengguna karena alur tidak benar-benar dijalankan).
 
+> Untuk **checklist QA manual klik-per-klik** (alur UI yang tidak ditangkap test
+> otomatis), lihat [MANUAL_TESTING.md](./MANUAL_TESTING.md).
+
 ---
 
 ## Tier 1 — Unit Tests (cepat, tanpa DB)
