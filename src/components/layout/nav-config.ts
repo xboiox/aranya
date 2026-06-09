@@ -17,6 +17,7 @@ import {
   GraduationCap,
   Package,
   ListChecks,
+  Target,
   BarChart3,
   type LucideIcon,
 } from "lucide-react"
@@ -71,6 +72,9 @@ export const NAV_SECTIONS: NavSection[] = [
       { href: "/dashboard/training/manage", label: "Kelola Training", icon: GraduationCap, roles: ["hr_admin"], module: "MODULE_2" },
       { href: "/dashboard/assets", label: "Aset Saya", icon: Package, module: "MODULE_2" },
       { href: "/dashboard/assets/manage", label: "Kelola Aset", icon: Package, roles: ["hr_admin"], module: "MODULE_2" },
+      { href: "/dashboard/kpi", label: "KPI Saya", icon: Target, module: "MODULE_2" },
+      { href: "/dashboard/kpi/team", label: "KPI Tim", icon: Target, roles: ["manager", "hr_admin"], module: "MODULE_2" },
+      { href: "/dashboard/kpi/periods", label: "Periode KPI", icon: Target, roles: ["hr_admin"], module: "MODULE_2" },
       { href: "/dashboard/onboarding", label: "Checklist Saya", icon: ListChecks, module: "MODULE_2" },
       { href: "/dashboard/onboarding/manage", label: "Onboarding/Offboarding", icon: ListChecks, roles: ["hr_admin"], module: "MODULE_2" },
       { href: "/dashboard/analytics", label: "HR Analytics", icon: BarChart3, roles: ["hr_admin"], module: "MODULE_2" },

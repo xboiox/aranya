@@ -13,6 +13,12 @@ describe("notificationHref", () => {
     expect(notificationHref("overtime_approved")).toBe("/dashboard/overtime")
   })
 
+  it("mengarahkan notifikasi KPI ke halaman yang tepat", () => {
+    expect(notificationHref("kpi_proposed")).toBe("/dashboard/kpi")
+    expect(notificationHref("kpi_agreed")).toBe("/dashboard/kpi/team")
+    expect(notificationHref("kpi_revision")).toBe("/dashboard/kpi/team")
+  })
+
   it("mengembalikan null untuk tipe tanpa halaman terkait", () => {
     expect(notificationHref("email")).toBeNull()
     expect(notificationHref("password")).toBeNull()
