@@ -39,7 +39,7 @@ Mengecualikan `*.integration.test.ts`.
 | Properti | File |
 |----------|------|
 | **RLS tenant isolation** (security core): tenant context terisolasi, tanpa context terblokir, bypass lihat semua, tulis lintas-tenant ditolak (WITH CHECK) | `src/test/integration/rls.integration.test.ts` |
-| **RLS isolasi tabel Modul 2**: `assets`, `kpi_evaluations`, `onboarding_tasks` — baca terisolasi, tanpa context kosong, bypass lihat semua, tulis lintas-tenant ditolak | `src/test/integration/module2-rls.integration.test.ts` |
+| **RLS isolasi tabel Modul 2**: `assets`, `onboarding_tasks`, dan tabel KPI (`kpis`, `kpi_progress`, `kpi_feedback`, `kpi_appraisals`) — baca terisolasi, tanpa context kosong, bypass lihat semua, tulis lintas-tenant ditolak | `src/test/integration/module2-rls.integration.test.ts` |
 | **Leave balance**: hanya cuti tahunan approved yang mengurangi kuota; terisolasi per tenant | `src/test/integration/leave.integration.test.ts` |
 
 - Tiap test membuat data **ephemeral** (tenant/karyawan dengan id acak) lalu **cleanup**

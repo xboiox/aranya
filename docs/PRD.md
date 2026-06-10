@@ -103,11 +103,14 @@ Fitur ini tersedia di semua modul dan tidak dijual terpisah:
 
 Fokus pada **orang**: kinerja, pengembangan, operasi HR. (Add-on independen, butuh Modul 1.)
 
-### 6.1 KPI Management
-- HR Admin atau Manager membuat indikator KPI per jabatan/divisi
-- Karyawan mengisi nilai KPI sesuai periode (bulanan/kuartalan/tahunan)
-- Approval oleh direct lead
-- Score KPI tersimpan dan dapat dijadikan referensi perhitungan bonus
+### 6.1 KPI / Performance Management (siklus 3 fase — lihat `KPI_DESIGN.md`)
+- **Perencanaan:** HR menetapkan periode (kuartalan/tahunan) + target perusahaan; **manajer
+  langsung** menyusun KPI berbobot (total 100%) untuk bawahan; karyawan **menyetujui atau minta
+  revisi** (goal agreement).
+- **Eksekusi:** karyawan memperbarui progres + mengunggah bukti; manajer memantau & memberi feedback.
+- **Penilaian:** karyawan self-assessment (1–5 + kendala); manajer menilai (1–5); HR mengunci
+  periode & mengkalibrasi skor akhir.
+- **Skor akhir** = Σ(bobot/100 × skor final), rentang 1–5 → referensi perhitungan **Bonus**.
 
 ### 6.2 Bonus Management
 - HR Admin mengkonfigurasi formula bonus per perusahaan/divisi/jabatan

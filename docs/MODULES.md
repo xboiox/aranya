@@ -48,8 +48,10 @@ RLS multi-tenant, module gating) termasuk di sini.
 
 Fokus pada **orang**: kinerja, pengembangan, operasi HR. Risiko rendah–sedang (pola CRUD + workflow).
 
-- **KPI Management** + approval (indikator per jabatan, isi nilai, approve, riwayat skor)
-- **Bonus** (formula dikonfigurasi HR, memakai skor KPI; trigger manual)
+- **KPI / Performance Management** ✅ — siklus 3 fase: perencanaan (manajer susun KPI berbobot,
+  karyawan setuju/revisi) → eksekusi (update progres + bukti, feedback) → penilaian (self + manajer
+  1–5, HR lock + kalibrasi, skor akhir tertimbang). Detail: `docs/KPI_DESIGN.md`
+- **Bonus** ⬜ (formula dikonfigurasi HR, memakai skor akhir KPI; trigger manual)
 - **Training & Development** (rencana, sertifikasi + masa berlaku)
 - **Asset Management** (aset dipinjamkan ke karyawan, integrasi offboarding)
 - **Onboarding / Offboarding** (checklist)

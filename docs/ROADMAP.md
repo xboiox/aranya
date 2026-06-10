@@ -190,15 +190,20 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Asset Management: catat aset perusahaan (laptop/HP/kendaraan/kartu/lainnya), pinjamkan/
   kembalikan ke karyawan, hapus; karyawan lihat aset yang dipinjam. `/dashboard/assets` + `/manage`
   (ter-gate MODULE_2; integrasi offboarding = follow-up)
-- [x] KPI management: penilaian per periode (kuartal), pengajuan karyawan, approval atasan/HR
-  (anti-self-approve, fallback HR), score history, ajuan ulang bila ditolak. `/dashboard/kpi` +
-  `/approvals` (ter-gate MODULE_2; indikator berbobot = follow-up)
+- [x] KPI / Performance Management — siklus penuh 3 fase (lihat `docs/KPI_DESIGN.md`):
+  - **Fase A** Perencanaan: HR atur periode + target perusahaan; manajer susun KPI berbobot
+    (total 100%) untuk bawahan; karyawan setujui / minta revisi; guard aktivasi.
+  - **Fase B** Eksekusi: karyawan update progres + unggah bukti; manajer monitoring + feedback;
+    completion rate.
+  - **Fase C** Penilaian: self-assessment + nilai manajer (1–5); HR lock + kalibrasi; skor akhir
+    tertimbang Σ(bobot×final). `/dashboard/kpi` (karyawan) + `/kpi/team` (manajer) + `/kpi/periods` (HR)
+  - (ter-gate MODULE_2; v2: cascade formal, template, reminder otomatis, laporan PDF)
 - [x] Onboarding/Offboarding checklist: HR kelola tugas per karyawan (tambah/centang/hapus +
   template standar), karyawan lihat progres. `/dashboard/onboarding` + `/manage` (ter-gate MODULE_2;
   auto-link ke serah terima aset = follow-up)
 - [x] HR Analytics Dashboard: headcount aktif/nonaktif, hadir & cuti hari ini, antrian persetujuan
-  (cuti+lembur+KPI), karyawan baru bln ini, rata-rata KPI; breakdown per departemen/kontrak/gender.
-  `/dashboard/analytics` (HR-only, ter-gate MODULE_2)
+  (cuti+lembur), karyawan baru bln ini, rata-rata skor KPI (periode terkunci); breakdown per
+  departemen/kontrak/gender. `/dashboard/analytics` (HR-only, ter-gate MODULE_2)
 - [ ] Bonus: konfigurasi formula, trigger kalkulasi, approval HR (memakai KPI score)
 - [ ] Discipline & Warning (SP1/2/3)
 - [ ] API publik & webhook untuk integrasi pihak ketiga

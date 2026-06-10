@@ -123,6 +123,35 @@ user_roles: { userId, roleId: employee_role_id, tenantId }
 
 ---
 
+### Modul 1 — Operasional (ringkas)
+
+| Tabel | Deskripsi |
+|-------|-----------|
+| `attendance`, `geofence_locations` | Absensi check-in/out + lokasi geofence |
+| `leave_requests` | Pengajuan cuti + approval |
+| `overtime_requests` | Pengajuan lembur + approval |
+| `payslips` | Slip gaji (file di storage) |
+| `shifts` | Shift kerja per tenant |
+
+### Modul 2 — HR Ops & Performance
+
+| Tabel | Deskripsi |
+|-------|-----------|
+| `training_records` | Pelatihan & sertifikasi per karyawan |
+| `assets` | Aset perusahaan + peminjaman ke karyawan |
+| `onboarding_tasks` | Checklist onboarding/offboarding per karyawan |
+| `kpi_periods` | Siklus KPI: `planning → active → appraisal → locked` |
+| `company_objectives` | Target perusahaan top-down per periode (referensi) |
+| `kpis` | KPI per karyawan: bobot, target, status `draft/proposed/agreed/revision_requested` |
+| `kpi_progress` | Update progres (Fase B) + bukti (storage) |
+| `kpi_feedback` | Feedback manajer saat monitoring |
+| `kpi_appraisals` | Penilaian akhir per KPI: self/manager/final score (1–5) + kalibrasi HR |
+
+> Semua tabel di atas tenant-scoped (`tenant_id` + RLS, lihat `rls.sql`).
+> KPI lama `kpi_evaluations` (self-score MVP) sudah di-drop & diganti model 3 fase.
+
+---
+
 ## RLS Context
 
 ```typescript
@@ -151,6 +180,15 @@ src/lib/db/schema/
 ├── notifications.ts notifications
 ├── invitations.ts   invitations
 ├── tax-rates.ts     taxRateLayers, ptkpValues, bpjsRates
+├── attendance.ts    attendance, geofenceLocations
+├── leave.ts         leaveRequests
+├── overtime.ts      overtimeRequests
+├── payslip.ts       payslips
+├── shift.ts         shifts
+├── training.ts      trainingRecords
+├── asset.ts         assets
+├── onboarding.ts    onboardingTasks
+├── kpi.ts           kpiPeriods, companyObjectives, kpis, kpiProgress, kpiFeedback, kpiAppraisals
 └── index.ts         re-export semua
 ```
 

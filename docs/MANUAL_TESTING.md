@@ -29,6 +29,10 @@ perlu diverifikasi.
 > **Catat:** menu Modul 2 (Training, Aset, KPI, Onboarding, HR Analytics) **hanya
 > muncul bila MODULE_2 aktif** untuk tenant tsb. Jika menu tidak terlihat, itu
 > kemungkinan masalah aktivasi modul, bukan bug.
+>
+> **Catat (KPI):** `db:seed:demo` **belum** membuat data KPI — jadi halaman KPI akan
+> kosong di awal. Itu normal; Anda membuat periode + KPI sendiri saat menjalankan
+> Smoke Test di bawah. (Penyemaian skenario KPI = peningkatan yang bisa dibuat nanti.)
 
 ---
 
@@ -192,11 +196,12 @@ perlu diverifikasi.
 - [ ] HR (`/assets/manage`): tambah aset → **pinjamkan** ke karyawan → karyawan
       melihat aset di "Aset Saya" → **kembalikan** aset → hilang dari karyawan
 
-### KPI — Performance Management Fase A 🆕
+### KPI — Performance Management (siklus penuh A → B → C) 🆕
 
 > Modul KPI dirombak total (lihat `docs/KPI_DESIGN.md`). Alur baru = siklus goal
-> setting 3 peran. Uji **end-to-end** dengan urutan di bawah. Butuh minimal 1
-> manajer + 1 bawahan langsung (mis. demo: Manager → Budi).
+> setting 3 peran. Uji **end-to-end** dengan urutan di bawah (Fase A → B → C). Butuh
+> minimal 1 manajer + 1 bawahan langsung (mis. demo: Manager → Budi).
+> Untuk jalur cepat ~15 menit, lihat **⭐ Smoke Test Cepat** di atas.
 
 **Fase A — Perencanaan (HR) — `/dashboard/kpi/periods`**
 - [ ] HR: **Buat Periode** (nama, tipe Kuartalan/Tahunan, tanggal mulai–selesai)
