@@ -249,7 +249,28 @@ perlu diverifikasi.
 - [ ] **Otorisasi bukti**: karyawan lain (bukan pemilik/atasan/HR) membuka
       `/api/kpi/evidence/<id>` langsung → **ditolak** (403)
 
-> Catatan: penilaian akhir (self+manager score), kalibrasi & lock = Fase C (belum ada).
+**Fase C — Penilaian (periode `Penilaian` → `Terkunci`)** 🆕
+> Prasyarat: periode **Berjalan** dengan KPI Disetujui (lihat Fase A & B).
+
+- [ ] **HR** (`/dashboard/kpi/periods/[id]`): klik **Mulai tahap penilaian**
+      → status jadi **Penilaian**; input progres tertutup
+- [ ] **Karyawan** (`/dashboard/kpi`): tiap KPI muncul **self-assessment** (skor 1–5 +
+      catatan kendala) → simpan → bisa diperbarui
+- [ ] **Manajer** (`/dashboard/kpi/team`, periode Penilaian): tiap KPI menampilkan
+      **nilai diri karyawan**; beri **nilai manajer (1–5)** + catatan → tersimpan
+- [ ] Header per karyawan menampilkan **"Skor akhir X.XX / 5"** (tertimbang) atau
+      "Skor belum lengkap" bila ada KPI belum dinilai
+- [ ] **HR Kunci periode** saat masih ada KPI belum dinilai → **ditolak** dengan pesan
+- [ ] Setelah semua dinilai → **Kunci periode** berhasil → status **Terkunci**
+- [ ] **HR** (KPI Tim, periode Terkunci): **kalibrasi skor akhir** satu KPI (ubah final
+      ke nilai berbeda dari manajer) → tersimpan; skor akhir karyawan ikut berubah
+- [ ] **Karyawan** (periode Terkunci): banner **"Skor akhir [periode]: X.XX / 5"** +
+      skor final per KPI (read-only)
+- [ ] **HR Analytics** (`/dashboard/analytics`): kartu **"Rata-rata KPI"** kembali
+      muncul (skor akhir periode terkunci, 1–5)
+- [ ] Manajer/karyawan **tidak bisa** kalibrasi (hanya HR); coba sebagai non-HR → tak ada form
+
+> Siklus KPI penuh (A→B→C) selesai. Selanjutnya: Bonus (memakai skor akhir).
 
 ### Onboarding/Offboarding (`/dashboard/onboarding`)
 - [ ] HR (`/onboarding/manage`): pilih karyawan + tipe → **Terapkan checklist standar**
@@ -260,7 +281,8 @@ perlu diverifikasi.
 - [ ] HR: kartu statistik (aktif, hadir hari ini, cuti hari ini, antrian persetujuan
       = cuti+lembur, karyawan baru, nonaktif) tampil
 - [ ] Breakdown per Departemen / Tipe Kontrak / Gender tampil dengan bar
-- [ ] Catatan: kartu "rata-rata KPI" sengaja **tidak ada** (kembali saat KPI Fase C)
+- [ ] 🆕 Kartu **"Rata-rata KPI"** muncul = rata-rata skor akhir periode KPI terkunci
+      (1–5); "—" bila belum ada periode terkunci
 
 ---
 
