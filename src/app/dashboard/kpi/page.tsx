@@ -3,13 +3,22 @@ import { auth } from "@/lib/auth"
 import { isModuleActive } from "@/lib/modules"
 import { ModuleLocked } from "@/components/module-locked"
 import { getEmployeeIdByUser } from "@/modules/attendance/queries"
-import { listMyKpis } from "@/modules/kpi/queries"
+import { listMyKpis, progressForKpis, feedbackForKpis } from "@/modules/kpi/queries"
 import {
   KPI_STATUS_LABEL,
   KPI_STATUS_STYLE,
   type KpiStatus,
 } from "@/modules/kpi/schema"
 import KpiAgreement from "./_agreement"
+import KpiTracking, { type ProgressItem, type FeedbackItem } from "./_tracking"
+
+function dt(d: Date): string {
+  return new Date(d).toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
+}
 
 export default async function MyKpiPage() {
   const session = await auth()
@@ -28,6 +37,25 @@ export default async function MyKpiPage() {
   }
 
   const items = await listMyKpis(tenantId, employeeId)
+
+  // Tracking (Fase B) hanya untuk KPI agreed di periode active.
+  const trackedIds = items.filter((k) => k.periodStatus === "active" && k.status === "agreed").map((k) => k.id)
+  const [progressRows, feedbackRows] = await Promise.all([
+    progressForKpis(tenantId, trackedIds),
+    feedbackForKpis(tenantId, trackedIds),
+  ])
+  const progressByKpi = new Map<string, ProgressItem[]>()
+  for (const p of progressRows) {
+    const arr = progressByKpi.get(p.kpiId) ?? []
+    arr.push({ id: p.id, percent: p.percent, note: p.note, evidenceName: p.evidenceName, hasEvidence: p.hasEvidence, date: dt(p.createdAt) })
+    progressByKpi.set(p.kpiId, arr)
+  }
+  const feedbackByKpi = new Map<string, FeedbackItem[]>()
+  for (const f of feedbackRows) {
+    const arr = feedbackByKpi.get(f.kpiId) ?? []
+    arr.push({ id: f.id, fromName: f.fromName, message: f.message, date: dt(f.createdAt) })
+    feedbackByKpi.set(f.kpiId, arr)
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -63,7 +91,15 @@ export default async function MyKpiPage() {
               {k.status === "revision_requested" && k.revisionNote && (
                 <p className="mt-2 text-xs text-muted-foreground">Catatan revisi Anda: {k.revisionNote}</p>
               )}
-              {k.status === "proposed" && <KpiAgreement kpiId={k.id} />}
+              {k.status === "proposed" && k.periodStatus === "planning" && <KpiAgreement kpiId={k.id} />}
+              {k.status === "agreed" && k.periodStatus === "active" && (
+                <KpiTracking
+                  kpiId={k.id}
+                  latestPercent={progressByKpi.get(k.id)?.[0]?.percent ?? 0}
+                  progress={progressByKpi.get(k.id) ?? []}
+                  feedback={feedbackByKpi.get(k.id) ?? []}
+                />
+              )}
             </li>
           ))}
         </ul>

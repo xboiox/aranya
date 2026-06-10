@@ -8,6 +8,8 @@ import {
   getPeriod,
   listTeamKpis,
   listAssignableEmployees,
+  progressForKpis,
+  feedbackForKpis,
   type TeamKpiItem,
 } from "@/modules/kpi/queries"
 import {
@@ -15,11 +17,21 @@ import {
   PERIOD_STATUS_STYLE,
   KPI_STATUS_LABEL,
   KPI_STATUS_STYLE,
+  KPI_RED_THRESHOLD,
   type PeriodStatus,
   type KpiStatus,
 } from "@/modules/kpi/schema"
 import KpiCreateForm from "./_create-form"
 import KpiRow from "./_kpi-row"
+import KpiMonitorRow from "./_monitor-row"
+
+function dt(d: Date): string {
+  return new Date(d).toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    dateStyle: "medium",
+    timeStyle: "short",
+  })
+}
 
 interface Props {
   searchParams: Promise<{ periodId?: string }>
@@ -59,10 +71,32 @@ export default async function TeamKpiPage({ searchParams }: Props) {
   }
 
   const isPlanning = period.status === "planning"
+  const isActive = period.status === "active"
   const [teamKpis, assignable] = await Promise.all([
     listTeamKpis(tenantId, period.id, myEmployeeId, isHr),
     isPlanning ? listAssignableEmployees(tenantId, myEmployeeId, isHr) : Promise.resolve([]),
   ])
+
+  // Monitoring (Fase B) saat periode berjalan.
+  const kpiIds = teamKpis.map((k) => k.id)
+  const [progressRows, feedbackRows] = isActive
+    ? await Promise.all([progressForKpis(tenantId, kpiIds), feedbackForKpis(tenantId, kpiIds)])
+    : [[], []]
+  const latestByKpi = new Map<string, number>()
+  const progressByKpi = new Map<string, typeof progressRows>()
+  for (const p of progressRows) {
+    const arr = progressByKpi.get(p.kpiId) ?? []
+    arr.push(p)
+    progressByKpi.set(p.kpiId, arr)
+    if (!latestByKpi.has(p.kpiId)) latestByKpi.set(p.kpiId, p.percent) // desc → pertama = terbaru
+  }
+  const feedbackByKpi = new Map<string, typeof feedbackRows>()
+  for (const f of feedbackRows) {
+    const arr = feedbackByKpi.get(f.kpiId) ?? []
+    arr.push(f)
+    feedbackByKpi.set(f.kpiId, arr)
+  }
+  const updatedCount = isActive ? teamKpis.filter((k) => progressByKpi.has(k.id)).length : 0
 
   // Kelompokkan per karyawan + total bobot.
   const byEmployee = new Map<string, { name: string | null; items: TeamKpiItem[]; total: number }>()
@@ -95,7 +129,12 @@ export default async function TeamKpiPage({ searchParams }: Props) {
         </span>
       </form>
 
-      {!isPlanning && (
+      {isActive && (
+        <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+          Periode berjalan — pantau progres & beri feedback. {updatedCount}/{teamKpis.length} KPI sudah diupdate.
+        </p>
+      )}
+      {!isPlanning && !isActive && (
         <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
           Periode sudah {PERIOD_STATUS_LABEL[period.status as PeriodStatus].toLowerCase()} — KPI terkunci dari perubahan.
         </p>
@@ -119,20 +158,46 @@ export default async function TeamKpiPage({ searchParams }: Props) {
               </span>
             </div>
             <ul className="divide-y">
-              {g.items.map((k) => (
-                <KpiRow
-                  key={k.id}
-                  id={k.id}
-                  title={k.title}
-                  weight={k.weight}
-                  target={k.target}
-                  status={k.status}
-                  statusLabel={KPI_STATUS_LABEL[k.status as KpiStatus]}
-                  statusStyle={KPI_STATUS_STYLE[k.status as KpiStatus]}
-                  revisionNote={k.revisionNote}
-                  editable={isPlanning}
-                />
-              ))}
+              {g.items.map((k) =>
+                isActive ? (
+                  <KpiMonitorRow
+                    key={k.id}
+                    id={k.id}
+                    title={k.title}
+                    weight={k.weight}
+                    target={k.target}
+                    latestPercent={latestByKpi.get(k.id) ?? 0}
+                    isRed={(latestByKpi.get(k.id) ?? 0) < KPI_RED_THRESHOLD}
+                    progress={(progressByKpi.get(k.id) ?? []).map((p) => ({
+                      id: p.id,
+                      percent: p.percent,
+                      note: p.note,
+                      evidenceName: p.evidenceName,
+                      hasEvidence: p.hasEvidence,
+                      date: dt(p.createdAt),
+                    }))}
+                    feedback={(feedbackByKpi.get(k.id) ?? []).map((f) => ({
+                      id: f.id,
+                      fromName: f.fromName,
+                      message: f.message,
+                      date: dt(f.createdAt),
+                    }))}
+                  />
+                ) : (
+                  <KpiRow
+                    key={k.id}
+                    id={k.id}
+                    title={k.title}
+                    weight={k.weight}
+                    target={k.target}
+                    status={k.status}
+                    statusLabel={KPI_STATUS_LABEL[k.status as KpiStatus]}
+                    statusStyle={KPI_STATUS_STYLE[k.status as KpiStatus]}
+                    revisionNote={k.revisionNote}
+                    editable={isPlanning}
+                  />
+                ),
+              )}
             </ul>
           </div>
         ))
