@@ -73,4 +73,6 @@ export const GCS_PATHS = {
     `claims/${tenantId}/${claimId}/${filename}`,
   asset: (tenantId: string, assetId: string, filename: string) =>
     `assets/${tenantId}/${assetId}/${filename}`,
+  kpiEvidence: (tenantId: string, kpiId: string, filename: string) =>
+    `kpi-evidence/${tenantId}/${kpiId}/${filename}`,
 }

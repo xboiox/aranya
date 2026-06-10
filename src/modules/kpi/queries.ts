@@ -1,6 +1,14 @@
 import { withTenantContext } from "@/lib/db"
-import { kpiPeriods, companyObjectives, kpis, employees, users } from "@/lib/db/schema"
-import { eq, and, desc, asc } from "drizzle-orm"
+import {
+  kpiPeriods,
+  companyObjectives,
+  kpis,
+  kpiProgress,
+  kpiFeedback,
+  employees,
+  users,
+} from "@/lib/db/schema"
+import { eq, and, desc, asc, inArray } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
 
 export type KpiPeriodRow = typeof kpiPeriods.$inferSelect
@@ -129,6 +137,100 @@ export async function listAssignableEmployees(
     return base.where(
       and(eq(employees.isActive, true), eq(employees.reportsToId, managerEmployeeId)),
     )
+  })
+}
+
+// ---------- Fase B: progres & feedback ----------
+
+export interface ProgressRow {
+  id: string
+  kpiId: string
+  percent: number
+  note: string | null
+  evidenceName: string | null
+  hasEvidence: boolean
+  createdAt: Date
+}
+
+// Semua progres untuk sekumpulan KPI (urut terbaru dulu). Page mengelompokkan per kpiId.
+export async function progressForKpis(
+  tenantId: string,
+  kpiIds: string[],
+): Promise<ProgressRow[]> {
+  if (kpiIds.length === 0) return []
+  return withTenantContext(tenantId, async (tx) => {
+    const rows = await tx
+      .select({
+        id: kpiProgress.id,
+        kpiId: kpiProgress.kpiId,
+        percent: kpiProgress.percent,
+        note: kpiProgress.note,
+        evidenceName: kpiProgress.evidenceName,
+        evidencePath: kpiProgress.evidencePath,
+        createdAt: kpiProgress.createdAt,
+      })
+      .from(kpiProgress)
+      .where(inArray(kpiProgress.kpiId, kpiIds))
+      .orderBy(desc(kpiProgress.createdAt))
+    return rows.map(({ evidencePath, ...r }) => ({ ...r, hasEvidence: !!evidencePath }))
+  })
+}
+
+export interface FeedbackRow {
+  id: string
+  kpiId: string
+  fromName: string | null
+  message: string
+  createdAt: Date
+}
+
+export async function feedbackForKpis(
+  tenantId: string,
+  kpiIds: string[],
+): Promise<FeedbackRow[]> {
+  if (kpiIds.length === 0) return []
+  return withTenantContext(tenantId, (tx) =>
+    tx
+      .select({
+        id: kpiFeedback.id,
+        kpiId: kpiFeedback.kpiId,
+        fromName: users.name,
+        message: kpiFeedback.message,
+        createdAt: kpiFeedback.createdAt,
+      })
+      .from(kpiFeedback)
+      .leftJoin(users, eq(users.id, kpiFeedback.fromUserId))
+      .where(inArray(kpiFeedback.kpiId, kpiIds))
+      .orderBy(desc(kpiFeedback.createdAt)),
+  )
+}
+
+// Data untuk otorisasi unduh bukti: pemilik KPI + manajer + path.
+export interface EvidenceMeta {
+  evidencePath: string | null
+  evidenceName: string | null
+  employeeUserId: string
+  managerId: string
+}
+
+export async function getEvidenceMeta(
+  tenantId: string,
+  progressId: string,
+): Promise<EvidenceMeta | null> {
+  return withTenantContext(tenantId, async (tx) => {
+    const [row] = await tx
+      .select({
+        evidencePath: kpiProgress.evidencePath,
+        evidenceName: kpiProgress.evidenceName,
+        employeeUserId: employees.userId,
+        managerId: kpis.managerId,
+      })
+      .from(kpiProgress)
+      .innerJoin(kpis, eq(kpis.id, kpiProgress.kpiId))
+      .innerJoin(employees, eq(employees.id, kpis.employeeId))
+      .where(eq(kpiProgress.id, progressId))
+      .limit(1)
+    return row ?? null
   })
 }
 

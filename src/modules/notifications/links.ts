@@ -11,6 +11,7 @@ export function notificationHref(type: string): string | null {
       return "/dashboard/overtime/approvals"
     case "kpi_agreed":
     case "kpi_revision":
+    case "kpi_progress":
       return "/dashboard/kpi/team"
 
     // Keputusan / aksi → halaman penerima
@@ -21,6 +22,7 @@ export function notificationHref(type: string): string | null {
     case "overtime_rejected":
       return "/dashboard/overtime"
     case "kpi_proposed":
+    case "kpi_feedback":
       return "/dashboard/kpi"
 
     case "payslip":

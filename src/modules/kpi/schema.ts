@@ -78,3 +78,20 @@ export const kpiUpdateSchema = z.object({
   weight: weightField,
   target: z.string().trim().max(300).optional().nullish(),
 })
+
+export const progressSchema = z.object({
+  percent: z.coerce
+    .number({ invalid_type_error: "Progres harus angka" })
+    .int("Progres harus bilangan bulat")
+    .min(0, "Progres minimal 0%")
+    .max(100, "Progres maksimal 100%"),
+  note: z.string().trim().max(1000).optional().nullish(),
+})
+
+export const feedbackSchema = z.object({
+  message: z.string().trim().min(1, "Pesan tidak boleh kosong").max(1000),
+})
+
+// Ambang KPI "merah" (perlu perhatian) pada monitoring.
+export const KPI_RED_THRESHOLD = 30
+

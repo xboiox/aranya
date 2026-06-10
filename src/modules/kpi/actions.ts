@@ -1,21 +1,36 @@
 "use server"
+import { randomUUID } from "crypto"
 import { auth, hasRole } from "@/lib/auth"
 import { withTenantContext } from "@/lib/db"
-import { kpiPeriods, companyObjectives, kpis, employees } from "@/lib/db/schema"
+import {
+  kpiPeriods,
+  companyObjectives,
+  kpis,
+  kpiProgress,
+  kpiFeedback,
+  employees,
+} from "@/lib/db/schema"
 import { logAudit } from "@/lib/audit"
 import { notify } from "@/lib/notifications"
 import { isModuleActive } from "@/lib/modules"
+import { putObject } from "@/lib/storage"
+import { GCS_PATHS } from "@/lib/gcs"
 import { getEmployeeIdByUser } from "@/modules/attendance/queries"
 import {
   periodCreateSchema,
   objectiveCreateSchema,
   kpiCreateSchema,
   kpiUpdateSchema,
+  progressSchema,
+  feedbackSchema,
 } from "./schema"
 import { listWeightRows } from "./queries"
 import { activationProblems } from "./validation"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
+
+const MAX_EVIDENCE = 5 * 1024 * 1024 // 5 MB
+const EVIDENCE_EXT = /\.(pdf|png|jpe?g|webp)$/i
 
 type State = { error?: string; success?: string }
 
@@ -442,4 +457,136 @@ export async function requestRevisionKpi(kpiId: string, note: string): Promise<S
   })
   revalidatePath("/dashboard/kpi")
   return { success: "Permintaan revisi terkirim" }
+}
+
+// ---------- Fase B: progres (karyawan) & feedback (manajer) ----------
+
+// KPI milik karyawan login, status agreed, periode active.
+async function loadTrackableKpi(tenantId: string, actorUserId: string, kpiId: string) {
+  const myEmployeeId = await getEmployeeIdByUser(tenantId, actorUserId)
+  if (!myEmployeeId) return { error: "Data karyawan tidak ditemukan" as string }
+
+  const kpi = await withTenantContext(tenantId, (tx) =>
+    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
+  )
+  if (!kpi) return { error: "KPI tidak ditemukan" }
+  if (kpi.employeeId !== myEmployeeId) return { error: "Ini bukan KPI Anda" }
+  if (kpi.status !== "agreed") return { error: "KPI belum disetujui" }
+
+  const period = await withTenantContext(tenantId, (tx) =>
+    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, kpi.periodId) }),
+  )
+  if (period?.status !== "active") return { error: "Periode belum berjalan" }
+  return { kpi }
+}
+
+export async function addProgress(_prev: State, formData: FormData): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+
+  const kpiId = String(formData.get("kpiId") ?? "")
+  if (!kpiId) return { error: "KPI tidak valid" }
+  const parsed = progressSchema.safeParse({
+    percent: formData.get("percent"),
+    note: formData.get("note"),
+  })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+
+  const loaded = await loadTrackableKpi(c.tenantId, c.session.user.id, kpiId)
+  if ("error" in loaded) return { error: loaded.error }
+
+  // Bukti opsional
+  let evidencePath: string | null = null
+  let evidenceName: string | null = null
+  const file = formData.get("evidence")
+  if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_EVIDENCE) return { error: "Bukti maksimal 5MB" }
+    if (!EVIDENCE_EXT.test(file.name)) return { error: "Bukti harus PDF atau gambar" }
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
+    evidencePath = GCS_PATHS.kpiEvidence(c.tenantId, kpiId, `${randomUUID()}-${safe}`)
+    evidenceName = file.name
+    await putObject(evidencePath, buffer, file.type || "application/octet-stream")
+  }
+
+  await withTenantContext(c.tenantId, (tx) =>
+    tx.insert(kpiProgress).values({
+      tenantId: c.tenantId,
+      kpiId,
+      percent: parsed.data.percent,
+      note: parsed.data.note ?? null,
+      evidencePath,
+      evidenceName,
+      createdById: c.session.user.id,
+    }),
+  )
+  await logAudit({
+    tenantId: c.tenantId,
+    userId: c.session.user.id,
+    action: "kpi.progress",
+    entityType: "kpi",
+    entityId: kpiId,
+    newValues: { percent: parsed.data.percent },
+  })
+  await notify({
+    tenantId: c.tenantId,
+    userId: loaded.kpi.managerId,
+    type: "kpi_progress",
+    title: "Progres KPI diperbarui",
+    body: `${c.session.user.name ?? "Karyawan"} memperbarui progres "${loaded.kpi.title}" ke ${parsed.data.percent}%.`,
+    data: { kpiId },
+  })
+  revalidatePath("/dashboard/kpi")
+  return { success: "Progres tersimpan" }
+}
+
+export async function addFeedback(kpiId: string, message: string): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const isHr = hasRole(c.session.user.roles, "hr_admin")
+
+  const parsed = feedbackSchema.safeParse({ message })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+
+  const kpi = await withTenantContext(c.tenantId, (tx) =>
+    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
+  )
+  if (!kpi) return { error: "KPI tidak ditemukan" }
+  if (!(await canManage(c.tenantId, c.session.user.id, isHr, kpi.employeeId))) {
+    return { error: "Anda tidak berwenang atas KPI ini" }
+  }
+  const period = await withTenantContext(c.tenantId, (tx) =>
+    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, kpi.periodId) }),
+  )
+  if (period?.status !== "active") return { error: "Feedback hanya saat periode berjalan" }
+
+  const employeeUserId = await withTenantContext(c.tenantId, async (tx) => {
+    await tx.insert(kpiFeedback).values({
+      tenantId: c.tenantId,
+      kpiId,
+      fromUserId: c.session.user.id,
+      message: parsed.data.message,
+    })
+    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, kpi.employeeId) })
+    return emp?.userId ?? null
+  })
+  await logAudit({
+    tenantId: c.tenantId,
+    userId: c.session.user.id,
+    action: "kpi.feedback",
+    entityType: "kpi",
+    entityId: kpiId,
+  })
+  if (employeeUserId) {
+    await notify({
+      tenantId: c.tenantId,
+      userId: employeeUserId,
+      type: "kpi_feedback",
+      title: "Feedback KPI dari atasan",
+      body: `Atasan memberi feedback pada "${kpi.title}".`,
+      data: { kpiId },
+    })
+  }
+  revalidatePath("/dashboard/kpi/team")
+  return { success: "Feedback terkirim" }
 }

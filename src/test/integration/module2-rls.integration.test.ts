@@ -1,6 +1,13 @@
 import { describe, it, expect, afterAll } from "vitest"
 import { db, withTenantContext, withSuperAdminContext } from "@/lib/db"
-import { assets, kpiPeriods, kpis, onboardingTasks } from "@/lib/db/schema"
+import {
+  assets,
+  kpiPeriods,
+  kpis,
+  kpiProgress,
+  kpiFeedback,
+  onboardingTasks,
+} from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
 import { createTestTenant, createTestEmployee, cleanupTenants } from "./helpers"
 
@@ -114,6 +121,49 @@ describe("RLS isolasi tabel Modul 2 (DB nyata, app role)", () => {
           tx
             .insert(kpis)
             .values({ tenantId: t2.id, periodId: p1.id, employeeId: e1.id, managerId: "m1", title: "Selundup", weight: 100 }),
+        ),
+      ).rejects.toThrow()
+    })
+  })
+
+  describe("kpi_progress & kpi_feedback", () => {
+    it("baca terisolasi & tulis lintas-tenant ditolak", async () => {
+      const { t1, t2, e1, e2 } = await twoTenants("kpibc")
+      const p1 = await createTestPeriod(t1.id)
+      const p2 = await createTestPeriod(t2.id)
+      const [k1] = await withTenantContext(t1.id, (tx) =>
+        tx.insert(kpis).values({ tenantId: t1.id, periodId: p1.id, employeeId: e1.id, managerId: "m1", title: "K1", weight: 100 }).returning(),
+      )
+      const [k2] = await withTenantContext(t2.id, (tx) =>
+        tx.insert(kpis).values({ tenantId: t2.id, periodId: p2.id, employeeId: e2.id, managerId: "m2", title: "K2", weight: 100 }).returning(),
+      )
+
+      // progres
+      await withTenantContext(t1.id, (tx) =>
+        tx.insert(kpiProgress).values({ tenantId: t1.id, kpiId: k1.id, percent: 50, createdById: "u1" }),
+      )
+      await withTenantContext(t2.id, (tx) =>
+        tx.insert(kpiProgress).values({ tenantId: t2.id, kpiId: k2.id, percent: 70, createdById: "u2" }),
+      )
+      const progT1 = await withTenantContext(t1.id, (tx) => tx.select({ id: kpiProgress.id, kpiId: kpiProgress.kpiId }).from(kpiProgress))
+      expect(progT1.every((r) => r.kpiId === k1.id)).toBe(true)
+      const progNoCtx = await db.select({ id: kpiProgress.id }).from(kpiProgress)
+      expect(progNoCtx).toHaveLength(0)
+      await expect(
+        withTenantContext(t1.id, (tx) =>
+          tx.insert(kpiProgress).values({ tenantId: t2.id, kpiId: k1.id, percent: 10, createdById: "u1" }),
+        ),
+      ).rejects.toThrow()
+
+      // feedback
+      await withTenantContext(t1.id, (tx) =>
+        tx.insert(kpiFeedback).values({ tenantId: t1.id, kpiId: k1.id, fromUserId: "u1", message: "ok" }),
+      )
+      const fbNoCtx = await db.select({ id: kpiFeedback.id }).from(kpiFeedback)
+      expect(fbNoCtx).toHaveLength(0)
+      await expect(
+        withTenantContext(t1.id, (tx) =>
+          tx.insert(kpiFeedback).values({ tenantId: t2.id, kpiId: k1.id, fromUserId: "u1", message: "x" }),
         ),
       ).rejects.toThrow()
     })

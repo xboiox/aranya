@@ -74,3 +74,34 @@ export const kpis = pgTable("kpis", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 })
+
+// Fase B — update progres (historis) oleh karyawan.
+export const kpiProgress = pgTable("kpi_progress", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tenantId: text("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  kpiId: text("kpi_id")
+    .notNull()
+    .references(() => kpis.id, { onDelete: "cascade" }),
+  percent: integer("percent").notNull(), // 0–100
+  note: text("note"),
+  evidencePath: text("evidence_path"),
+  evidenceName: text("evidence_name"),
+  createdById: text("created_by_id").notNull(), // userId
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+})
+
+// Fase B — feedback manajer saat monitoring.
+export const kpiFeedback = pgTable("kpi_feedback", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  tenantId: text("tenant_id")
+    .notNull()
+    .references(() => tenants.id, { onDelete: "cascade" }),
+  kpiId: text("kpi_id")
+    .notNull()
+    .references(() => kpis.id, { onDelete: "cascade" }),
+  fromUserId: text("from_user_id").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+})
