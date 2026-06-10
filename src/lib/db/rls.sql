@@ -40,6 +40,7 @@ ALTER TABLE company_objectives ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpis               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpi_progress       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpi_feedback       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_appraisals     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE onboarding_tasks   ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE employees          FORCE ROW LEVEL SECURITY;
@@ -63,6 +64,7 @@ ALTER TABLE company_objectives FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpis               FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpi_progress       FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpi_feedback       FORCE ROW LEVEL SECURITY;
+ALTER TABLE kpi_appraisals     FORCE ROW LEVEL SECURITY;
 ALTER TABLE onboarding_tasks   FORCE ROW LEVEL SECURITY;
 
 -- ── Drop existing policies before recreating (idempotent) ────
@@ -88,6 +90,7 @@ DROP POLICY IF EXISTS tenant_isolation ON company_objectives;
 DROP POLICY IF EXISTS tenant_isolation ON kpis;
 DROP POLICY IF EXISTS tenant_isolation ON kpi_progress;
 DROP POLICY IF EXISTS tenant_isolation ON kpi_feedback;
+DROP POLICY IF EXISTS tenant_isolation ON kpi_appraisals;
 DROP POLICY IF EXISTS tenant_isolation ON onboarding_tasks;
 
 -- ── Create policies ───────────────────────────────────────────
@@ -153,6 +156,9 @@ CREATE POLICY tenant_isolation ON kpi_progress
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 
 CREATE POLICY tenant_isolation ON kpi_feedback
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON kpi_appraisals
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 
 CREATE POLICY tenant_isolation ON onboarding_tasks

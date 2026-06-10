@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, integer, date } from "drizzle-orm/pg-core"
+import { pgTable, text, timestamp, integer, date, unique } from "drizzle-orm/pg-core"
 import { tenants } from "./tenants"
 import { employees } from "./employees"
 
@@ -105,3 +105,26 @@ export const kpiFeedback = pgTable("kpi_feedback", {
   message: text("message").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 })
+
+// Fase C — penilaian akhir per KPI (self + manager + final/kalibrasi).
+export const kpiAppraisals = pgTable(
+  "kpi_appraisals",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    tenantId: text("tenant_id")
+      .notNull()
+      .references(() => tenants.id, { onDelete: "cascade" }),
+    kpiId: text("kpi_id")
+      .notNull()
+      .references(() => kpis.id, { onDelete: "cascade" }),
+    selfScore: integer("self_score"), // 1–5 (karyawan)
+    selfNote: text("self_note"),
+    managerScore: integer("manager_score"), // 1–5 (manajer)
+    managerNote: text("manager_note"),
+    finalScore: integer("final_score"), // 1–5; default = managerScore, override HR
+    calibratedById: text("calibrated_by_id"), // userId HR
+    createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
+  },
+  (t) => [unique().on(t.kpiId)],
+)

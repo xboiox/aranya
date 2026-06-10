@@ -8,6 +8,7 @@ import {
   kpis,
   kpiProgress,
   kpiFeedback,
+  kpiAppraisals,
   employees,
 } from "@/lib/db/schema"
 import { logAudit } from "@/lib/audit"
@@ -23,9 +24,12 @@ import {
   kpiUpdateSchema,
   progressSchema,
   feedbackSchema,
+  selfScoreSchema,
+  managerScoreSchema,
+  calibrateSchema,
 } from "./schema"
-import { listWeightRows } from "./queries"
-import { activationProblems } from "./validation"
+import { listWeightRows, listScoreRows } from "./queries"
+import { activationProblems, lockProblems } from "./validation"
 import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
@@ -589,4 +593,147 @@ export async function addFeedback(kpiId: string, message: string): Promise<State
   }
   revalidatePath("/dashboard/kpi/team")
   return { success: "Feedback terkirim" }
+}
+
+// ---------- Fase C: penilaian (appraisal) ----------
+
+async function periodStatusOf(tenantId: string, periodId: string): Promise<string | undefined> {
+  const p = await withTenantContext(tenantId, (tx) =>
+    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) }),
+  )
+  return p?.status
+}
+
+// HR: active → appraisal
+export async function startAppraisal(periodId: string): Promise<State> {
+  const c = await requireHr()
+  if ("error" in c) return { error: c.error }
+  if ((await periodStatusOf(c.tenantId, periodId)) !== "active") {
+    return { error: "Hanya periode berjalan yang bisa masuk penilaian" }
+  }
+  await withTenantContext(c.tenantId, (tx) =>
+    tx.update(kpiPeriods).set({ status: "appraisal", updatedAt: new Date() }).where(eq(kpiPeriods.id, periodId)),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.period.appraisal", entityType: "kpi_period", entityId: periodId })
+  revalidatePath("/dashboard/kpi/periods")
+  return { success: "Periode masuk tahap penilaian" }
+}
+
+// HR: appraisal → locked (guard: semua KPI sudah dinilai manajer)
+export async function lockPeriod(periodId: string): Promise<State> {
+  const c = await requireHr()
+  if ("error" in c) return { error: c.error }
+  if ((await periodStatusOf(c.tenantId, periodId)) !== "appraisal") {
+    return { error: "Hanya periode penilaian yang bisa dikunci" }
+  }
+  const rows = await listScoreRows(c.tenantId, periodId)
+  const problems = lockProblems(rows)
+  if (problems.length > 0) return { error: `Belum bisa dikunci — ${problems.join("; ")}` }
+
+  await withTenantContext(c.tenantId, (tx) =>
+    tx.update(kpiPeriods).set({ status: "locked", updatedAt: new Date() }).where(eq(kpiPeriods.id, periodId)),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.period.lock", entityType: "kpi_period", entityId: periodId })
+  revalidatePath("/dashboard/kpi/periods")
+  return { success: "Periode dikunci" }
+}
+
+// Memuat KPI + periode dgn status tertentu.
+async function loadKpiInStatus(tenantId: string, kpiId: string, status: string) {
+  const kpi = await withTenantContext(tenantId, (tx) =>
+    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
+  )
+  if (!kpi) return { error: "KPI tidak ditemukan" as string }
+  if ((await periodStatusOf(tenantId, kpi.periodId)) !== status) {
+    return { error: "Aksi tidak sesuai tahap periode" }
+  }
+  return { kpi }
+}
+
+// Karyawan: self-assessment (periode appraisal).
+export async function setSelfScore(_prev: State, formData: FormData): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const kpiId = String(formData.get("kpiId") ?? "")
+  const parsed = selfScoreSchema.safeParse({
+    selfScore: formData.get("selfScore"),
+    selfNote: formData.get("selfNote"),
+  })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+
+  const myEmployeeId = await getEmployeeIdByUser(c.tenantId, c.session.user.id)
+  const loaded = await loadKpiInStatus(c.tenantId, kpiId, "appraisal")
+  if ("error" in loaded) return { error: loaded.error }
+  if (loaded.kpi.employeeId !== myEmployeeId) return { error: "Ini bukan KPI Anda" }
+
+  await withTenantContext(c.tenantId, (tx) =>
+    tx
+      .insert(kpiAppraisals)
+      .values({ tenantId: c.tenantId, kpiId, selfScore: parsed.data.selfScore, selfNote: parsed.data.selfNote ?? null })
+      .onConflictDoUpdate({
+        target: kpiAppraisals.kpiId,
+        set: { selfScore: parsed.data.selfScore, selfNote: parsed.data.selfNote ?? null, updatedAt: new Date() },
+      }),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.self_score", entityType: "kpi", entityId: kpiId })
+  revalidatePath("/dashboard/kpi")
+  return { success: "Penilaian diri tersimpan" }
+}
+
+// Manajer/HR: manager scoring (periode appraisal). finalScore default = managerScore.
+export async function setManagerScore(_prev: State, formData: FormData): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const isHr = hasRole(c.session.user.roles, "hr_admin")
+  const kpiId = String(formData.get("kpiId") ?? "")
+  const parsed = managerScoreSchema.safeParse({
+    managerScore: formData.get("managerScore"),
+    managerNote: formData.get("managerNote"),
+  })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+
+  const loaded = await loadKpiInStatus(c.tenantId, kpiId, "appraisal")
+  if ("error" in loaded) return { error: loaded.error }
+  if (!(await canManage(c.tenantId, c.session.user.id, isHr, loaded.kpi.employeeId))) {
+    return { error: "Anda tidak berwenang menilai KPI ini" }
+  }
+
+  const score = parsed.data.managerScore
+  await withTenantContext(c.tenantId, (tx) =>
+    tx
+      .insert(kpiAppraisals)
+      .values({ tenantId: c.tenantId, kpiId, managerScore: score, managerNote: parsed.data.managerNote ?? null, finalScore: score })
+      .onConflictDoUpdate({
+        target: kpiAppraisals.kpiId,
+        set: { managerScore: score, managerNote: parsed.data.managerNote ?? null, finalScore: score, updatedAt: new Date() },
+      }),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.manager_score", entityType: "kpi", entityId: kpiId, newValues: { managerScore: score } })
+  revalidatePath("/dashboard/kpi/team")
+  return { success: "Nilai tersimpan" }
+}
+
+// HR: kalibrasi finalScore (periode locked).
+export async function calibrateFinalScore(_prev: State, formData: FormData): Promise<State> {
+  const c = await requireHr()
+  if ("error" in c) return { error: c.error }
+  const kpiId = String(formData.get("kpiId") ?? "")
+  const parsed = calibrateSchema.safeParse({ finalScore: formData.get("finalScore") })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+
+  const loaded = await loadKpiInStatus(c.tenantId, kpiId, "locked")
+  if ("error" in loaded) return { error: loaded.error }
+
+  await withTenantContext(c.tenantId, (tx) =>
+    tx
+      .insert(kpiAppraisals)
+      .values({ tenantId: c.tenantId, kpiId, finalScore: parsed.data.finalScore, calibratedById: c.session.user.id })
+      .onConflictDoUpdate({
+        target: kpiAppraisals.kpiId,
+        set: { finalScore: parsed.data.finalScore, calibratedById: c.session.user.id, updatedAt: new Date() },
+      }),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.calibrate", entityType: "kpi", entityId: kpiId, newValues: { finalScore: parsed.data.finalScore } })
+  revalidatePath("/dashboard/kpi/team")
+  return { success: "Skor akhir dikalibrasi" }
 }

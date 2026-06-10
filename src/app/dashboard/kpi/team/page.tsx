@@ -10,8 +10,10 @@ import {
   listAssignableEmployees,
   progressForKpis,
   feedbackForKpis,
+  appraisalsForKpis,
   type TeamKpiItem,
 } from "@/modules/kpi/queries"
+import { weightedFinalScore } from "@/modules/kpi/validation"
 import {
   PERIOD_STATUS_LABEL,
   PERIOD_STATUS_STYLE,
@@ -24,6 +26,7 @@ import {
 import KpiCreateForm from "./_create-form"
 import KpiRow from "./_kpi-row"
 import KpiMonitorRow from "./_monitor-row"
+import KpiScoreRow from "./_score-row"
 
 function dt(d: Date): string {
   return new Date(d).toLocaleString("id-ID", {
@@ -72,6 +75,9 @@ export default async function TeamKpiPage({ searchParams }: Props) {
 
   const isPlanning = period.status === "planning"
   const isActive = period.status === "active"
+  const isAppraisal = period.status === "appraisal"
+  const isLocked = period.status === "locked"
+  const isScoring = isAppraisal || isLocked
   const [teamKpis, assignable] = await Promise.all([
     listTeamKpis(tenantId, period.id, myEmployeeId, isHr),
     isPlanning ? listAssignableEmployees(tenantId, myEmployeeId, isHr) : Promise.resolve([]),
@@ -97,6 +103,10 @@ export default async function TeamKpiPage({ searchParams }: Props) {
     feedbackByKpi.set(f.kpiId, arr)
   }
   const updatedCount = isActive ? teamKpis.filter((k) => progressByKpi.has(k.id)).length : 0
+
+  // Penilaian (Fase C): muat appraisal saat appraisal/locked.
+  const appraisalRows = isScoring ? await appraisalsForKpis(tenantId, kpiIds) : []
+  const apprByKpi = new Map(appraisalRows.map((a) => [a.kpiId, a]))
 
   // Kelompokkan per karyawan + total bobot.
   const byEmployee = new Map<string, { name: string | null; items: TeamKpiItem[]; total: number }>()
@@ -134,9 +144,14 @@ export default async function TeamKpiPage({ searchParams }: Props) {
           Periode berjalan — pantau progres & beri feedback. {updatedCount}/{teamKpis.length} KPI sudah diupdate.
         </p>
       )}
-      {!isPlanning && !isActive && (
+      {isAppraisal && (
         <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
-          Periode sudah {PERIOD_STATUS_LABEL[period.status as PeriodStatus].toLowerCase()} — KPI terkunci dari perubahan.
+          Tahap penilaian — beri nilai (1–5) tiap KPI bawahan. Skor akhir default = nilai manajer.
+        </p>
+      )}
+      {isLocked && (
+        <p className="rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground">
+          Periode terkunci{isHr ? " — Anda dapat mengkalibrasi skor akhir." : " — penilaian final."}
         </p>
       )}
 
@@ -153,13 +168,40 @@ export default async function TeamKpiPage({ searchParams }: Props) {
           <div key={empId} className="rounded-xl border">
             <div className="flex items-center justify-between border-b px-4 py-2">
               <span className="font-medium">{g.name ?? "—"}</span>
-              <span className={`text-sm ${g.total === 100 ? "text-emerald-600" : "text-amber-600"}`}>
-                Total bobot {g.total}%{g.total !== 100 && " (harus 100%)"}
-              </span>
+              {isScoring ? (
+                (() => {
+                  const score = weightedFinalScore(
+                    g.items.map((k) => ({ weight: k.weight, finalScore: apprByKpi.get(k.id)?.finalScore ?? null })),
+                  )
+                  return (
+                    <span className="text-sm font-medium">
+                      {score != null ? `Skor akhir ${score.toFixed(2)} / 5` : "Skor belum lengkap"}
+                    </span>
+                  )
+                })()
+              ) : (
+                <span className={`text-sm ${g.total === 100 ? "text-emerald-600" : "text-amber-600"}`}>
+                  Total bobot {g.total}%{g.total !== 100 && " (harus 100%)"}
+                </span>
+              )}
             </div>
             <ul className="divide-y">
               {g.items.map((k) =>
-                isActive ? (
+                isScoring ? (
+                  <KpiScoreRow
+                    key={k.id}
+                    id={k.id}
+                    title={k.title}
+                    weight={k.weight}
+                    selfScore={apprByKpi.get(k.id)?.selfScore ?? null}
+                    selfNote={apprByKpi.get(k.id)?.selfNote ?? null}
+                    managerScore={apprByKpi.get(k.id)?.managerScore ?? null}
+                    managerNote={apprByKpi.get(k.id)?.managerNote ?? null}
+                    finalScore={apprByKpi.get(k.id)?.finalScore ?? null}
+                    mode={isLocked ? "locked" : "appraisal"}
+                    canCalibrate={isHr}
+                  />
+                ) : isActive ? (
                   <KpiMonitorRow
                     key={k.id}
                     id={k.id}

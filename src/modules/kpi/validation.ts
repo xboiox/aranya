@@ -50,3 +50,37 @@ export function activationProblems(rows: KpiWeightRow[]): string[] {
   }
   return problems
 }
+
+// ---------- Fase C: penilaian ----------
+
+export interface ScoredKpi {
+  weight: number
+  finalScore: number | null
+}
+
+/**
+ * Skor akhir karyawan per periode = Σ(bobot/100 × finalScore), rentang 1–5.
+ * Mengembalikan null bila ada KPI yang belum punya finalScore (belum lengkap).
+ */
+export function weightedFinalScore(items: ScoredKpi[]): number | null {
+  if (items.length === 0) return null
+  let sum = 0
+  for (const it of items) {
+    if (it.finalScore == null) return null
+    sum += (it.weight / 100) * it.finalScore
+  }
+  return Math.round(sum * 100) / 100
+}
+
+export interface ManagerScoreRow {
+  employeeName: string | null
+  managerScore: number | null
+}
+
+/** KPI yang belum dinilai manajer — menghalangi penguncian periode. */
+export function lockProblems(rows: ManagerScoreRow[]): string[] {
+  const missing = rows.filter((r) => r.managerScore == null)
+  if (missing.length === 0) return []
+  const names = [...new Set(missing.map((r) => r.employeeName ?? "Karyawan"))]
+  return [`Masih ada ${missing.length} KPI belum dinilai manajer (${names.join(", ")})`]
+}

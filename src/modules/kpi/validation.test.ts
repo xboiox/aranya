@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest"
-import { summarizeWeights, activationProblems } from "./validation"
+import {
+  summarizeWeights,
+  activationProblems,
+  weightedFinalScore,
+  lockProblems,
+} from "./validation"
 
 const row = (employeeId: string, weight: number, status: string, employeeName = employeeId) => ({
   employeeId,
@@ -46,5 +51,38 @@ describe("activationProblems", () => {
       row("e2", 50, "agreed"),
     ])
     expect(p).toEqual([])
+  })
+})
+
+describe("weightedFinalScore", () => {
+  it("menghitung rata-rata tertimbang (rentang 1–5)", () => {
+    // 60% × 5 + 40% × 3 = 3 + 1.2 = 4.2
+    expect(weightedFinalScore([
+      { weight: 60, finalScore: 5 },
+      { weight: 40, finalScore: 3 },
+    ])).toBe(4.2)
+  })
+  it("null bila ada finalScore yang belum diisi", () => {
+    expect(weightedFinalScore([
+      { weight: 50, finalScore: 4 },
+      { weight: 50, finalScore: null },
+    ])).toBeNull()
+  })
+  it("null bila kosong", () => {
+    expect(weightedFinalScore([])).toBeNull()
+  })
+})
+
+describe("lockProblems", () => {
+  it("melaporkan KPI yang belum dinilai manajer", () => {
+    const p = lockProblems([
+      { employeeName: "Budi", managerScore: 4 },
+      { employeeName: "Budi", managerScore: null },
+    ])
+    expect(p).toHaveLength(1)
+    expect(p[0]).toMatch(/belum dinilai/)
+  })
+  it("kosong bila semua sudah dinilai", () => {
+    expect(lockProblems([{ employeeName: "Budi", managerScore: 5 }])).toEqual([])
   })
 })

@@ -4,9 +4,12 @@ import {
   leaveRequests,
   overtimeRequests,
   attendance,
+  kpis,
+  kpiPeriods,
+  kpiAppraisals,
 } from "@/lib/db/schema"
 import { todayJakarta } from "@/lib/date"
-import { and, eq, gte, lte, isNotNull, count } from "drizzle-orm"
+import { and, eq, gte, lte, isNotNull, count, avg } from "drizzle-orm"
 import { GENDER_LABEL, toBreakdown, type Breakdown } from "./transform"
 
 export type { Breakdown }
@@ -18,6 +21,7 @@ export interface HrAnalytics {
   presentToday: number
   onLeaveToday: number
   pendingApprovals: number
+  avgKpiScore: number | null
   byDepartment: Breakdown[]
   byContractType: Breakdown[]
   byGender: Breakdown[]
@@ -36,6 +40,7 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
       onLeaveRow,
       leavePendingRow,
       overtimePendingRow,
+      avgKpiRow,
       deptRows,
       contractRows,
       genderRows,
@@ -65,6 +70,13 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
         .select({ value: count() })
         .from(overtimeRequests)
         .where(eq(overtimeRequests.status, "pending")),
+      // Rata-rata skor akhir KPI pada periode terkunci (1–5)
+      tx
+        .select({ value: avg(kpiAppraisals.finalScore) })
+        .from(kpiAppraisals)
+        .innerJoin(kpis, eq(kpis.id, kpiAppraisals.kpiId))
+        .innerJoin(kpiPeriods, eq(kpiPeriods.id, kpis.periodId))
+        .where(and(eq(kpiPeriods.status, "locked"), isNotNull(kpiAppraisals.finalScore))),
       tx
         .select({ key: employees.department, value: count() })
         .from(employees)
@@ -91,6 +103,7 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
       pendingApprovals:
         Number(leavePendingRow[0]?.value ?? 0) +
         Number(overtimePendingRow[0]?.value ?? 0),
+      avgKpiScore: avgKpiRow[0]?.value == null ? null : Math.round(Number(avgKpiRow[0].value) * 100) / 100,
       byDepartment: toBreakdown(deptRows),
       byContractType: toBreakdown(contractRows),
       byGender: toBreakdown(genderRows, GENDER_LABEL),

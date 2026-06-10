@@ -80,6 +80,11 @@ export default async function AnalyticsPage() {
         <StatCard label="Menunggu Persetujuan" value={a.pendingApprovals} hint="cuti + lembur" />
         <StatCard label="Karyawan Baru (bln ini)" value={a.newHiresThisMonth} />
         <StatCard label="Nonaktif" value={a.totalInactive} />
+        <StatCard
+          label="Rata-rata KPI"
+          value={a.avgKpiScore ?? "—"}
+          hint="skor akhir periode terkunci (1–5)"
+        />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

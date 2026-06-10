@@ -5,6 +5,7 @@ import {
   kpis,
   kpiProgress,
   kpiFeedback,
+  kpiAppraisals,
   employees,
   users,
 } from "@/lib/db/schema"
@@ -232,6 +233,50 @@ export async function getEvidenceMeta(
       .limit(1)
     return row ?? null
   })
+}
+
+// ---------- Fase C: penilaian ----------
+
+export type AppraisalRow = typeof kpiAppraisals.$inferSelect
+
+export async function appraisalsForKpis(
+  tenantId: string,
+  kpiIds: string[],
+): Promise<AppraisalRow[]> {
+  if (kpiIds.length === 0) return []
+  return withTenantContext(tenantId, (tx) =>
+    tx.select().from(kpiAppraisals).where(inArray(kpiAppraisals.kpiId, kpiIds)),
+  )
+}
+
+export interface ScoreRow {
+  kpiId: string
+  employeeId: string
+  employeeName: string | null
+  weight: number
+  managerScore: number | null
+  finalScore: number | null
+}
+
+// Baris skor semua KPI sebuah periode — untuk guard lock & laporan skor akhir.
+export async function listScoreRows(tenantId: string, periodId: string): Promise<ScoreRow[]> {
+  return withTenantContext(tenantId, (tx) =>
+    tx
+      .select({
+        kpiId: kpis.id,
+        employeeId: kpis.employeeId,
+        employeeName: users.name,
+        weight: kpis.weight,
+        managerScore: kpiAppraisals.managerScore,
+        finalScore: kpiAppraisals.finalScore,
+      })
+      .from(kpis)
+      .innerJoin(employees, eq(employees.id, kpis.employeeId))
+      .innerJoin(users, eq(users.id, employees.userId))
+      .leftJoin(kpiAppraisals, eq(kpiAppraisals.kpiId, kpis.id))
+      .where(eq(kpis.periodId, periodId))
+      .orderBy(asc(users.name)),
+  )
 }
 
 // Baris bobot/status semua KPI sebuah periode — untuk guard aktivasi (HR).

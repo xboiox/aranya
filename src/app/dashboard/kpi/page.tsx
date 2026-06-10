@@ -3,14 +3,23 @@ import { auth } from "@/lib/auth"
 import { isModuleActive } from "@/lib/modules"
 import { ModuleLocked } from "@/components/module-locked"
 import { getEmployeeIdByUser } from "@/modules/attendance/queries"
-import { listMyKpis, progressForKpis, feedbackForKpis } from "@/modules/kpi/queries"
+import {
+  listMyKpis,
+  progressForKpis,
+  feedbackForKpis,
+  appraisalsForKpis,
+  type AppraisalRow,
+} from "@/modules/kpi/queries"
 import {
   KPI_STATUS_LABEL,
   KPI_STATUS_STYLE,
+  SCORE_LABEL,
   type KpiStatus,
 } from "@/modules/kpi/schema"
+import { weightedFinalScore } from "@/modules/kpi/validation"
 import KpiAgreement from "./_agreement"
 import KpiTracking, { type ProgressItem, type FeedbackItem } from "./_tracking"
+import KpiAppraisal from "./_appraisal"
 
 function dt(d: Date): string {
   return new Date(d).toLocaleString("id-ID", {
@@ -57,6 +66,25 @@ export default async function MyKpiPage() {
     feedbackByKpi.set(f.kpiId, arr)
   }
 
+  // Penilaian (Fase C) untuk KPI agreed di periode appraisal/locked.
+  const apprIds = items
+    .filter((k) => k.status === "agreed" && (k.periodStatus === "appraisal" || k.periodStatus === "locked"))
+    .map((k) => k.id)
+  const appraisalRows = await appraisalsForKpis(tenantId, apprIds)
+  const apprByKpi = new Map<string, AppraisalRow>(appraisalRows.map((a) => [a.kpiId, a]))
+
+  // Skor akhir tertimbang per periode terkunci (untuk banner).
+  const lockedScores = new Map<string, { weight: number; finalScore: number | null }[]>()
+  for (const k of items) {
+    if (k.periodStatus !== "locked" || k.status !== "agreed") continue
+    const arr = lockedScores.get(k.periodName) ?? []
+    arr.push({ weight: k.weight, finalScore: apprByKpi.get(k.id)?.finalScore ?? null })
+    lockedScores.set(k.periodName, arr)
+  }
+  const periodScores = [...lockedScores.entries()]
+    .map(([name, rows]) => ({ name, score: weightedFinalScore(rows) }))
+    .filter((p) => p.score != null)
+
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
@@ -65,6 +93,15 @@ export default async function MyKpiPage() {
           Tinjau & setujui KPI yang diberikan atasan. Bila terlalu berat, minta revisi.
         </p>
       </div>
+
+      {periodScores.map((p) => (
+        <div key={p.name} className="rounded-xl border bg-emerald-50 px-4 py-3">
+          <p className="text-sm text-emerald-900">
+            Skor akhir <span className="font-medium">{p.name}</span>:{" "}
+            <span className="text-lg font-bold">{p.score?.toFixed(2)}</span> / 5
+          </p>
+        </div>
+      ))}
 
       {items.length === 0 ? (
         <p className="rounded-xl border px-4 py-8 text-center text-sm text-muted-foreground">
@@ -99,6 +136,30 @@ export default async function MyKpiPage() {
                   progress={progressByKpi.get(k.id) ?? []}
                   feedback={feedbackByKpi.get(k.id) ?? []}
                 />
+              )}
+              {k.status === "agreed" && k.periodStatus === "appraisal" && (
+                <KpiAppraisal
+                  kpiId={k.id}
+                  currentSelfScore={apprByKpi.get(k.id)?.selfScore ?? null}
+                  currentSelfNote={apprByKpi.get(k.id)?.selfNote ?? null}
+                />
+              )}
+              {k.status === "agreed" && k.periodStatus === "locked" && (
+                <div className="mt-3 space-y-1 border-t pt-3 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">Skor akhir:</span>{" "}
+                    <span className="font-semibold">
+                      {apprByKpi.get(k.id)?.finalScore ?? "—"}
+                      {apprByKpi.get(k.id)?.finalScore != null && ` — ${SCORE_LABEL[apprByKpi.get(k.id)!.finalScore!]}`}
+                    </span>
+                  </p>
+                  {apprByKpi.get(k.id)?.selfScore != null && (
+                    <p className="text-xs text-muted-foreground">Nilai diri Anda: {apprByKpi.get(k.id)?.selfScore}</p>
+                  )}
+                  {apprByKpi.get(k.id)?.managerNote && (
+                    <p className="text-xs text-muted-foreground">Catatan atasan: {apprByKpi.get(k.id)?.managerNote}</p>
+                  )}
+                </div>
               )}
             </li>
           ))}

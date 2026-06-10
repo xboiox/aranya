@@ -6,6 +6,7 @@ import {
   kpis,
   kpiProgress,
   kpiFeedback,
+  kpiAppraisals,
   onboardingTasks,
 } from "@/lib/db/schema"
 import { eq } from "drizzle-orm"
@@ -164,6 +165,18 @@ describe("RLS isolasi tabel Modul 2 (DB nyata, app role)", () => {
       await expect(
         withTenantContext(t1.id, (tx) =>
           tx.insert(kpiFeedback).values({ tenantId: t2.id, kpiId: k1.id, fromUserId: "u1", message: "x" }),
+        ),
+      ).rejects.toThrow()
+
+      // appraisal
+      await withTenantContext(t1.id, (tx) =>
+        tx.insert(kpiAppraisals).values({ tenantId: t1.id, kpiId: k1.id, finalScore: 4 }),
+      )
+      const apprNoCtx = await db.select({ id: kpiAppraisals.id }).from(kpiAppraisals)
+      expect(apprNoCtx).toHaveLength(0)
+      await expect(
+        withTenantContext(t1.id, (tx) =>
+          tx.insert(kpiAppraisals).values({ tenantId: t2.id, kpiId: k2.id, finalScore: 3 }),
         ),
       ).rejects.toThrow()
     })

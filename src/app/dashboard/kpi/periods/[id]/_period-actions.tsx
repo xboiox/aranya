@@ -2,7 +2,12 @@
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { activatePeriod, deletePeriod } from "@/modules/kpi/actions"
+import {
+  activatePeriod,
+  deletePeriod,
+  startAppraisal,
+  lockPeriod,
+} from "@/modules/kpi/actions"
 import { Button } from "@/components/ui/button"
 
 export default function PeriodActions({ periodId, status }: { periodId: string; status: string }) {
@@ -21,29 +26,51 @@ export default function PeriodActions({ periodId, status }: { periodId: string; 
     })
   }
 
-  if (status !== "planning") {
+  if (status === "planning") {
     return (
-      <p className="text-sm text-muted-foreground">
-        Periode sudah berjalan — tidak ada aksi perencanaan.
-      </p>
+      <div className="flex flex-wrap gap-2">
+        <Button disabled={pending} onClick={() => run(() => activatePeriod(periodId))}>
+          Aktifkan periode
+        </Button>
+        <Button
+          variant="ghost"
+          disabled={pending}
+          onClick={() => run(() => deletePeriod(periodId), () => router.push("/dashboard/kpi/periods"))}
+        >
+          Hapus periode
+        </Button>
+        <p className="w-full text-xs text-muted-foreground">
+          Aktivasi butuh semua KPI tiap karyawan total bobot 100% & sudah disetujui.
+        </p>
+      </div>
     )
   }
 
-  return (
-    <div className="flex flex-wrap gap-2">
-      <Button disabled={pending} onClick={() => run(() => activatePeriod(periodId))}>
-        Aktifkan periode
-      </Button>
-      <Button
-        variant="ghost"
-        disabled={pending}
-        onClick={() => run(() => deletePeriod(periodId), () => router.push("/dashboard/kpi/periods"))}
-      >
-        Hapus periode
-      </Button>
-      <p className="w-full text-xs text-muted-foreground">
-        Aktivasi butuh semua KPI tiap karyawan total bobot 100% & sudah disetujui.
-      </p>
-    </div>
-  )
+  if (status === "active") {
+    return (
+      <div className="space-y-2">
+        <Button disabled={pending} onClick={() => run(() => startAppraisal(periodId))}>
+          Mulai tahap penilaian
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Menutup input progres; membuka self-assessment & penilaian manajer.
+        </p>
+      </div>
+    )
+  }
+
+  if (status === "appraisal") {
+    return (
+      <div className="space-y-2">
+        <Button disabled={pending} onClick={() => run(() => lockPeriod(periodId))}>
+          Kunci periode
+        </Button>
+        <p className="text-xs text-muted-foreground">
+          Penguncian butuh semua KPI sudah dinilai manajer. Setelah terkunci, HR dapat mengkalibrasi skor akhir.
+        </p>
+      </div>
+    )
+  }
+
+  return <p className="text-sm text-muted-foreground">Periode terkunci — penilaian final & kalibrasi di halaman KPI Tim.</p>
 }

@@ -95,3 +95,31 @@ export const feedbackSchema = z.object({
 // Ambang KPI "merah" (perlu perhatian) pada monitoring.
 export const KPI_RED_THRESHOLD = 30
 
+const score15 = z.coerce
+  .number({ invalid_type_error: "Skor harus angka" })
+  .int("Skor harus bilangan bulat")
+  .min(1, "Skor minimal 1")
+  .max(5, "Skor maksimal 5")
+
+export const selfScoreSchema = z.object({
+  selfScore: score15,
+  selfNote: z.string().trim().max(1000).optional().nullish(),
+})
+
+export const managerScoreSchema = z.object({
+  managerScore: score15,
+  managerNote: z.string().trim().max(1000).optional().nullish(),
+})
+
+export const calibrateSchema = z.object({
+  finalScore: score15,
+})
+
+export const SCORE_LABEL: Record<number, string> = {
+  1: "Sangat kurang",
+  2: "Kurang",
+  3: "Cukup",
+  4: "Baik",
+  5: "Sangat baik",
+}
+
