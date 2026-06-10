@@ -193,7 +193,27 @@ perlu diverifikasi.
       → status jadi **Berjalan**; form & tombol KPI terkunci (tidak bisa diubah)
 - [ ] Coba akses `/dashboard/kpi/periods` sebagai **Karyawan** (non-HR) → diarahkan keluar
 
-> Catatan: progres/bukti, penilaian akhir & kalibrasi = Fase B & C (belum ada).
+**Fase B — Eksekusi & Monitoring (periode `Berjalan`)** 🆕
+> Prasyarat: sudah ada periode berstatus **Berjalan** (lihat aktivasi di atas) dengan
+> minimal 1 KPI Disetujui untuk seorang karyawan.
+
+- [ ] **Karyawan** (`/dashboard/kpi`): pada KPI Disetujui muncul **progress bar** +
+      form **Update** (persen, catatan, unggah bukti)
+- [ ] Update progres ke mis. 50% (tanpa bukti) → bar berubah, riwayat bertambah
+- [ ] Update lagi + **unggah bukti** (PDF/gambar ≤5MB) → muncul link 📎 di riwayat
+- [ ] Unggah bukti > 5MB / tipe selain PDF-gambar → ditolak dengan pesan
+- [ ] **Manajer** (`/dashboard/kpi/team`, periode Berjalan): tiap KPI menampilkan
+      **% terbaru** + bar; KPI < 30% diberi badge **"Perlu perhatian"** (merah)
+- [ ] Header menampilkan **completion rate** ("X/Y KPI sudah diupdate")
+- [ ] Manajer klik link 📎 bukti → **terunduh** (otorisasi: pemilik/manajer/HR)
+- [ ] Manajer kirim **feedback** pada satu KPI → muncul di riwayat + notifikasi ke karyawan
+- [ ] Karyawan melihat **feedback atasan** di KPI-nya
+- [ ] **Notifikasi**: "Progres KPI diperbarui" (ke manajer) & "Feedback KPI dari atasan"
+      (ke karyawan) → klik mengarah ke halaman yang benar
+- [ ] **Otorisasi bukti**: karyawan lain (bukan pemilik/atasan/HR) membuka
+      `/api/kpi/evidence/<id>` langsung → **ditolak** (403)
+
+> Catatan: penilaian akhir (self+manager score), kalibrasi & lock = Fase C (belum ada).
 
 ### Onboarding/Offboarding (`/dashboard/onboarding`)
 - [ ] HR (`/onboarding/manage`): pilih karyawan + tipe → **Terapkan checklist standar**

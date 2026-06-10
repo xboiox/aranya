@@ -1,8 +1,8 @@
 # Aranya HRIS — Desain Modul KPI / Performance Management
 
-**Versi:** 0.2
-**Tanggal:** 2026-06-09
-**Status:** **Fase A selesai diimplementasi**; Fase B & C berikutnya
+**Versi:** 0.3
+**Tanggal:** 2026-06-10
+**Status:** **Fase A & B selesai diimplementasi**; Fase C berikutnya
 
 Menggantikan KPI MVP lama (satu skor self-assessment) dengan siklus manajemen
 kinerja 3 fase. Dibangun **bertahap A → B → C**, tiap fase shippable.
