@@ -32,6 +32,42 @@ perlu diverifikasi.
 
 ---
 
+## ⭐ Smoke Test Cepat (≈15 menit) — jalankan ini dulu
+
+> Jalur prioritas end-to-end untuk fitur terbaru (**KPI Fase A + B**) yang akan jadi
+> fondasi Fase C. Lakukan **berurutan** dengan 3 login bergantian. Buka **DevTools →
+> Console** sepanjang pengujian — tidak boleh ada error merah.
+> Detail tiap langkah ada di **Bagian 7 → KPI**.
+
+**A. HR menyiapkan periode** (login `hr@demo.aranya`)
+- [ ] `/dashboard/kpi/periods` → **Buat Periode** (mis. "KPI Q3 2026", Kuartalan) → muncul **Perencanaan**
+- [ ] **Kelola →** → tambah 1 **Target Perusahaan** → coba **Aktifkan** sekarang → **ditolak** (belum ada KPI 100%)
+
+**B. Manajer menyusun KPI** (login `manager@demo.aranya`)
+- [ ] `/dashboard/kpi/team` → pilih periode tadi → **Tambah KPI** untuk Budi sampai **total bobot = 100%** (indikator hijau)
+- [ ] **Kirim** semua KPI → status **Menunggu persetujuan**
+
+**C. Karyawan menyetujui** (login `budi@demo.aranya`)
+- [ ] `/dashboard/kpi` → **Setujui** semua KPI (atau **Minta revisi** 1, lalu manajer revisi+kirim, lalu setujui)
+- [ ] Cek **notifikasi** manajer ter-update (klik → diarahkan ke KPI Tim)
+
+**D. HR mengaktifkan** (login `hr@demo.aranya`)
+- [ ] **Aktifkan periode** → berhasil → status **Berjalan**
+
+**E. Eksekusi (Fase B)**
+- [ ] Karyawan (`/dashboard/kpi`): **Update** progres 1 KPI ke 50% + **unggah bukti** (PDF/gambar) → bar & riwayat update
+- [ ] Manajer (`/dashboard/kpi/team`): lihat **% terbaru**, badge **"Perlu perhatian"** bila <30%, **completion rate**; **unduh bukti**; kirim **feedback**
+- [ ] Karyawan melihat **feedback** atasan di KPI-nya
+
+**F. Cek keamanan singkat**
+- [ ] Login Karyawan → buka langsung `/dashboard/kpi/periods` → **ditarik keluar**
+- [ ] Console tetap **bersih** sepanjang A–E
+
+> Jika semua ✅ → fondasi KPI sehat untuk Fase C. Bila ada ❌, lapor (format di bawah)
+> sebelum lanjut. Checklist regresi lengkap ada di bagian-bagian berikutnya.
+
+---
+
 ## 1. Login, 2FA & Navigasi
 
 - [ ] Login `hr@demo.aranya` → diminta setup/isi **2FA** (TOTP) → berhasil masuk `/dashboard`
