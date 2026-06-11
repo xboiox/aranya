@@ -136,6 +136,18 @@ draft ──(manajer kirim)──▶ proposed ──(karyawan setuju)──▶ a
 - HR baru boleh menggeser periode ke `active` jika **semua KPI = agreed** dan
   **total bobot tiap karyawan = 100%** (validasi guard).
 
+> **Perbaikan disepakati (2026-06-12) — belum diimplementasi:**
+> Guard aktivasi saat ini hanya mengecek karyawan yang **sudah punya** KPI, sehingga
+> karyawan tanpa KPI sama sekali (mis. Siti) lolos. Keputusan:
+> - **Cakupan = Opsi A:** setiap **karyawan aktif yang punya atasan langsung**
+>   (`reportsToId` terisi) **wajib** punya KPI lengkap (bobot 100% & agreed) sebelum
+>   periode bisa diaktifkan. Karyawan tanpa atasan (puncak hierarki) dikecualikan.
+> - **Panel "Kesiapan aktivasi"** persisten di halaman detail periode: daftar blocker
+>   per karyawan ("Siti — belum ada KPI"), atau "Siap diaktifkan ✓". Validasi server
+>   tetap sumber kebenaran.
+> Catatan: bila redesign **leveling** (lihat §11) jadi dikerjakan, perbaikan ini
+> menyatu ke dalamnya (cek kelengkapan jadi 2 tingkat bobot).
+
 ---
 
 ## 6. Lingkup v1 = Fase A (yang akan dibangun pertama)
@@ -188,3 +200,28 @@ draft ──(manajer kirim)──▶ proposed ──(karyawan setuju)──▶ a
   `module2-rls.integration.test.ts`.
 - HR Analytics: metrik "rata-rata KPI" disesuaikan ke skor akhir model baru
   (atau disembunyikan sampai Fase C ada).
+
+---
+
+## 11. Usulan redesign: KPI berjenjang (Epic → Task → Sub-task) — DISKUSI
+
+**Status:** sedang didiskusikan (2026-06-12). Mengubah model KPI flat (tabel `kpis`
+satu tingkat) menjadi **pohon berjenjang**. Ini perubahan **besar** pada data model,
+scoring, dan ketiga halaman. Belum disepakati final.
+
+Struktur usulan user:
+- **Epic → Task → Sub-task** (3 tingkat).
+- **Total bobot semua Epic per karyawan = 100%.**
+- **Dalam 1 Epic, total bobot Task = 100%.**
+- **Sub-task opsional**, diisi oleh user.
+- **Predefined score** untuk tiap task (target).
+- **Score realization** (capaian aktual).
+- **Skor × bobot** → kontribusi tertimbang.
+
+Bobot efektif task = (bobot epic% × bobot task%). Skor akhir karyawan =
+Σ(bobot epic/100 × bobot task/100 × realization task).
+
+**Pertanyaan terbuka (perlu jawaban sebelum desain final):** lihat catatan diskusi —
+skala skor (1–5 vs 0–100 vs target/realisasi), siapa mengisi realization & kapan,
+peran sub-task (berbobot/berskor atau sekadar rincian), pemetaan ke siklus A/B/C,
+dan apakah benar-benar mengganti model flat (rebuild) vs v2.
