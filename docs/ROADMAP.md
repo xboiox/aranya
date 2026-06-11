@@ -230,6 +230,15 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 
 ---
 
+## Lintas-fase / Platform (backlog)
+
+- [ ] **Internationalization (i18n)** — toggle dwibahasa **EN + ID**, **default English**;
+  cakupan UI + server actions + validasi + **notifikasi & email**. Framework `next-intl`
+  (locale via cookie + kolom `users.locale`). **Dikerjakan nanti** sebagai track tersendiri
+  (jangan interleave dgn smoke-test). Rencana bertahap: lihat [I18N_DESIGN.md](./I18N_DESIGN.md)
+
+---
+
 ## Catatan
 
 - Setiap fase diselesaikan sebelum memulai fase berikutnya
