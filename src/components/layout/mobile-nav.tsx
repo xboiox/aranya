@@ -3,6 +3,7 @@ import { useState } from "react"
 import { Menu, X } from "lucide-react"
 import { NavList } from "./nav-list"
 import { UserMenu } from "./user-menu"
+import { Brand } from "./brand"
 import type { RoleName } from "@/lib/db/schema"
 
 interface Props {
@@ -23,11 +24,11 @@ export function MobileNav({ name, email, roles, activeModules = [], unreadCount 
           type="button"
           aria-label="Buka menu"
           onClick={() => setOpen(true)}
-          className="rounded-md p-1 hover:bg-sidebar-accent"
+          className="cursor-pointer rounded-md p-1 transition-colors hover:bg-sidebar-accent"
         >
           <Menu className="size-5" />
         </button>
-        <span className="text-lg font-bold">Aranya HRIS</span>
+        <Brand />
       </header>
 
       {open && (
@@ -35,12 +36,12 @@ export function MobileNav({ name, email, roles, activeModules = [], unreadCount 
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="absolute left-0 top-0 flex h-full w-72 flex-col bg-sidebar p-3 text-sidebar-foreground shadow-xl">
             <div className="mb-2 flex items-center justify-between px-1">
-              <span className="text-lg font-bold">Aranya HRIS</span>
+              <Brand />
               <button
                 type="button"
                 aria-label="Tutup menu"
                 onClick={() => setOpen(false)}
-                className="rounded-md p-1 hover:bg-sidebar-accent"
+                className="cursor-pointer rounded-md p-1 transition-colors hover:bg-sidebar-accent"
               >
                 <X className="size-5" />
               </button>

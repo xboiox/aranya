@@ -45,8 +45,11 @@ export default async function DashboardPage() {
         )}
         <Card className="opacity-60">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Clock className="size-5" /> Absensi
+            <CardTitle className="flex items-center gap-2.5 text-base">
+              <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                <Clock className="size-5" />
+              </span>
+              Absensi
             </CardTitle>
             <CardDescription>Segera hadir di Modul 1.</CardDescription>
           </CardHeader>
@@ -68,11 +71,14 @@ function QuickCard({
   desc: string
 }) {
   return (
-    <Link href={href}>
-      <Card className="transition-colors hover:border-primary">
+    <Link href={href} className="group">
+      <Card className="cursor-pointer transition-all hover:-translate-y-0.5 hover:ring-primary/40 hover:shadow-md">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            {icon} {title}
+          <CardTitle className="flex items-center gap-2.5 text-base">
+            <span className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+              {icon}
+            </span>
+            {title}
           </CardTitle>
           <CardDescription>{desc}</CardDescription>
         </CardHeader>
