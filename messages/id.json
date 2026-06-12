@@ -16,7 +16,33 @@
     "emailPlaceholder": "anda@perusahaan.com",
     "signIn": "Masuk",
     "signingIn": "Memproses...",
-    "forgotPassword": "Lupa password?"
+    "forgotPassword": "Lupa password?",
+    "backToLogin": "Kembali ke login",
+    "forgotTitle": "Lupa Password",
+    "forgotSubtitle": "Masukkan email Anda dan kami akan mengirimkan link reset password.",
+    "sendResetLink": "Kirim Link Reset",
+    "sending": "Mengirim...",
+    "emailSentTitle": "Email terkirim",
+    "emailSentBody": "Jika email Anda terdaftar, kami telah mengirimkan link reset password. Periksa inbox Anda.",
+    "resetTitle": "Reset Password",
+    "resetSubtitle": "Buat password baru untuk akun Anda.",
+    "newPassword": "Password Baru",
+    "confirmPassword": "Konfirmasi Password",
+    "passwordHint": "Min. 8 karakter, huruf kapital, dan angka",
+    "saveNewPassword": "Simpan Password Baru",
+    "saving": "Menyimpan...",
+    "loading": "Memuat...",
+    "tokenMissing": "Token reset tidak ditemukan.",
+    "requestNewLink": "Minta link baru"
+  },
+  "errors": {
+    "unexpectedTitle": "Terjadi kesalahan",
+    "unexpectedBody": "Maaf, terjadi kesalahan tak terduga. Tim kami sudah dicatat.",
+    "tryAgain": "Coba lagi",
+    "toDashboard": "Ke Dashboard",
+    "notFoundTitle": "Halaman tidak ditemukan",
+    "notFoundBody": "Halaman yang Anda cari tidak ada atau sudah dipindahkan.",
+    "backToDashboard": "Kembali ke Dashboard"
   },
   "userMenu": {
     "signOut": "Keluar"

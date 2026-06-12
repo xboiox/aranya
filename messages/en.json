@@ -16,7 +16,33 @@
     "emailPlaceholder": "you@company.com",
     "signIn": "Sign in",
     "signingIn": "Signing in...",
-    "forgotPassword": "Forgot password?"
+    "forgotPassword": "Forgot password?",
+    "backToLogin": "Back to login",
+    "forgotTitle": "Forgot password",
+    "forgotSubtitle": "Enter your email and we'll send you a reset link.",
+    "sendResetLink": "Send reset link",
+    "sending": "Sending...",
+    "emailSentTitle": "Email sent",
+    "emailSentBody": "If your email is registered, we've sent a password reset link. Please check your inbox.",
+    "resetTitle": "Reset password",
+    "resetSubtitle": "Create a new password for your account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordHint": "Min. 8 characters, with an uppercase letter and a number",
+    "saveNewPassword": "Save new password",
+    "saving": "Saving...",
+    "loading": "Loading...",
+    "tokenMissing": "Reset token not found.",
+    "requestNewLink": "Request a new link"
+  },
+  "errors": {
+    "unexpectedTitle": "Something went wrong",
+    "unexpectedBody": "Sorry, an unexpected error occurred. Our team has been notified.",
+    "tryAgain": "Try again",
+    "toDashboard": "Go to dashboard",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you're looking for doesn't exist or has been moved.",
+    "backToDashboard": "Back to dashboard"
   },
   "userMenu": {
     "signOut": "Sign out"
