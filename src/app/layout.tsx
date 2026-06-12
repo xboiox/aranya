@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import "./globals.css"
 import { Geist } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale } from "next-intl/server";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -11,16 +13,20 @@ export const metadata: Metadata = {
   description: "Human Resource Information System",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const locale = await getLocale()
+
   return (
-    <html lang="id" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
+    <html lang={locale} suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body>
-        {children}
-        <Toaster />
+        <NextIntlClientProvider>
+          {children}
+          <Toaster />
+        </NextIntlClientProvider>
       </body>
     </html>
   )

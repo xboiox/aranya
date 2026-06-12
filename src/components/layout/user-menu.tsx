@@ -1,5 +1,6 @@
 "use client"
 import { ChevronsUpDown, LogOut } from "lucide-react"
+import { useTranslations } from "next-intl"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -9,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { LocaleToggle } from "./locale-toggle"
 import { signOutAction } from "./actions"
 
 interface Props {
@@ -17,16 +19,17 @@ interface Props {
 }
 
 export function UserMenu({ name, email }: Props) {
+  const t = useTranslations()
   const initials = (name ?? email ?? "?").slice(0, 2).toUpperCase()
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger className="flex w-full items-center gap-2 rounded-md p-2 text-left hover:bg-sidebar-accent">
+      <DropdownMenuTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md p-2 text-left transition-colors hover:bg-sidebar-accent">
         <Avatar className="size-8">
           <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
         <span className="flex-1 overflow-hidden text-sm">
-          <span className="block truncate font-medium">{name ?? "Pengguna"}</span>
+          <span className="block truncate font-medium">{name ?? t("common.user")}</span>
           <span className="block truncate text-xs text-muted-foreground">{email}</span>
         </span>
         <ChevronsUpDown className="size-4 text-muted-foreground" />
@@ -36,13 +39,15 @@ export function UserMenu({ name, email }: Props) {
           <DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
+        <LocaleToggle />
+        <DropdownMenuSeparator />
         <form action={signOutAction}>
           <button
             type="submit"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors hover:bg-accent"
           >
             <LogOut className="size-4" />
-            Keluar
+            {t("userMenu.signOut")}
           </button>
         </form>
       </DropdownMenuContent>

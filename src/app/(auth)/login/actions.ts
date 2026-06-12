@@ -1,13 +1,21 @@
 "use server"
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
+import { eq } from "drizzle-orm"
 import { signIn } from "@/lib/auth"
 import { AuthError } from "next-auth"
 import { z } from "zod"
 import { rateLimit } from "@/lib/rate-limit"
+import { db } from "@/lib/db"
+import { users } from "@/lib/db/schema"
+import { isLocale, LOCALE_COOKIE } from "@/i18n/routing"
 
 const schema = z.object({
   email:    z.string().email("Email tidak valid"),
   password: z.string().min(1, "Password harus diisi"),
 })
+
+const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 
 export async function loginAction(
   _prev: { error?: string },
@@ -30,9 +38,9 @@ export async function loginAction(
 
   try {
     await signIn("credentials", {
-      email:      parsed.data.email,
-      password:   parsed.data.password,
-      redirectTo: "/dashboard",
+      email:    parsed.data.email,
+      password: parsed.data.password,
+      redirect: false,
     })
   } catch (error) {
     if (error instanceof AuthError) {
@@ -43,8 +51,22 @@ export async function loginAction(
           return { error: "Terjadi kesalahan. Silakan coba lagi." }
       }
     }
-    throw error // NEXT_REDIRECT — biarkan Next.js handle
+    throw error
   }
 
-  return {}
+  // Login sukses → sinkronkan cookie bahasa dari preferensi akun (lintas perangkat).
+  const user = await db.query.users.findFirst({
+    where: eq(users.email, parsed.data.email),
+    columns: { locale: true },
+  })
+  if (user && isLocale(user.locale)) {
+    const cookieStore = await cookies()
+    cookieStore.set(LOCALE_COOKIE, user.locale, {
+      path: "/",
+      maxAge: ONE_YEAR_SECONDS,
+      sameSite: "lax",
+    })
+  }
+
+  redirect("/dashboard")
 }

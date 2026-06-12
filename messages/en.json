@@ -1,0 +1,64 @@
+{
+  "common": {
+    "soon": "Soon",
+    "user": "User"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "id": "Indonesian"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@company.com",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "forgotPassword": "Forgot password?"
+  },
+  "userMenu": {
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "sections": {
+      "selfService": "Self-Service",
+      "management": "Management",
+      "hrOps": "HR Ops & Performance (Module 2)",
+      "payroll": "Payroll (Module 3)",
+      "platform": "Platform"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "notifications": "Notifications",
+      "attendance": "Attendance",
+      "leave": "Leave",
+      "overtime": "Overtime",
+      "organization": "Org Structure",
+      "payslip": "Payslip",
+      "leaveApprovals": "Leave Approvals",
+      "overtimeApprovals": "Overtime Approvals",
+      "employees": "Employees",
+      "payslipManage": "Manage Payslips",
+      "leaveSettings": "Leave Settings",
+      "attendanceTeam": "Team Attendance",
+      "shifts": "Work Shifts",
+      "attendanceSettings": "Attendance Settings",
+      "security": "Security",
+      "audit": "Audit Log",
+      "training": "Training & Certification",
+      "trainingManage": "Manage Training",
+      "assets": "My Assets",
+      "assetsManage": "Manage Assets",
+      "kpi": "My KPI",
+      "kpiTeam": "Team KPI",
+      "kpiPeriods": "KPI Periods",
+      "onboarding": "My Checklist",
+      "onboardingManage": "Onboarding/Offboarding",
+      "analytics": "HR Analytics",
+      "payroll": "Payroll",
+      "tenants": "Tenants"
+    }
+  }
+}

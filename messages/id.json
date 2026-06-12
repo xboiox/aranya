@@ -1,0 +1,64 @@
+{
+  "common": {
+    "soon": "Segera",
+    "user": "Pengguna"
+  },
+  "language": {
+    "label": "Bahasa",
+    "en": "English",
+    "id": "Indonesia"
+  },
+  "auth": {
+    "welcomeBack": "Selamat datang kembali",
+    "subtitle": "Masuk ke akun Anda",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "anda@perusahaan.com",
+    "signIn": "Masuk",
+    "signingIn": "Memproses...",
+    "forgotPassword": "Lupa password?"
+  },
+  "userMenu": {
+    "signOut": "Keluar"
+  },
+  "nav": {
+    "sections": {
+      "selfService": "Layanan Mandiri",
+      "management": "Manajemen",
+      "hrOps": "HR Ops & Performa (Modul 2)",
+      "payroll": "Payroll (Modul 3)",
+      "platform": "Platform"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "notifications": "Notifikasi",
+      "attendance": "Absensi",
+      "leave": "Cuti",
+      "overtime": "Lembur",
+      "organization": "Struktur Organisasi",
+      "payslip": "Slip Gaji",
+      "leaveApprovals": "Persetujuan Cuti",
+      "overtimeApprovals": "Persetujuan Lembur",
+      "employees": "Karyawan",
+      "payslipManage": "Kelola Slip Gaji",
+      "leaveSettings": "Pengaturan Cuti",
+      "attendanceTeam": "Absensi Tim",
+      "shifts": "Shift Kerja",
+      "attendanceSettings": "Pengaturan Absensi",
+      "security": "Keamanan",
+      "audit": "Audit Log",
+      "training": "Training & Sertifikasi",
+      "trainingManage": "Kelola Training",
+      "assets": "Aset Saya",
+      "assetsManage": "Kelola Aset",
+      "kpi": "KPI Saya",
+      "kpiTeam": "KPI Tim",
+      "kpiPeriods": "Periode KPI",
+      "onboarding": "Checklist Saya",
+      "onboardingManage": "Onboarding/Offboarding",
+      "analytics": "HR Analytics",
+      "payroll": "Payroll",
+      "tenants": "Tenant"
+    }
+  }
+}

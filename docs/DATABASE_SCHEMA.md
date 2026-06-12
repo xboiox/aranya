@@ -26,7 +26,7 @@ Application code menggunakan `withTenantContext()` atau `withSuperAdminContext()
 
 | Tabel | Deskripsi |
 |-------|-----------|
-| `users` | Akun login. Fields: id, name, email, password (bcrypt), emailVerified |
+| `users` | Akun login. Fields: id, name, email, password (bcrypt), emailVerified, locale (`'en'\|'id'`, default `'en'` — preferensi bahasa i18n) |
 | `accounts` | OAuth provider links (Google, dll.) |
 | `sessions` | Database sessions (JWT strategy) |
 | `verification_tokens` | Email verification tokens |
