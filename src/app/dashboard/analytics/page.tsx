@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import { auth, hasRole } from "@/lib/auth"
 import { isModuleActive } from "@/lib/modules"
 import { ModuleLocked } from "@/components/module-locked"
@@ -17,7 +18,15 @@ function StatCard({ label, value, hint }: { label: string; value: number | strin
   )
 }
 
-function BreakdownCard({ title, rows }: { title: string; rows: Breakdown[] }) {
+function BreakdownCard({
+  title,
+  rows,
+  emptyLabel,
+}: {
+  title: string
+  rows: Breakdown[]
+  emptyLabel: string
+}) {
   const max = rows.reduce((m, r) => Math.max(m, r.count), 0) || 1
   return (
     <Card>
@@ -26,7 +35,7 @@ function BreakdownCard({ title, rows }: { title: string; rows: Breakdown[] }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {rows.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Belum ada data.</p>
+          <p className="text-sm text-muted-foreground">{emptyLabel}</p>
         ) : (
           rows.map((r) => (
             <div key={r.label} className="space-y-1">
@@ -63,34 +72,29 @@ export default async function AnalyticsPage() {
   const headcount = a.totalActive + a.totalInactive
   const attendanceRate =
     a.totalActive === 0 ? 0 : Math.round((a.presentToday / a.totalActive) * 100)
+  const t = await getTranslations("analytics")
 
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">HR Analytics</h1>
-        <p className="text-sm text-muted-foreground">
-          Ringkasan tenaga kerja & aktivitas hari ini.
-        </p>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
+        <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Karyawan Aktif" value={a.totalActive} hint={`${headcount} total terdaftar`} />
-        <StatCard label="Hadir Hari Ini" value={a.presentToday} hint={`${attendanceRate}% dari aktif`} />
-        <StatCard label="Cuti Hari Ini" value={a.onLeaveToday} />
-        <StatCard label="Menunggu Persetujuan" value={a.pendingApprovals} hint="cuti + lembur" />
-        <StatCard label="Karyawan Baru (bln ini)" value={a.newHiresThisMonth} />
-        <StatCard label="Nonaktif" value={a.totalInactive} />
-        <StatCard
-          label="Rata-rata KPI"
-          value={a.avgKpiScore ?? "—"}
-          hint="skor akhir periode terkunci (1–5)"
-        />
+        <StatCard label={t("activeEmployees")} value={a.totalActive} hint={t("totalRegistered", { count: headcount })} />
+        <StatCard label={t("presentToday")} value={a.presentToday} hint={t("ofActive", { rate: attendanceRate })} />
+        <StatCard label={t("onLeaveToday")} value={a.onLeaveToday} />
+        <StatCard label={t("pendingApprovals")} value={a.pendingApprovals} hint={t("leaveOvertimeHint")} />
+        <StatCard label={t("newHires")} value={a.newHiresThisMonth} />
+        <StatCard label={t("inactive")} value={a.totalInactive} />
+        <StatCard label={t("avgKpi")} value={a.avgKpiScore ?? "—"} hint={t("avgKpiHint")} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <BreakdownCard title="Per Departemen" rows={a.byDepartment} />
-        <BreakdownCard title="Per Tipe Kontrak" rows={a.byContractType} />
-        <BreakdownCard title="Per Gender" rows={a.byGender} />
+        <BreakdownCard title={t("byDepartment")} rows={a.byDepartment} emptyLabel={t("emptyData")} />
+        <BreakdownCard title={t("byContractType")} rows={a.byContractType} emptyLabel={t("emptyData")} />
+        <BreakdownCard title={t("byGender")} rows={a.byGender} emptyLabel={t("emptyData")} />
       </div>
     </div>
   )

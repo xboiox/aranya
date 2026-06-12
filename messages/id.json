@@ -104,6 +104,53 @@
   "userMenu": {
     "signOut": "Keluar"
   },
+  "moduleLocked": {
+    "title": "Modul belum aktif",
+    "body": "Fitur ini bagian dari <imp>{module}</imp> yang belum diaktifkan untuk perusahaan Anda. Hubungi administrator Aranya untuk mengaktifkan."
+  },
+  "organization": {
+    "noCompany": "Akun tidak terhubung ke perusahaan.",
+    "title": "Struktur Organisasi",
+    "subtitle": "Hierarki pelaporan kerja ({count} karyawan aktif).",
+    "empty": "Belum ada data karyawan."
+  },
+  "audit": {
+    "title": "Audit Log",
+    "subtitleAll": "Catatan aktivitas seluruh platform.",
+    "subtitleTenant": "Catatan aktivitas perusahaan Anda.",
+    "colTime": "Waktu",
+    "colActor": "Aktor",
+    "colAction": "Aksi",
+    "colEntity": "Entitas",
+    "colTenant": "Tenant",
+    "colIp": "IP",
+    "empty": "Belum ada catatan audit.",
+    "prev": "← Sebelumnya",
+    "next": "Berikutnya →"
+  },
+  "analytics": {
+    "title": "HR Analytics",
+    "subtitle": "Ringkasan tenaga kerja & aktivitas hari ini.",
+    "emptyData": "Belum ada data.",
+    "activeEmployees": "Karyawan Aktif",
+    "totalRegistered": "{count} total terdaftar",
+    "presentToday": "Hadir Hari Ini",
+    "ofActive": "{rate}% dari aktif",
+    "onLeaveToday": "Cuti Hari Ini",
+    "pendingApprovals": "Menunggu Persetujuan",
+    "leaveOvertimeHint": "cuti + lembur",
+    "newHires": "Karyawan Baru (bln ini)",
+    "inactive": "Nonaktif",
+    "avgKpi": "Rata-rata KPI",
+    "avgKpiHint": "skor akhir periode terkunci (1–5)",
+    "byDepartment": "Per Departemen",
+    "byContractType": "Per Tipe Kontrak",
+    "byGender": "Per Gender"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "subtitle": "Kalkulator payroll (PPh 21 TER, BPJS) & slip gaji otomatis — segera hadir di Modul 3."
+  },
   "nav": {
     "sections": {
       "selfService": "Layanan Mandiri",

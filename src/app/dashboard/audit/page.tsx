@@ -1,11 +1,12 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
+import { getLocale, getTranslations } from "next-intl/server"
 import { auth, hasRole, hasAnyRole } from "@/lib/auth"
 import { listTenantAuditLogs, listAllAuditLogs, type AuditRow } from "@/modules/audit/queries"
 import { Button } from "@/components/ui/button"
 
-function timeLabel(d: Date): string {
-  return new Date(d).toLocaleString("id-ID", {
+function timeLabel(d: Date, locale: string): string {
+  return new Date(d).toLocaleString(locale === "id" ? "id-ID" : "en-US", {
     timeZone: "Asia/Jakarta",
     dateStyle: "short",
     timeStyle: "short",
@@ -22,6 +23,8 @@ export default async function AuditPage({ searchParams }: Props) {
   if (!hasAnyRole(session.user.roles, "hr_admin", "super_admin")) {
     redirect("/dashboard")
   }
+  const t = await getTranslations("audit")
+  const locale = await getLocale()
 
   const { page: pageParam } = await searchParams
   const page = Math.max(0, parseInt(pageParam ?? "0", 10) || 0)
@@ -38,9 +41,9 @@ export default async function AuditPage({ searchParams }: Props) {
   return (
     <div className="mx-auto max-w-4xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Audit Log</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Catatan aktivitas {isSuper ? "seluruh platform" : "perusahaan Anda"}.
+          {isSuper ? t("subtitleAll") : t("subtitleTenant")}
         </p>
       </div>
 
@@ -48,25 +51,25 @@ export default async function AuditPage({ searchParams }: Props) {
         <table className="min-w-full divide-y text-sm">
           <thead className="bg-muted/50">
             <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Waktu</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Aktor</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Aksi</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Entitas</th>
-              {isSuper && <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Tenant</th>}
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">IP</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colTime")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colActor")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colAction")}</th>
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colEntity")}</th>
+              {isSuper && <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colTenant")}</th>}
+              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colIp")}</th>
             </tr>
           </thead>
           <tbody className="divide-y">
             {rows.length === 0 ? (
               <tr>
                 <td colSpan={isSuper ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
-                  Belum ada catatan audit.
+                  {t("empty")}
                 </td>
               </tr>
             ) : (
               rows.map((r) => (
                 <tr key={r.id}>
-                  <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{timeLabel(r.createdAt)}</td>
+                  <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{timeLabel(r.createdAt, locale)}</td>
                   <td className="px-4 py-2">{r.actorName ?? r.actorEmail ?? "—"}</td>
                   <td className="px-4 py-2 font-mono text-xs">{r.action}</td>
                   <td className="px-4 py-2 text-muted-foreground">{r.entityType ?? "—"}</td>
@@ -82,12 +85,12 @@ export default async function AuditPage({ searchParams }: Props) {
       <div className="flex justify-between">
         {page > 0 ? (
           <Button variant="outline" size="sm" render={<Link href={`/dashboard/audit?page=${page - 1}`} />}>
-            ← Sebelumnya
+            {t("prev")}
           </Button>
         ) : <span />}
         {hasNext && (
           <Button variant="outline" size="sm" render={<Link href={`/dashboard/audit?page=${page + 1}`} />}>
-            Berikutnya →
+            {t("next")}
           </Button>
         )}
       </div>

@@ -104,6 +104,53 @@
   "userMenu": {
     "signOut": "Sign out"
   },
+  "moduleLocked": {
+    "title": "Module not enabled",
+    "body": "This feature is part of <imp>{module}</imp>, which hasn't been enabled for your company. Contact the Aranya administrator to enable it."
+  },
+  "organization": {
+    "noCompany": "Your account isn't linked to a company.",
+    "title": "Org structure",
+    "subtitle": "Reporting hierarchy ({count} active employees).",
+    "empty": "No employee data yet."
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitleAll": "Activity records for the entire platform.",
+    "subtitleTenant": "Activity records for your company.",
+    "colTime": "Time",
+    "colActor": "Actor",
+    "colAction": "Action",
+    "colEntity": "Entity",
+    "colTenant": "Tenant",
+    "colIp": "IP",
+    "empty": "No audit records yet.",
+    "prev": "← Previous",
+    "next": "Next →"
+  },
+  "analytics": {
+    "title": "HR Analytics",
+    "subtitle": "Workforce summary & today's activity.",
+    "emptyData": "No data yet.",
+    "activeEmployees": "Active employees",
+    "totalRegistered": "{count} total registered",
+    "presentToday": "Present today",
+    "ofActive": "{rate}% of active",
+    "onLeaveToday": "On leave today",
+    "pendingApprovals": "Pending approvals",
+    "leaveOvertimeHint": "leave + overtime",
+    "newHires": "New hires (this month)",
+    "inactive": "Inactive",
+    "avgKpi": "Average KPI",
+    "avgKpiHint": "final score of locked period (1–5)",
+    "byDepartment": "By department",
+    "byContractType": "By contract type",
+    "byGender": "By gender"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "subtitle": "Payroll calculator (PPh 21 TER, BPJS) & automated payslips — coming soon in Module 3."
+  },
   "nav": {
     "sections": {
       "selfService": "Self-Service",
