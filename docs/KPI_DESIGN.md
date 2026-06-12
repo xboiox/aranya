@@ -1,8 +1,10 @@
 # Aranya HRIS — Desain Modul KPI / Performance Management
 
-**Versi:** 1.0
-**Tanggal:** 2026-06-10
-**Status:** **Fase A, B & C SELESAI** (siklus penuh). v2 backlog di bawah; lalu Bonus.
+**Versi:** 2.0-draft
+**Tanggal:** 2026-06-12
+**Status:** Model **flat** (§1–9) **SELESAI dibangun**, tapi akan **diganti** oleh
+**model berjenjang Dimension→KPI→Sub-task** — spec final di **§11** (parameter sudah
+disepakati). Rebuild bersih (pra-produksi). Smoke-test fitur lain dulu / lalu rebuild KPI.
 
 Menggantikan KPI MVP lama (satu skor self-assessment) dengan siklus manajemen
 kinerja 3 fase. Dibangun **bertahap A → B → C**, tiap fase shippable.
@@ -203,25 +205,146 @@ draft ──(manajer kirim)──▶ proposed ──(karyawan setuju)──▶ a
 
 ---
 
-## 11. Usulan redesign: KPI berjenjang (Epic → Task → Sub-task) — DISKUSI
+## 11. Redesign: KPI berjenjang (Dimension → KPI → Sub-task) — SPEC FINAL
 
-**Status:** sedang didiskusikan (2026-06-12). Mengubah model KPI flat (tabel `kpis`
-satu tingkat) menjadi **pohon berjenjang**. Ini perubahan **besar** pada data model,
-scoring, dan ketiga halaman. Belum disepakati final.
+**Status:** parameter **disepakati 2026-06-12** (lewat 2 gambar scorecard nyata).
+**Menggantikan** model flat (§1–9): tabel `kpis` satu tingkat → **pohon berjenjang**
+berbasis scorecard. Perubahan **besar** (data model, scoring, ketiga halaman). Karena
+pra-produksi → **rebuild bersih**, bukan migrasi data.
 
-Struktur usulan user:
-- **Epic → Task → Sub-task** (3 tingkat).
-- **Total bobot semua Epic per karyawan = 100%.**
-- **Dalam 1 Epic, total bobot Task = 100%.**
-- **Sub-task opsional**, diisi oleh user.
-- **Predefined score** untuk tiap task (target).
-- **Score realization** (capaian aktual).
-- **Skor × bobot** → kontribusi tertimbang.
+### 11.1 Terminologi
 
-Bobot efektif task = (bobot epic% × bobot task%). Skor akhir karyawan =
-Σ(bobot epic/100 × bobot task/100 × realization task).
+| Istilah user | Istilah scorecard / produk | Keterangan |
+|--------------|---------------------------|------------|
+| Epic | **Dimension** | mis. "Financial", "Productivity" |
+| Task | **KPI** | mis. "1.1 Target 80% utilization" |
+| Sub-task | **Sub-task** | opsional, dibuat karyawan |
 
-**Pertanyaan terbuka (perlu jawaban sebelum desain final):** lihat catatan diskusi —
-skala skor (1–5 vs 0–100 vs target/realisasi), siapa mengisi realization & kapan,
-peran sub-task (berbobot/berskor atau sekadar rincian), pemetaan ke siklus A/B/C,
-dan apakah benar-benar mengganti model flat (rebuild) vs v2.
+> Usul nama UI: **Dimension → KPI → Sub-task** (selaras template HR). *Perlu konfirmasi.*
+
+### 11.2 Parameter terkunci
+
+- **Hierarki:** Dimension → KPI → Sub-task (3 tingkat).
+- **Bobot 2 tingkat:** Σ bobot **Dimension** per karyawan = **100%**; Σ bobot **KPI**
+  dalam 1 Dimension = **100%**. (Sub-task **tanpa** bobot.)
+- **Rubrik per KPI ("Predefined KPI Score"):** tabel **5 baris (skor 1–5)**, tiap level
+  = kriteria konkret. **Target selalu = skor 3.** Mis. utilization: 1=0–30%, 2=31–79%,
+  3=80%(target), 4=81–100%, 5=>100%.
+- **Notes on KPI Target:** teks bebas pada KPI (mis. "95% utilization").
+- **Sub-task:** opsional, **tanpa bobot & tanpa skor**, **dibuat karyawan saat eksekusi**
+  sebagai ceklis/rincian pribadi (tidak memengaruhi skor).
+- **Penilaian per KPI:**
+  - **Realization** (teks capaian) — diisi **karyawan** saat penilaian.
+  - **Notes on achievement** (teks) — catatan capaian.
+  - **Skor 1–5 dipilih manual** merujuk rubrik (bukan auto-hitung):
+    **SE (selfScore, karyawan)** → **managerScore (manajer)** → **finalScore (HR kalibrasi)**.
+- **Skor yang dipakai di rumus = `finalScore`** (SE & manager hanya tahapan).
+
+### 11.3 Rumus skor (bottom-up, rentang 1–5)
+
+```
+Kontribusi KPI   = finalScore × (bobotKPI / 100)
+Skor Dimension   = Σ kontribusi KPI dalam dimensi          (≤ 5, krn ΣbobotKPI=100%)
+Kontribusi Dim   = Skor Dimension × (bobotDimension / 100)
+SKOR AKHIR       = Σ kontribusi Dimension                  (rentang 1–5)
+```
+
+Contoh (dari gambar, Dimension "Financial" bobot 20%):
+| KPI | bobot KPI | final | Score×bobotKPI |
+|-----|-----------|-------|----------------|
+| 1.1 | 60% | 4 | 2.4 |
+| 1.2 | 40% | 5 | 2.0 |
+| | | **Skor Dimensi** | **4.4** |
+
+Kontribusi Dimensi = 4.4 × 20% = **0.88**. Skor akhir = Σ semua kontribusi dimensi.
+
+### 11.4 Data model
+
+> Semua tabel tenant-scoped (`tenantId` + RLS). KPI lama (flat) di-drop.
+
+**`kpi_scorecards`** — satu per (karyawan, periode); pemegang agreement
+| kolom | tipe | catatan |
+|-------|------|---------|
+| periodId | fk kpi_periods | |
+| employeeId | fk employees | unik (periodId, employeeId) |
+| managerId | text (userId) | penyusun |
+| status | text | `draft → proposed → agreed \| revision_requested` |
+| revisionNote, agreedAt | text?/ts? | |
+
+**`kpi_dimensions`** (= Epic)
+| kolom | tipe |
+|-------|------|
+| scorecardId | fk kpi_scorecards (cascade) |
+| name | text |
+| weight | integer (% , Σ per scorecard = 100) |
+
+**`kpis`** (= KPI/Task) — **restruktur** (kini di bawah dimension)
+| kolom | tipe | catatan |
+|-------|------|---------|
+| dimensionId | fk kpi_dimensions (cascade) | |
+| title | text | |
+| weight | integer | %, Σ per dimensi = 100 |
+| targetNote | text? | "Notes on KPI Target" |
+| rubric | jsonb | 5 entri `{score:1..5, criteria}` (target=3) |
+
+**`kpi_subtasks`** — opsional, milik karyawan
+| kolom | tipe |
+|-------|------|
+| kpiId | fk kpis (cascade) |
+| title | text |
+| isDone | boolean |
+| createdById | text (userId) |
+
+**`kpi_appraisals`** — per KPI (extend dari Fase C)
+| kolom | tipe | catatan |
+|-------|------|---------|
+| kpiId | fk kpis (unik) | |
+| realization | text? | capaian (karyawan) |
+| selfScore | int? | 1–5 (SE, karyawan) |
+| managerScore | int? | 1–5 (manajer) |
+| finalScore | int? | 1–5; default = managerScore; override HR |
+| selfNote, managerNote, notesOnAchievement | text? | |
+| calibratedById | text? | userId HR |
+
+**Tetap dipakai (per KPI):** `kpi_progress` (progres % + bukti) & `kpi_feedback`
+(feedback manajer) — *lihat catatan terbuka 11.7.*
+
+### 11.5 State machine & siklus
+
+Periode (HR): `planning → active → appraisal → locked` (tetap).
+**Agreement pindah ke scorecard** (bukan per-KPI): `draft → proposed → agreed | revision_requested`.
+
+- **Planning:** manajer susun scorecard (dimensions + KPIs + bobot + rubrik + target note)
+  → **Kirim** (proposed) → karyawan **Setujui / Minta revisi** (per scorecard).
+- **Active:** karyawan tambah **sub-task** (opsional) + update progres/bukti; manajer feedback.
+- **Appraisal:** karyawan isi **Realization** + **SE (1–5)** per KPI; manajer isi **managerScore**.
+- **Locked:** HR **kalibrasi** `finalScore`; skor akhir bertingkat final.
+
+### 11.6 Guard aktivasi (gabung perbaikan §5, Opsi A)
+
+Periode boleh `planning → active` bila untuk **setiap karyawan aktif ber-`reportsToId`**:
+1. punya **scorecard** berstatus **agreed**, dan
+2. **Σ bobot Dimension = 100%**, dan
+3. **tiap Dimension: Σ bobot KPI = 100%.**
+
+Karyawan tanpa atasan (puncak hierarki) dikecualikan. **Panel "Kesiapan aktivasi"**
+persisten di halaman periode menampilkan blocker per karyawan ("Siti — belum ada scorecard",
+"Budi/Financial — bobot KPI 80%").
+
+### 11.7 Catatan terbuka (minor — perlu konfirmasi)
+
+1. **Penamaan UI:** Dimension/KPI/Sub-task (template) vs Epic/Task/Sub-task (istilah Anda)?
+2. **`kpi_progress` (progres % + bukti):** dipertahankan berdampingan dengan sub-task,
+   atau cukup sub-task + realization saja (drop progres %)? Default usul: **pertahankan**
+   (bukti & feedback bernilai); sub-task = ceklis pribadi pelengkap.
+3. **Rubrik:** selalu tepat 5 baris, kriteria bebas teks (boleh kosong selain target?).
+
+### 11.8 Dampak implementasi (rebuild)
+
+- Drop/restruktur `kpis`; tambah `kpi_scorecards`, `kpi_dimensions`, `kpi_subtasks`;
+  extend `kpi_appraisals`. RLS + integration test untuk tabel baru.
+- Tulis ulang 3 halaman (karyawan/manajer/HR) untuk editor pohon 2 tingkat + input
+  realization/skor + panel kesiapan.
+- Validasi bobot 2 tingkat (murni, teruji). Rumus skor bertingkat (murni, teruji).
+- Pra-produksi → tidak ada migrasi data; demo seed diperbarui bila perlu.
+- **Bonus** menunggu model ini final (mewarisi skor akhir).
