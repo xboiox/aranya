@@ -37,7 +37,10 @@ ALTER TABLE training_records   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE assets             ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpi_periods        ENABLE ROW LEVEL SECURITY;
 ALTER TABLE company_objectives ENABLE ROW LEVEL SECURITY;
-ALTER TABLE kpis               ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_scorecards     ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_epics          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_tasks          ENABLE ROW LEVEL SECURITY;
+ALTER TABLE kpi_subtasks       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpi_progress       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpi_feedback       ENABLE ROW LEVEL SECURITY;
 ALTER TABLE kpi_appraisals     ENABLE ROW LEVEL SECURITY;
@@ -61,7 +64,10 @@ ALTER TABLE training_records   FORCE ROW LEVEL SECURITY;
 ALTER TABLE assets             FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpi_periods        FORCE ROW LEVEL SECURITY;
 ALTER TABLE company_objectives FORCE ROW LEVEL SECURITY;
-ALTER TABLE kpis               FORCE ROW LEVEL SECURITY;
+ALTER TABLE kpi_scorecards     FORCE ROW LEVEL SECURITY;
+ALTER TABLE kpi_epics          FORCE ROW LEVEL SECURITY;
+ALTER TABLE kpi_tasks          FORCE ROW LEVEL SECURITY;
+ALTER TABLE kpi_subtasks       FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpi_progress       FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpi_feedback       FORCE ROW LEVEL SECURITY;
 ALTER TABLE kpi_appraisals     FORCE ROW LEVEL SECURITY;
@@ -87,7 +93,10 @@ DROP POLICY IF EXISTS tenant_isolation ON training_records;
 DROP POLICY IF EXISTS tenant_isolation ON assets;
 DROP POLICY IF EXISTS tenant_isolation ON kpi_periods;
 DROP POLICY IF EXISTS tenant_isolation ON company_objectives;
-DROP POLICY IF EXISTS tenant_isolation ON kpis;
+DROP POLICY IF EXISTS tenant_isolation ON kpi_scorecards;
+DROP POLICY IF EXISTS tenant_isolation ON kpi_epics;
+DROP POLICY IF EXISTS tenant_isolation ON kpi_tasks;
+DROP POLICY IF EXISTS tenant_isolation ON kpi_subtasks;
 DROP POLICY IF EXISTS tenant_isolation ON kpi_progress;
 DROP POLICY IF EXISTS tenant_isolation ON kpi_feedback;
 DROP POLICY IF EXISTS tenant_isolation ON kpi_appraisals;
@@ -149,7 +158,16 @@ CREATE POLICY tenant_isolation ON kpi_periods
 CREATE POLICY tenant_isolation ON company_objectives
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 
-CREATE POLICY tenant_isolation ON kpis
+CREATE POLICY tenant_isolation ON kpi_scorecards
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON kpi_epics
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON kpi_tasks
+  USING (tenant_id = current_tenant_id() OR is_super_admin());
+
+CREATE POLICY tenant_isolation ON kpi_subtasks
   USING (tenant_id = current_tenant_id() OR is_super_admin());
 
 CREATE POLICY tenant_isolation ON kpi_progress

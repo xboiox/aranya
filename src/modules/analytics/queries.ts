@@ -4,7 +4,9 @@ import {
   leaveRequests,
   overtimeRequests,
   attendance,
-  kpis,
+  kpiTasks,
+  kpiEpics,
+  kpiScorecards,
   kpiPeriods,
   kpiAppraisals,
 } from "@/lib/db/schema"
@@ -74,8 +76,10 @@ export async function getHrAnalytics(tenantId: string): Promise<HrAnalytics> {
       tx
         .select({ value: avg(kpiAppraisals.finalScore) })
         .from(kpiAppraisals)
-        .innerJoin(kpis, eq(kpis.id, kpiAppraisals.kpiId))
-        .innerJoin(kpiPeriods, eq(kpiPeriods.id, kpis.periodId))
+        .innerJoin(kpiTasks, eq(kpiTasks.id, kpiAppraisals.taskId))
+        .innerJoin(kpiEpics, eq(kpiEpics.id, kpiTasks.epicId))
+        .innerJoin(kpiScorecards, eq(kpiScorecards.id, kpiEpics.scorecardId))
+        .innerJoin(kpiPeriods, eq(kpiPeriods.id, kpiScorecards.periodId))
         .where(and(eq(kpiPeriods.status, "locked"), isNotNull(kpiAppraisals.finalScore))),
       tx
         .select({ key: employees.department, value: count() })

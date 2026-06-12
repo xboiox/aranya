@@ -3,7 +3,8 @@ import { redirect, notFound } from "next/navigation"
 import { auth, hasRole } from "@/lib/auth"
 import { isModuleActive } from "@/lib/modules"
 import { ModuleLocked } from "@/components/module-locked"
-import { getPeriod, listObjectives } from "@/modules/kpi/queries"
+import { getPeriod, listObjectives, listActivationStates } from "@/modules/kpi/queries"
+import { activationProblems } from "@/modules/kpi/validation"
 import {
   PERIOD_STATUS_LABEL,
   PERIOD_STATUS_STYLE,
@@ -33,6 +34,7 @@ export default async function PeriodDetailPage({ params }: Props) {
 
   const objectives = await listObjectives(tenantId, id)
   const isPlanning = period.status === "planning"
+  const readiness = isPlanning ? activationProblems(await listActivationStates(tenantId, id)) : []
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -56,6 +58,19 @@ export default async function PeriodDetailPage({ params }: Props) {
           objectives={objectives.map((o) => ({ id: o.id, title: o.title, description: o.description }))}
         />
       </section>
+
+      {isPlanning && (
+        <section className="space-y-2 rounded-xl border p-4">
+          <h2 className="text-sm font-semibold">Kesiapan Aktivasi</h2>
+          {readiness.length === 0 ? (
+            <p className="text-sm text-emerald-600">✓ Siap diaktifkan — semua scorecard wajib lengkap & disetujui.</p>
+          ) : (
+            <ul className="list-inside list-disc text-sm text-amber-700">
+              {readiness.map((p, i) => <li key={i}>{p}</li>)}
+            </ul>
+          )}
+        </section>
+      )}
 
       <section className="space-y-3 rounded-xl border p-4">
         <h2 className="text-sm font-semibold">Aksi Periode</h2>

@@ -4,166 +4,89 @@ import { isModuleActive } from "@/lib/modules"
 import { ModuleLocked } from "@/components/module-locked"
 import { getEmployeeIdByUser } from "@/modules/attendance/queries"
 import {
-  listMyKpis,
-  progressForKpis,
-  feedbackForKpis,
-  appraisalsForKpis,
-  type AppraisalRow,
+  listMyScorecards,
+  getScorecardTree,
+  subtasksForTasks,
+  progressForTasks,
+  feedbackForTasks,
 } from "@/modules/kpi/queries"
-import {
-  KPI_STATUS_LABEL,
-  KPI_STATUS_STYLE,
-  SCORE_LABEL,
-  type KpiStatus,
-} from "@/modules/kpi/schema"
-import { weightedFinalScore } from "@/modules/kpi/validation"
-import KpiAgreement from "./_agreement"
-import KpiTracking, { type ProgressItem, type FeedbackItem } from "./_tracking"
-import KpiAppraisal from "./_appraisal"
+import { scorecardScore } from "@/modules/kpi/validation"
+import EmployeeScorecard, { type ScorecardView } from "./_scorecard"
 
 function dt(d: Date): string {
-  return new Date(d).toLocaleString("id-ID", {
-    timeZone: "Asia/Jakarta",
-    dateStyle: "medium",
-    timeStyle: "short",
-  })
+  return new Date(d).toLocaleString("id-ID", { timeZone: "Asia/Jakarta", dateStyle: "medium", timeStyle: "short" })
 }
 
 export default async function MyKpiPage() {
   const session = await auth()
   if (!session) redirect("/login")
   const tenantId = session.user.tenantId
-  if (!tenantId) {
-    return <p className="text-sm text-muted-foreground">Akun tidak terhubung ke perusahaan.</p>
-  }
-  if (!(await isModuleActive(tenantId, "MODULE_2"))) {
-    return <ModuleLocked moduleCode="MODULE_2" />
-  }
+  if (!tenantId) return <p className="text-sm text-muted-foreground">Akun tidak terhubung ke perusahaan.</p>
+  if (!(await isModuleActive(tenantId, "MODULE_2"))) return <ModuleLocked moduleCode="MODULE_2" />
 
   const employeeId = await getEmployeeIdByUser(tenantId, session.user.id)
-  if (!employeeId) {
-    return <p className="text-sm text-muted-foreground">Fitur KPI hanya untuk akun karyawan.</p>
-  }
+  if (!employeeId) return <p className="text-sm text-muted-foreground">Fitur KPI hanya untuk akun karyawan.</p>
 
-  const items = await listMyKpis(tenantId, employeeId)
+  const cards = await listMyScorecards(tenantId, employeeId)
 
-  // Tracking (Fase B) hanya untuk KPI agreed di periode active.
-  const trackedIds = items.filter((k) => k.periodStatus === "active" && k.status === "agreed").map((k) => k.id)
-  const [progressRows, feedbackRows] = await Promise.all([
-    progressForKpis(tenantId, trackedIds),
-    feedbackForKpis(tenantId, trackedIds),
-  ])
-  const progressByKpi = new Map<string, ProgressItem[]>()
-  for (const p of progressRows) {
-    const arr = progressByKpi.get(p.kpiId) ?? []
-    arr.push({ id: p.id, percent: p.percent, note: p.note, evidenceName: p.evidenceName, hasEvidence: p.hasEvidence, date: dt(p.createdAt) })
-    progressByKpi.set(p.kpiId, arr)
-  }
-  const feedbackByKpi = new Map<string, FeedbackItem[]>()
-  for (const f of feedbackRows) {
-    const arr = feedbackByKpi.get(f.kpiId) ?? []
-    arr.push({ id: f.id, fromName: f.fromName, message: f.message, date: dt(f.createdAt) })
-    feedbackByKpi.set(f.kpiId, arr)
-  }
+  const views: ScorecardView[] = []
+  for (const c of cards) {
+    const epics = await getScorecardTree(tenantId, c.scorecardId)
+    const taskIds = epics.flatMap((e) => e.tasks.map((t) => t.id))
+    const isActive = c.periodStatus === "active"
+    const [subs, progress, feedback] = isActive
+      ? await Promise.all([
+          subtasksForTasks(tenantId, taskIds),
+          progressForTasks(tenantId, taskIds),
+          feedbackForTasks(tenantId, taskIds),
+        ])
+      : [[], [], []]
+    const latestByTask = new Map<string, number>()
+    for (const p of progress) if (!latestByTask.has(p.taskId)) latestByTask.set(p.taskId, p.percent)
 
-  // Penilaian (Fase C) untuk KPI agreed di periode appraisal/locked.
-  const apprIds = items
-    .filter((k) => k.status === "agreed" && (k.periodStatus === "appraisal" || k.periodStatus === "locked"))
-    .map((k) => k.id)
-  const appraisalRows = await appraisalsForKpis(tenantId, apprIds)
-  const apprByKpi = new Map<string, AppraisalRow>(appraisalRows.map((a) => [a.kpiId, a]))
+    const finalTotal = scorecardScore(
+      epics.map((e) => ({ weight: e.weight, tasks: e.tasks.map((t) => ({ weight: t.weight, finalScore: t.appraisal?.finalScore ?? null })) })),
+    )
 
-  // Skor akhir tertimbang per periode terkunci (untuk banner).
-  const lockedScores = new Map<string, { weight: number; finalScore: number | null }[]>()
-  for (const k of items) {
-    if (k.periodStatus !== "locked" || k.status !== "agreed") continue
-    const arr = lockedScores.get(k.periodName) ?? []
-    arr.push({ weight: k.weight, finalScore: apprByKpi.get(k.id)?.finalScore ?? null })
-    lockedScores.set(k.periodName, arr)
+    views.push({
+      scorecardId: c.scorecardId,
+      periodName: c.periodName,
+      periodStatus: c.periodStatus,
+      status: c.status,
+      revisionNote: c.revisionNote,
+      finalTotal,
+      epics: epics.map((e) => ({
+        id: e.id,
+        name: e.name,
+        weight: e.weight,
+        tasks: e.tasks.map((t) => ({
+          id: t.id,
+          title: t.title,
+          weight: t.weight,
+          targetNote: t.targetNote,
+          rubric: t.rubric,
+          realization: t.appraisal?.realization ?? null,
+          selfScore: t.appraisal?.selfScore ?? null,
+          managerNote: t.appraisal?.managerNote ?? null,
+          finalScore: t.appraisal?.finalScore ?? null,
+          latestPercent: latestByTask.get(t.id) ?? null,
+          subtasks: subs.filter((s) => s.taskId === t.id).map((s) => ({ id: s.id, title: s.title, isDone: s.isDone })),
+          feedback: feedback.filter((f) => f.taskId === t.id).map((f) => ({ id: f.id, fromName: f.fromName, message: f.message, date: dt(f.createdAt) })),
+        })),
+      })),
+    })
   }
-  const periodScores = [...lockedScores.entries()]
-    .map(([name, rows]) => ({ name, score: weightedFinalScore(rows) }))
-    .filter((p) => p.score != null)
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">KPI Saya</h1>
-        <p className="text-sm text-muted-foreground">
-          Tinjau & setujui KPI yang diberikan atasan. Bila terlalu berat, minta revisi.
-        </p>
+        <p className="text-sm text-muted-foreground">Scorecard KPI Anda per periode.</p>
       </div>
-
-      {periodScores.map((p) => (
-        <div key={p.name} className="rounded-xl border bg-emerald-50 px-4 py-3">
-          <p className="text-sm text-emerald-900">
-            Skor akhir <span className="font-medium">{p.name}</span>:{" "}
-            <span className="text-lg font-bold">{p.score?.toFixed(2)}</span> / 5
-          </p>
-        </div>
-      ))}
-
-      {items.length === 0 ? (
-        <p className="rounded-xl border px-4 py-8 text-center text-sm text-muted-foreground">
-          Belum ada KPI untuk Anda.
-        </p>
+      {views.length === 0 ? (
+        <p className="rounded-xl border px-4 py-8 text-center text-sm text-muted-foreground">Belum ada scorecard KPI untuk Anda.</p>
       ) : (
-        <ul className="space-y-3">
-          {items.map((k) => (
-            <li key={k.id} className="rounded-xl border p-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <p className="text-xs text-muted-foreground">{k.periodName}</p>
-                  <p className="font-medium">{k.title}</p>
-                </div>
-                <span className={`inline-flex shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${KPI_STATUS_STYLE[k.status as KpiStatus]}`}>
-                  {KPI_STATUS_LABEL[k.status as KpiStatus]}
-                </span>
-              </div>
-              {k.description && <p className="mt-1 text-sm text-muted-foreground">{k.description}</p>}
-              <div className="mt-2 flex flex-wrap gap-4 text-sm">
-                <span><span className="text-muted-foreground">Bobot:</span> {k.weight}%</span>
-                {k.target && <span><span className="text-muted-foreground">Target:</span> {k.target}</span>}
-              </div>
-              {k.status === "revision_requested" && k.revisionNote && (
-                <p className="mt-2 text-xs text-muted-foreground">Catatan revisi Anda: {k.revisionNote}</p>
-              )}
-              {k.status === "proposed" && k.periodStatus === "planning" && <KpiAgreement kpiId={k.id} />}
-              {k.status === "agreed" && k.periodStatus === "active" && (
-                <KpiTracking
-                  kpiId={k.id}
-                  latestPercent={progressByKpi.get(k.id)?.[0]?.percent ?? 0}
-                  progress={progressByKpi.get(k.id) ?? []}
-                  feedback={feedbackByKpi.get(k.id) ?? []}
-                />
-              )}
-              {k.status === "agreed" && k.periodStatus === "appraisal" && (
-                <KpiAppraisal
-                  kpiId={k.id}
-                  currentSelfScore={apprByKpi.get(k.id)?.selfScore ?? null}
-                  currentSelfNote={apprByKpi.get(k.id)?.selfNote ?? null}
-                />
-              )}
-              {k.status === "agreed" && k.periodStatus === "locked" && (
-                <div className="mt-3 space-y-1 border-t pt-3 text-sm">
-                  <p>
-                    <span className="text-muted-foreground">Skor akhir:</span>{" "}
-                    <span className="font-semibold">
-                      {apprByKpi.get(k.id)?.finalScore ?? "—"}
-                      {apprByKpi.get(k.id)?.finalScore != null && ` — ${SCORE_LABEL[apprByKpi.get(k.id)!.finalScore!]}`}
-                    </span>
-                  </p>
-                  {apprByKpi.get(k.id)?.selfScore != null && (
-                    <p className="text-xs text-muted-foreground">Nilai diri Anda: {apprByKpi.get(k.id)?.selfScore}</p>
-                  )}
-                  {apprByKpi.get(k.id)?.managerNote && (
-                    <p className="text-xs text-muted-foreground">Catatan atasan: {apprByKpi.get(k.id)?.managerNote}</p>
-                  )}
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        views.map((v) => <EmployeeScorecard key={v.scorecardId} view={v} />)
       )}
     </div>
   )

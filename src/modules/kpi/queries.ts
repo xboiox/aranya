@@ -2,19 +2,30 @@ import { withTenantContext } from "@/lib/db"
 import {
   kpiPeriods,
   companyObjectives,
-  kpis,
+  kpiScorecards,
+  kpiEpics,
+  kpiTasks,
+  kpiSubtasks,
   kpiProgress,
   kpiFeedback,
   kpiAppraisals,
   employees,
   users,
+  type RubricLevel,
 } from "@/lib/db/schema"
-import { eq, and, desc, asc, inArray } from "drizzle-orm"
+import { eq, and, desc, asc, inArray, isNotNull } from "drizzle-orm"
 import { alias } from "drizzle-orm/pg-core"
+import {
+  scorecardWeightProblems,
+  type EmployeeScorecardState,
+} from "./validation"
 
 export type KpiPeriodRow = typeof kpiPeriods.$inferSelect
 export type CompanyObjectiveRow = typeof companyObjectives.$inferSelect
-export type KpiRow = typeof kpis.$inferSelect
+export type ScorecardRow = typeof kpiScorecards.$inferSelect
+export type AppraisalRow = typeof kpiAppraisals.$inferSelect
+
+// ---------- Periode & objectives (HR) ----------
 
 export async function listPeriods(tenantId: string): Promise<KpiPeriodRow[]> {
   return withTenantContext(tenantId, (tx) =>
@@ -29,123 +40,208 @@ export async function getPeriod(tenantId: string, periodId: string): Promise<Kpi
   })
 }
 
-export async function listObjectives(
-  tenantId: string,
-  periodId: string,
-): Promise<CompanyObjectiveRow[]> {
+export async function listObjectives(tenantId: string, periodId: string): Promise<CompanyObjectiveRow[]> {
   return withTenantContext(tenantId, (tx) =>
-    tx
-      .select()
-      .from(companyObjectives)
-      .where(eq(companyObjectives.periodId, periodId))
-      .orderBy(asc(companyObjectives.createdAt)),
+    tx.select().from(companyObjectives).where(eq(companyObjectives.periodId, periodId)).orderBy(asc(companyObjectives.createdAt)),
   )
 }
 
-export interface MyKpiItem {
-  id: string
-  periodName: string
-  periodStatus: string
-  title: string
-  description: string | null
-  weight: number
-  target: string | null
-  status: string
-  revisionNote: string | null
-}
+// ---------- Scorecard ----------
 
-export async function listMyKpis(tenantId: string, employeeId: string): Promise<MyKpiItem[]> {
-  return withTenantContext(tenantId, (tx) =>
-    tx
-      .select({
-        id: kpis.id,
-        periodName: kpiPeriods.name,
-        periodStatus: kpiPeriods.status,
-        title: kpis.title,
-        description: kpis.description,
-        weight: kpis.weight,
-        target: kpis.target,
-        status: kpis.status,
-        revisionNote: kpis.revisionNote,
-      })
-      .from(kpis)
-      .innerJoin(kpiPeriods, eq(kpiPeriods.id, kpis.periodId))
-      .where(eq(kpis.employeeId, employeeId))
-      .orderBy(desc(kpiPeriods.startDate), asc(kpis.createdAt)),
-  )
-}
-
-export interface TeamKpiItem {
+export interface ScorecardSummary {
   id: string
   employeeId: string
   employeeName: string | null
-  title: string
-  weight: number
-  target: string | null
+  managerId: string
+  status: string
+  revisionNote: string | null
+  periodId: string
+  periodStatus: string
+}
+
+export async function getScorecard(tenantId: string, scorecardId: string): Promise<ScorecardSummary | null> {
+  return withTenantContext(tenantId, async (tx) => {
+    const [row] = await tx
+      .select({
+        id: kpiScorecards.id,
+        employeeId: kpiScorecards.employeeId,
+        employeeName: users.name,
+        managerId: kpiScorecards.managerId,
+        status: kpiScorecards.status,
+        revisionNote: kpiScorecards.revisionNote,
+        periodId: kpiScorecards.periodId,
+        periodStatus: kpiPeriods.status,
+      })
+      .from(kpiScorecards)
+      .innerJoin(employees, eq(employees.id, kpiScorecards.employeeId))
+      .innerJoin(users, eq(users.id, employees.userId))
+      .innerJoin(kpiPeriods, eq(kpiPeriods.id, kpiScorecards.periodId))
+      .where(eq(kpiScorecards.id, scorecardId))
+      .limit(1)
+    return row ?? null
+  })
+}
+
+export async function getScorecardByEmployee(
+  tenantId: string,
+  periodId: string,
+  employeeId: string,
+): Promise<ScorecardSummary | null> {
+  return withTenantContext(tenantId, async (tx) => {
+    const sc = await tx.query.kpiScorecards.findFirst({
+      where: and(eq(kpiScorecards.periodId, periodId), eq(kpiScorecards.employeeId, employeeId)),
+    })
+    return sc ? getScorecard(tenantId, sc.id) : null
+  })
+}
+
+// Scorecard milik karyawan lintas periode (untuk halaman /dashboard/kpi).
+export interface MyScorecardItem {
+  scorecardId: string
+  periodId: string
+  periodName: string
+  periodStatus: string
   status: string
   revisionNote: string | null
 }
 
-// KPI dalam satu periode. HR → semua; manajer → bawahan langsung saja.
-export async function listTeamKpis(
+export async function listMyScorecards(tenantId: string, employeeId: string): Promise<MyScorecardItem[]> {
+  return withTenantContext(tenantId, (tx) =>
+    tx
+      .select({
+        scorecardId: kpiScorecards.id,
+        periodId: kpiScorecards.periodId,
+        periodName: kpiPeriods.name,
+        periodStatus: kpiPeriods.status,
+        status: kpiScorecards.status,
+        revisionNote: kpiScorecards.revisionNote,
+      })
+      .from(kpiScorecards)
+      .innerJoin(kpiPeriods, eq(kpiPeriods.id, kpiScorecards.periodId))
+      .where(eq(kpiScorecards.employeeId, employeeId))
+      .orderBy(desc(kpiPeriods.startDate)),
+  )
+}
+
+// Scorecard tim dalam satu periode. HR → semua; manajer → bawahan langsung.
+export interface TeamScorecardItem {
+  scorecardId: string | null
+  employeeId: string
+  employeeName: string | null
+  status: string | null
+}
+
+export async function listTeamScorecards(
   tenantId: string,
   periodId: string,
   managerEmployeeId: string,
   isHr: boolean,
-): Promise<TeamKpiItem[]> {
+): Promise<TeamScorecardItem[]> {
   return withTenantContext(tenantId, (tx) => {
+    const sc = alias(kpiScorecards, "sc")
     const base = tx
       .select({
-        id: kpis.id,
-        employeeId: kpis.employeeId,
+        scorecardId: sc.id,
+        employeeId: employees.id,
         employeeName: users.name,
-        title: kpis.title,
-        weight: kpis.weight,
-        target: kpis.target,
-        status: kpis.status,
-        revisionNote: kpis.revisionNote,
+        status: sc.status,
       })
-      .from(kpis)
-      .innerJoin(employees, eq(employees.id, kpis.employeeId))
-      .innerJoin(users, eq(users.id, employees.userId))
-      .orderBy(asc(users.name), asc(kpis.createdAt))
-
-    if (isHr) return base.where(eq(kpis.periodId, periodId))
-    return base.where(
-      and(eq(kpis.periodId, periodId), eq(employees.reportsToId, managerEmployeeId)),
-    )
-  })
-}
-
-export interface ReportOption {
-  id: string
-  name: string | null
-}
-
-// Kandidat karyawan untuk diberi KPI. HR → semua aktif; manajer → bawahan langsung.
-export async function listAssignableEmployees(
-  tenantId: string,
-  managerEmployeeId: string,
-  isHr: boolean,
-): Promise<ReportOption[]> {
-  return withTenantContext(tenantId, (tx) => {
-    const base = tx
-      .select({ id: employees.id, name: users.name })
       .from(employees)
       .innerJoin(users, eq(users.id, employees.userId))
+      .leftJoin(sc, and(eq(sc.employeeId, employees.id), eq(sc.periodId, periodId)))
+      .where(
+        isHr
+          ? eq(employees.isActive, true)
+          : and(eq(employees.isActive, true), eq(employees.reportsToId, managerEmployeeId)),
+      )
       .orderBy(asc(users.name))
-    if (isHr) return base.where(eq(employees.isActive, true))
-    return base.where(
-      and(eq(employees.isActive, true), eq(employees.reportsToId, managerEmployeeId)),
-    )
+    return base
   })
 }
 
-// ---------- Fase B: progres & feedback ----------
+// ---------- Pohon scorecard (epic → task + appraisal) ----------
+
+export interface TaskNode {
+  id: string
+  title: string
+  weight: number
+  targetNote: string | null
+  rubric: RubricLevel[]
+  appraisal: AppraisalRow | null
+}
+export interface EpicNode {
+  id: string
+  name: string
+  weight: number
+  tasks: TaskNode[]
+}
+
+export async function getScorecardTree(tenantId: string, scorecardId: string): Promise<EpicNode[]> {
+  return withTenantContext(tenantId, async (tx) => {
+    const epics = await tx
+      .select()
+      .from(kpiEpics)
+      .where(eq(kpiEpics.scorecardId, scorecardId))
+      .orderBy(asc(kpiEpics.createdAt))
+    if (epics.length === 0) return []
+
+    const epicIds = epics.map((e) => e.id)
+    const tasks = await tx
+      .select()
+      .from(kpiTasks)
+      .where(inArray(kpiTasks.epicId, epicIds))
+      .orderBy(asc(kpiTasks.createdAt))
+
+    const taskIds = tasks.map((t) => t.id)
+    const appraisals = taskIds.length
+      ? await tx.select().from(kpiAppraisals).where(inArray(kpiAppraisals.taskId, taskIds))
+      : []
+    const apprByTask = new Map(appraisals.map((a) => [a.taskId, a]))
+
+    return epics.map((e) => ({
+      id: e.id,
+      name: e.name,
+      weight: e.weight,
+      tasks: tasks
+        .filter((t) => t.epicId === e.id)
+        .map((t) => ({
+          id: t.id,
+          title: t.title,
+          weight: t.weight,
+          targetNote: t.targetNote,
+          rubric: t.rubric,
+          appraisal: apprByTask.get(t.id) ?? null,
+        })),
+    }))
+  })
+}
+
+// Semua taskId dalam sebuah scorecard (untuk batch query Fase B).
+export async function taskIdsOfScorecard(tenantId: string, scorecardId: string): Promise<string[]> {
+  return withTenantContext(tenantId, async (tx) => {
+    const rows = await tx
+      .select({ id: kpiTasks.id })
+      .from(kpiTasks)
+      .innerJoin(kpiEpics, eq(kpiEpics.id, kpiTasks.epicId))
+      .where(eq(kpiEpics.scorecardId, scorecardId))
+    return rows.map((r) => r.id)
+  })
+}
+
+// ---------- Eksekusi (Fase B) ----------
+
+export type SubtaskRow = typeof kpiSubtasks.$inferSelect
+
+export async function subtasksForTasks(tenantId: string, taskIds: string[]): Promise<SubtaskRow[]> {
+  if (taskIds.length === 0) return []
+  return withTenantContext(tenantId, (tx) =>
+    tx.select().from(kpiSubtasks).where(inArray(kpiSubtasks.taskId, taskIds)).orderBy(asc(kpiSubtasks.createdAt)),
+  )
+}
 
 export interface ProgressRow {
   id: string
-  kpiId: string
+  taskId: string
   percent: number
   note: string | null
   evidenceName: string | null
@@ -153,17 +249,13 @@ export interface ProgressRow {
   createdAt: Date
 }
 
-// Semua progres untuk sekumpulan KPI (urut terbaru dulu). Page mengelompokkan per kpiId.
-export async function progressForKpis(
-  tenantId: string,
-  kpiIds: string[],
-): Promise<ProgressRow[]> {
-  if (kpiIds.length === 0) return []
+export async function progressForTasks(tenantId: string, taskIds: string[]): Promise<ProgressRow[]> {
+  if (taskIds.length === 0) return []
   return withTenantContext(tenantId, async (tx) => {
     const rows = await tx
       .select({
         id: kpiProgress.id,
-        kpiId: kpiProgress.kpiId,
+        taskId: kpiProgress.taskId,
         percent: kpiProgress.percent,
         note: kpiProgress.note,
         evidenceName: kpiProgress.evidenceName,
@@ -171,7 +263,7 @@ export async function progressForKpis(
         createdAt: kpiProgress.createdAt,
       })
       .from(kpiProgress)
-      .where(inArray(kpiProgress.kpiId, kpiIds))
+      .where(inArray(kpiProgress.taskId, taskIds))
       .orderBy(desc(kpiProgress.createdAt))
     return rows.map(({ evidencePath, ...r }) => ({ ...r, hasEvidence: !!evidencePath }))
   })
@@ -179,34 +271,30 @@ export async function progressForKpis(
 
 export interface FeedbackRow {
   id: string
-  kpiId: string
+  taskId: string
   fromName: string | null
   message: string
   createdAt: Date
 }
 
-export async function feedbackForKpis(
-  tenantId: string,
-  kpiIds: string[],
-): Promise<FeedbackRow[]> {
-  if (kpiIds.length === 0) return []
+export async function feedbackForTasks(tenantId: string, taskIds: string[]): Promise<FeedbackRow[]> {
+  if (taskIds.length === 0) return []
   return withTenantContext(tenantId, (tx) =>
     tx
       .select({
         id: kpiFeedback.id,
-        kpiId: kpiFeedback.kpiId,
+        taskId: kpiFeedback.taskId,
         fromName: users.name,
         message: kpiFeedback.message,
         createdAt: kpiFeedback.createdAt,
       })
       .from(kpiFeedback)
       .leftJoin(users, eq(users.id, kpiFeedback.fromUserId))
-      .where(inArray(kpiFeedback.kpiId, kpiIds))
+      .where(inArray(kpiFeedback.taskId, taskIds))
       .orderBy(desc(kpiFeedback.createdAt)),
   )
 }
 
-// Data untuk otorisasi unduh bukti: pemilik KPI + manajer + path.
 export interface EvidenceMeta {
   evidencePath: string | null
   evidenceName: string | null
@@ -214,85 +302,76 @@ export interface EvidenceMeta {
   managerId: string
 }
 
-export async function getEvidenceMeta(
-  tenantId: string,
-  progressId: string,
-): Promise<EvidenceMeta | null> {
+export async function getEvidenceMeta(tenantId: string, progressId: string): Promise<EvidenceMeta | null> {
   return withTenantContext(tenantId, async (tx) => {
     const [row] = await tx
       .select({
         evidencePath: kpiProgress.evidencePath,
         evidenceName: kpiProgress.evidenceName,
         employeeUserId: employees.userId,
-        managerId: kpis.managerId,
+        managerId: kpiScorecards.managerId,
       })
       .from(kpiProgress)
-      .innerJoin(kpis, eq(kpis.id, kpiProgress.kpiId))
-      .innerJoin(employees, eq(employees.id, kpis.employeeId))
+      .innerJoin(kpiTasks, eq(kpiTasks.id, kpiProgress.taskId))
+      .innerJoin(kpiEpics, eq(kpiEpics.id, kpiTasks.epicId))
+      .innerJoin(kpiScorecards, eq(kpiScorecards.id, kpiEpics.scorecardId))
+      .innerJoin(employees, eq(employees.id, kpiScorecards.employeeId))
       .where(eq(kpiProgress.id, progressId))
       .limit(1)
     return row ?? null
   })
 }
 
-// ---------- Fase C: penilaian ----------
+// ---------- Guard HR (aktivasi & lock) ----------
 
-export type AppraisalRow = typeof kpiAppraisals.$inferSelect
+// State kesiapan aktivasi per karyawan wajib (aktif + ber-atasan).
+export async function listActivationStates(tenantId: string, periodId: string): Promise<EmployeeScorecardState[]> {
+  return withTenantContext(tenantId, async (tx) => {
+    const required = await tx
+      .select({ employeeId: employees.id, employeeName: users.name })
+      .from(employees)
+      .innerJoin(users, eq(users.id, employees.userId))
+      .where(and(eq(employees.isActive, true), isNotNull(employees.reportsToId)))
+      .orderBy(asc(users.name))
 
-export async function appraisalsForKpis(
-  tenantId: string,
-  kpiIds: string[],
-): Promise<AppraisalRow[]> {
-  if (kpiIds.length === 0) return []
-  return withTenantContext(tenantId, (tx) =>
-    tx.select().from(kpiAppraisals).where(inArray(kpiAppraisals.kpiId, kpiIds)),
-  )
+    const states: EmployeeScorecardState[] = []
+    for (const r of required) {
+      const sc = await tx.query.kpiScorecards.findFirst({
+        where: and(eq(kpiScorecards.periodId, periodId), eq(kpiScorecards.employeeId, r.employeeId)),
+      })
+      if (!sc) {
+        states.push({ employeeName: r.employeeName, hasScorecard: false, agreed: false, weightProblems: [] })
+        continue
+      }
+      const epics = await tx.select().from(kpiEpics).where(eq(kpiEpics.scorecardId, sc.id))
+      const tasks = epics.length
+        ? await tx.select({ epicId: kpiTasks.epicId, weight: kpiTasks.weight }).from(kpiTasks).where(inArray(kpiTasks.epicId, epics.map((e) => e.id)))
+        : []
+      const weightProblems = scorecardWeightProblems(
+        epics.map((e) => ({ name: e.name, weight: e.weight, taskWeights: tasks.filter((t) => t.epicId === e.id).map((t) => t.weight) })),
+      )
+      states.push({
+        employeeName: r.employeeName,
+        hasScorecard: true,
+        agreed: sc.status === "agreed",
+        weightProblems,
+      })
+    }
+    return states
+  })
 }
 
-export interface ScoreRow {
-  kpiId: string
-  employeeId: string
-  employeeName: string | null
-  weight: number
-  managerScore: number | null
-  finalScore: number | null
-}
-
-// Baris skor semua KPI sebuah periode — untuk guard lock & laporan skor akhir.
-export async function listScoreRows(tenantId: string, periodId: string): Promise<ScoreRow[]> {
+// Baris managerScore semua task sebuah periode — untuk guard lock.
+export async function listLockScoreRows(tenantId: string, periodId: string) {
   return withTenantContext(tenantId, (tx) =>
     tx
-      .select({
-        kpiId: kpis.id,
-        employeeId: kpis.employeeId,
-        employeeName: users.name,
-        weight: kpis.weight,
-        managerScore: kpiAppraisals.managerScore,
-        finalScore: kpiAppraisals.finalScore,
-      })
-      .from(kpis)
-      .innerJoin(employees, eq(employees.id, kpis.employeeId))
+      .select({ employeeName: users.name, managerScore: kpiAppraisals.managerScore })
+      .from(kpiTasks)
+      .innerJoin(kpiEpics, eq(kpiEpics.id, kpiTasks.epicId))
+      .innerJoin(kpiScorecards, eq(kpiScorecards.id, kpiEpics.scorecardId))
+      .innerJoin(employees, eq(employees.id, kpiScorecards.employeeId))
       .innerJoin(users, eq(users.id, employees.userId))
-      .leftJoin(kpiAppraisals, eq(kpiAppraisals.kpiId, kpis.id))
-      .where(eq(kpis.periodId, periodId))
-      .orderBy(asc(users.name)),
+      .leftJoin(kpiAppraisals, eq(kpiAppraisals.taskId, kpiTasks.id))
+      .where(eq(kpiScorecards.periodId, periodId)),
   )
-}
-
-// Baris bobot/status semua KPI sebuah periode — untuk guard aktivasi (HR).
-export async function listWeightRows(tenantId: string, periodId: string) {
-  return withTenantContext(tenantId, (tx) => {
-    const requesterUser = alias(users, "emp_user")
-    return tx
-      .select({
-        employeeId: kpis.employeeId,
-        employeeName: requesterUser.name,
-        weight: kpis.weight,
-        status: kpis.status,
-      })
-      .from(kpis)
-      .innerJoin(employees, eq(employees.id, kpis.employeeId))
-      .innerJoin(requesterUser, eq(requesterUser.id, employees.userId))
-      .where(eq(kpis.periodId, periodId))
-  })
 }

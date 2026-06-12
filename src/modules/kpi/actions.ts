@@ -1,11 +1,14 @@
 "use server"
 import { randomUUID } from "crypto"
 import { auth, hasRole } from "@/lib/auth"
-import { withTenantContext } from "@/lib/db"
+import { withTenantContext, type Database } from "@/lib/db"
 import {
   kpiPeriods,
   companyObjectives,
-  kpis,
+  kpiScorecards,
+  kpiEpics,
+  kpiTasks,
+  kpiSubtasks,
   kpiProgress,
   kpiFeedback,
   kpiAppraisals,
@@ -16,27 +19,28 @@ import { notify } from "@/lib/notifications"
 import { isModuleActive } from "@/lib/modules"
 import { putObject } from "@/lib/storage"
 import { GCS_PATHS } from "@/lib/gcs"
-import { getEmployeeIdByUser } from "@/modules/attendance/queries"
 import {
   periodCreateSchema,
   objectiveCreateSchema,
-  kpiCreateSchema,
-  kpiUpdateSchema,
+  epicSchema,
+  taskSchema,
+  parseRubric,
+  subtaskSchema,
   progressSchema,
   feedbackSchema,
-  selfScoreSchema,
+  realizationSchema,
   managerScoreSchema,
   calibrateSchema,
 } from "./schema"
-import { listWeightRows, listScoreRows } from "./queries"
-import { activationProblems, lockProblems } from "./validation"
-import { eq, and } from "drizzle-orm"
+import { listActivationStates, listLockScoreRows } from "./queries"
+import { activationProblems, lockProblems, scorecardWeightProblems } from "./validation"
+import { eq, and, inArray } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
-const MAX_EVIDENCE = 5 * 1024 * 1024 // 5 MB
-const EVIDENCE_EXT = /\.(pdf|png|jpe?g|webp)$/i
-
 type State = { error?: string; success?: string }
+
+const MAX_EVIDENCE = 5 * 1024 * 1024
+const EVIDENCE_EXT = /\.(pdf|png|jpe?g|webp)$/i
 
 async function ctx() {
   const session = await auth()
@@ -58,12 +62,25 @@ async function requireHr() {
   return c
 }
 
+async function periodStatusOf(tx: Database, periodId: string): Promise<string | undefined> {
+  const p = await tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) })
+  return p?.status
+}
+
+// Apakah aktor (HR atau atasan langsung) boleh mengelola scorecard karyawan ini.
+async function canManageEmployee(tx: Database, actorUserId: string, isHr: boolean, employeeId: string): Promise<boolean> {
+  if (isHr) return true
+  const emp = await tx.query.employees.findFirst({ where: eq(employees.id, employeeId) })
+  if (!emp?.reportsToId) return false
+  const me = await tx.query.employees.findFirst({ where: eq(employees.userId, actorUserId) })
+  return !!me && emp.reportsToId === me.id
+}
+
 // ---------- Periode (HR) ----------
 
 export async function createPeriod(_prev: State, formData: FormData): Promise<State> {
   const c = await requireHr()
   if ("error" in c) return { error: c.error }
-
   const parsed = periodCreateSchema.safeParse({
     name: formData.get("name"),
     type: formData.get("type"),
@@ -72,61 +89,17 @@ export async function createPeriod(_prev: State, formData: FormData): Promise<St
   })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
   const d = parsed.data
-
-  await withTenantContext(c.tenantId, async (tx) => {
-    await tx.insert(kpiPeriods).values({
-      tenantId: c.tenantId,
-      name: d.name,
-      type: d.type,
-      startDate: new Date(d.startDate),
-      endDate: new Date(d.endDate),
-    })
-  })
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.period.create",
-    entityType: "kpi_period",
-    newValues: { name: d.name, type: d.type },
-  })
+  await withTenantContext(c.tenantId, (tx) =>
+    tx.insert(kpiPeriods).values({ tenantId: c.tenantId, name: d.name, type: d.type, startDate: new Date(d.startDate), endDate: new Date(d.endDate) }),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.period.create", entityType: "kpi_period", newValues: { name: d.name } })
   revalidatePath("/dashboard/kpi/periods")
   return { success: "Periode dibuat" }
-}
-
-export async function activatePeriod(periodId: string): Promise<State> {
-  const c = await requireHr()
-  if ("error" in c) return { error: c.error }
-
-  const period = await withTenantContext(c.tenantId, (tx) =>
-    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) }),
-  )
-  if (!period) return { error: "Periode tidak ditemukan" }
-  if (period.status !== "planning") return { error: "Hanya periode perencanaan yang bisa diaktifkan" }
-
-  const rows = await listWeightRows(c.tenantId, periodId)
-  const problems = activationProblems(rows)
-  if (problems.length > 0) {
-    return { error: `Belum bisa diaktifkan — ${problems.join("; ")}` }
-  }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx.update(kpiPeriods).set({ status: "active", updatedAt: new Date() }).where(eq(kpiPeriods.id, periodId)),
-  )
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.period.activate",
-    entityType: "kpi_period",
-    entityId: periodId,
-  })
-  revalidatePath("/dashboard/kpi/periods")
-  return { success: "Periode diaktifkan" }
 }
 
 export async function deletePeriod(periodId: string): Promise<State> {
   const c = await requireHr()
   if ("error" in c) return { error: c.error }
-
   const result = await withTenantContext(c.tenantId, async (tx) => {
     const p = await tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) })
     if (!p) return { error: "Periode tidak ditemukan" as string }
@@ -135,16 +108,51 @@ export async function deletePeriod(periodId: string): Promise<State> {
     return { ok: true }
   })
   if ("error" in result) return { error: result.error }
-
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.period.delete",
-    entityType: "kpi_period",
-    entityId: periodId,
-  })
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.period.delete", entityType: "kpi_period", entityId: periodId })
   revalidatePath("/dashboard/kpi/periods")
   return { success: "Periode dihapus" }
+}
+
+async function transitionPeriod(periodId: string, from: string, to: string, action: string): Promise<State> {
+  const c = await requireHr()
+  if ("error" in c) return { error: c.error }
+  const status = await withTenantContext(c.tenantId, (tx) => periodStatusOf(tx, periodId))
+  if (status !== from) return { error: `Transisi tidak sesuai tahap (status: ${status ?? "?"})` }
+  await withTenantContext(c.tenantId, (tx) =>
+    tx.update(kpiPeriods).set({ status: to, updatedAt: new Date() }).where(eq(kpiPeriods.id, periodId)),
+  )
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action, entityType: "kpi_period", entityId: periodId })
+  revalidatePath("/dashboard/kpi/periods")
+  return {}
+}
+
+export async function activatePeriod(periodId: string): Promise<State> {
+  const c = await requireHr()
+  if ("error" in c) return { error: c.error }
+  if ((await withTenantContext(c.tenantId, (tx) => periodStatusOf(tx, periodId))) !== "planning") {
+    return { error: "Hanya periode perencanaan yang bisa diaktifkan" }
+  }
+  const problems = activationProblems(await listActivationStates(c.tenantId, periodId))
+  if (problems.length > 0) return { error: `Belum bisa diaktifkan — ${problems.join("; ")}` }
+  const r = await transitionPeriod(periodId, "planning", "active", "kpi.period.activate")
+  return r.error ? r : { success: "Periode diaktifkan" }
+}
+
+export async function startAppraisal(periodId: string): Promise<State> {
+  const r = await transitionPeriod(periodId, "active", "appraisal", "kpi.period.appraisal")
+  return r.error ? r : { success: "Periode masuk tahap penilaian" }
+}
+
+export async function lockPeriod(periodId: string): Promise<State> {
+  const c = await requireHr()
+  if ("error" in c) return { error: c.error }
+  if ((await withTenantContext(c.tenantId, (tx) => periodStatusOf(tx, periodId))) !== "appraisal") {
+    return { error: "Hanya periode penilaian yang bisa dikunci" }
+  }
+  const problems = lockProblems(await listLockScoreRows(c.tenantId, periodId))
+  if (problems.length > 0) return { error: `Belum bisa dikunci — ${problems.join("; ")}` }
+  const r = await transitionPeriod(periodId, "appraisal", "locked", "kpi.period.lock")
+  return r.error ? r : { success: "Periode dikunci" }
 }
 
 // ---------- Company objectives (HR) ----------
@@ -152,28 +160,16 @@ export async function deletePeriod(periodId: string): Promise<State> {
 export async function addObjective(_prev: State, formData: FormData): Promise<State> {
   const c = await requireHr()
   if ("error" in c) return { error: c.error }
-
   const periodId = String(formData.get("periodId") ?? "")
-  if (!periodId) return { error: "Periode tidak valid" }
-  const parsed = objectiveCreateSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-  })
+  const parsed = objectiveCreateSchema.safeParse({ title: formData.get("title"), description: formData.get("description") })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
-
   const ok = await withTenantContext(c.tenantId, async (tx) => {
     const p = await tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) })
     if (!p) return false
-    await tx.insert(companyObjectives).values({
-      tenantId: c.tenantId,
-      periodId,
-      title: parsed.data.title,
-      description: parsed.data.description ?? null,
-    })
+    await tx.insert(companyObjectives).values({ tenantId: c.tenantId, periodId, title: parsed.data.title, description: parsed.data.description ?? null })
     return true
   })
   if (!ok) return { error: "Periode tidak ditemukan" }
-
   revalidatePath(`/dashboard/kpi/periods/${periodId}`)
   return { success: "Target perusahaan ditambahkan" }
 }
@@ -188,318 +184,290 @@ export async function deleteObjective(id: string, periodId: string): Promise<Sta
   return { success: "Target dihapus" }
 }
 
-// ---------- KPI (manajer / HR) ----------
+// ---------- Scorecard (manajer/HR menyusun; karyawan menyetujui) ----------
 
-// Otorisasi: HR, atau atasan langsung dari karyawan target.
-async function canManage(
-  tenantId: string,
-  actorUserId: string,
-  isHr: boolean,
-  employeeId: string,
-): Promise<boolean> {
-  if (isHr) return true
-  return withTenantContext(tenantId, async (tx) => {
-    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, employeeId) })
-    if (!emp?.reportsToId) return false
-    const me = await tx.query.employees.findFirst({ where: eq(employees.userId, actorUserId) })
-    return !!me && emp.reportsToId === me.id
-  })
-}
-
-async function requirePlanning(tenantId: string, periodId: string): Promise<boolean> {
-  const p = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) }),
-  )
-  return p?.status === "planning"
-}
-
-export async function createKpi(_prev: State, formData: FormData): Promise<State> {
+export async function createScorecard(periodId: string, employeeId: string): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const isHr = hasRole(c.session.user.roles, "hr_admin")
-
-  const periodId = String(formData.get("periodId") ?? "")
-  if (!periodId) return { error: "Periode tidak valid" }
-  const parsed = kpiCreateSchema.safeParse({
-    employeeId: formData.get("employeeId"),
-    title: formData.get("title"),
-    description: formData.get("description"),
-    weight: formData.get("weight"),
-    target: formData.get("target"),
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    if ((await periodStatusOf(tx, periodId)) !== "planning") return { error: "Scorecard hanya dibuat saat perencanaan" as string }
+    if (!(await canManageEmployee(tx, c.session.user.id, isHr, employeeId))) return { error: "Anda hanya bisa membuat scorecard bawahan langsung" }
+    const existing = await tx.query.kpiScorecards.findFirst({ where: and(eq(kpiScorecards.periodId, periodId), eq(kpiScorecards.employeeId, employeeId)) })
+    if (existing) return { error: "Scorecard sudah ada" }
+    const [sc] = await tx.insert(kpiScorecards).values({ tenantId: c.tenantId, periodId, employeeId, managerId: c.session.user.id }).returning()
+    return { sc }
   })
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
-  const d = parsed.data
-
-  if (!(await requirePlanning(c.tenantId, periodId))) {
-    return { error: "KPI hanya bisa disusun saat periode perencanaan" }
-  }
-  if (!(await canManage(c.tenantId, c.session.user.id, isHr, d.employeeId))) {
-    return { error: "Anda hanya bisa membuat KPI untuk bawahan langsung" }
-  }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx.insert(kpis).values({
-      tenantId: c.tenantId,
-      periodId,
-      employeeId: d.employeeId,
-      managerId: c.session.user.id,
-      title: d.title,
-      description: d.description ?? null,
-      weight: d.weight,
-      target: d.target ?? null,
-    }),
-  )
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.create",
-    entityType: "kpi",
-    newValues: { employeeId: d.employeeId, title: d.title, weight: d.weight },
-  })
+  if ("error" in result) return { error: result.error }
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.scorecard.create", entityType: "kpi_scorecard", entityId: result.sc.id })
   revalidatePath("/dashboard/kpi/team")
-  return { success: "KPI dibuat (draf)" }
+  return { success: "Scorecard dibuat" }
 }
 
-// Memuat KPI + cek otorisasi & periode planning. Mengembalikan kpi atau error.
-async function loadManageableKpi(
-  tenantId: string,
-  actorUserId: string,
-  isHr: boolean,
-  kpiId: string,
-) {
-  const kpi = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
-  )
-  if (!kpi) return { error: "KPI tidak ditemukan" as string }
-  if (!(await requirePlanning(tenantId, kpi.periodId))) {
-    return { error: "Periode sudah tidak dalam perencanaan" }
-  }
-  if (!(await canManage(tenantId, actorUserId, isHr, kpi.employeeId))) {
-    return { error: "Anda tidak berwenang atas KPI ini" }
-  }
-  return { kpi }
+// Memuat scorecard + cek phase planning + authz manajer/HR.
+async function loadEditableScorecard(tx: Database, actorUserId: string, isHr: boolean, scorecardId: string) {
+  const sc = await tx.query.kpiScorecards.findFirst({ where: eq(kpiScorecards.id, scorecardId) })
+  if (!sc) return { error: "Scorecard tidak ditemukan" as string }
+  if ((await periodStatusOf(tx, sc.periodId)) !== "planning") return { error: "Periode tidak dalam perencanaan" }
+  if (!(await canManageEmployee(tx, actorUserId, isHr, sc.employeeId))) return { error: "Anda tidak berwenang atas scorecard ini" }
+  if (!["draft", "revision_requested"].includes(sc.status)) return { error: "Scorecard sudah dikirim" }
+  return { sc }
 }
 
-export async function updateKpi(kpiId: string, _prev: State, formData: FormData): Promise<State> {
+export async function deleteScorecard(scorecardId: string): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const isHr = hasRole(c.session.user.roles, "hr_admin")
-
-  const parsed = kpiUpdateSchema.safeParse({
-    title: formData.get("title"),
-    description: formData.get("description"),
-    weight: formData.get("weight"),
-    target: formData.get("target"),
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadEditableScorecard(tx, c.session.user.id, isHr, scorecardId)
+    if ("error" in r) return { error: r.error }
+    await tx.delete(kpiScorecards).where(eq(kpiScorecards.id, scorecardId))
+    return { ok: true }
   })
-  if (!parsed.success) return { error: parsed.error.errors[0].message }
-  const d = parsed.data
-
-  const loaded = await loadManageableKpi(c.tenantId, c.session.user.id, isHr, kpiId)
-  if ("error" in loaded) return { error: loaded.error }
-  if (!["draft", "revision_requested"].includes(loaded.kpi.status)) {
-    return { error: "Hanya KPI draf / minta-revisi yang bisa diubah" }
-  }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx
-      .update(kpis)
-      .set({
-        title: d.title,
-        description: d.description ?? null,
-        weight: d.weight,
-        target: d.target ?? null,
-        status: "draft",
-        revisionNote: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(kpis.id, kpiId)),
-  )
+  if ("error" in result) return { error: result.error }
   revalidatePath("/dashboard/kpi/team")
-  return { success: "KPI diperbarui" }
+  return { success: "Scorecard dihapus" }
 }
 
-export async function deleteKpi(kpiId: string): Promise<State> {
+export async function sendScorecard(scorecardId: string): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const isHr = hasRole(c.session.user.roles, "hr_admin")
-
-  const loaded = await loadManageableKpi(c.tenantId, c.session.user.id, isHr, kpiId)
-  if ("error" in loaded) return { error: loaded.error }
-  if (loaded.kpi.status !== "draft") return { error: "Hanya KPI draf yang bisa dihapus" }
-
-  await withTenantContext(c.tenantId, (tx) => tx.delete(kpis).where(eq(kpis.id, kpiId)))
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.delete",
-    entityType: "kpi",
-    entityId: kpiId,
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadEditableScorecard(tx, c.session.user.id, isHr, scorecardId)
+    if ("error" in r) return { error: r.error }
+    // Validasi bobot 2 tingkat sebelum dikirim
+    const epics = await tx.select().from(kpiEpics).where(eq(kpiEpics.scorecardId, scorecardId))
+    const tasks = epics.length ? await tx.select({ epicId: kpiTasks.epicId, weight: kpiTasks.weight }).from(kpiTasks).where(inArray(kpiTasks.epicId, epics.map((e) => e.id))) : []
+    const wp = scorecardWeightProblems(epics.map((e) => ({ name: e.name, weight: e.weight, taskWeights: tasks.filter((t) => t.epicId === e.id).map((t) => t.weight) })))
+    if (wp.length > 0) return { error: `Bobot belum valid — ${wp.join("; ")}` }
+    await tx.update(kpiScorecards).set({ status: "proposed", revisionNote: null, updatedAt: new Date() }).where(eq(kpiScorecards.id, scorecardId))
+    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, r.sc.employeeId) })
+    return { employeeUserId: emp?.userId ?? null }
   })
-  revalidatePath("/dashboard/kpi/team")
-  return { success: "KPI dihapus" }
-}
-
-export async function sendKpi(kpiId: string): Promise<State> {
-  const c = await ctx()
-  if ("error" in c) return { error: c.error }
-  const isHr = hasRole(c.session.user.roles, "hr_admin")
-
-  const loaded = await loadManageableKpi(c.tenantId, c.session.user.id, isHr, kpiId)
-  if ("error" in loaded) return { error: loaded.error }
-  if (!["draft", "revision_requested"].includes(loaded.kpi.status)) {
-    return { error: "KPI ini sudah dikirim" }
-  }
-
-  const employeeUserId = await withTenantContext(c.tenantId, async (tx) => {
-    await tx
-      .update(kpis)
-      .set({ status: "proposed", revisionNote: null, updatedAt: new Date() })
-      .where(eq(kpis.id, kpiId))
-    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, loaded.kpi.employeeId) })
-    return emp?.userId ?? null
-  })
-
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.send",
-    entityType: "kpi",
-    entityId: kpiId,
-  })
-  if (employeeUserId) {
-    await notify({
-      tenantId: c.tenantId,
-      userId: employeeUserId,
-      type: "kpi_proposed",
-      title: "KPI baru menunggu persetujuan",
-      body: `KPI "${loaded.kpi.title}" dikirim untuk Anda setujui.`,
-      data: { kpiId },
-    })
+  if ("error" in result) return { error: result.error }
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.scorecard.send", entityType: "kpi_scorecard", entityId: scorecardId })
+  if (result.employeeUserId) {
+    await notify({ tenantId: c.tenantId, userId: result.employeeUserId, type: "kpi_proposed", title: "Scorecard KPI menunggu persetujuan", body: "Atasan mengirim scorecard KPI untuk Anda setujui.", data: { scorecardId } })
   }
   revalidatePath("/dashboard/kpi/team")
-  return { success: "KPI dikirim ke karyawan" }
+  return { success: "Scorecard dikirim ke karyawan" }
 }
 
-// ---------- KPI (karyawan: setuju / minta revisi) ----------
-
-// Memuat KPI milik karyawan yang sedang login & periode planning.
-async function loadOwnedProposedKpi(tenantId: string, actorUserId: string, kpiId: string) {
-  const myEmployeeId = await getEmployeeIdByUser(tenantId, actorUserId)
-  if (!myEmployeeId) return { error: "Data karyawan tidak ditemukan" as string }
-
-  const kpi = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
-  )
-  if (!kpi) return { error: "KPI tidak ditemukan" }
-  if (kpi.employeeId !== myEmployeeId) return { error: "Ini bukan KPI Anda" }
-  if (!(await requirePlanning(tenantId, kpi.periodId))) {
-    return { error: "Periode sudah tidak dalam perencanaan" }
-  }
-  if (kpi.status !== "proposed") return { error: "KPI ini sudah diproses" }
-  return { kpi }
+// Karyawan: setujui / minta revisi scorecard miliknya (period planning, status proposed).
+async function loadOwnedProposedScorecard(tx: Database, actorUserId: string, scorecardId: string) {
+  const myEmployeeId = await getEmployeeIdByUser2(tx, actorUserId)
+  const sc = await tx.query.kpiScorecards.findFirst({ where: eq(kpiScorecards.id, scorecardId) })
+  if (!sc) return { error: "Scorecard tidak ditemukan" as string }
+  if (sc.employeeId !== myEmployeeId) return { error: "Ini bukan scorecard Anda" }
+  if ((await periodStatusOf(tx, sc.periodId)) !== "planning") return { error: "Periode tidak dalam perencanaan" }
+  if (sc.status !== "proposed") return { error: "Scorecard ini sudah diproses" }
+  return { sc }
 }
 
-export async function agreeKpi(kpiId: string): Promise<State> {
+async function getEmployeeIdByUser2(tx: Database, userId: string): Promise<string | null> {
+  const emp = await tx.query.employees.findFirst({ where: eq(employees.userId, userId) })
+  return emp?.id ?? null
+}
+
+export async function agreeScorecard(scorecardId: string): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
-
-  const loaded = await loadOwnedProposedKpi(c.tenantId, c.session.user.id, kpiId)
-  if ("error" in loaded) return { error: loaded.error }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx
-      .update(kpis)
-      .set({ status: "agreed", agreedAt: new Date(), revisionNote: null, updatedAt: new Date() })
-      .where(eq(kpis.id, kpiId)),
-  )
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.agree",
-    entityType: "kpi",
-    entityId: kpiId,
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadOwnedProposedScorecard(tx, c.session.user.id, scorecardId)
+    if ("error" in r) return { error: r.error }
+    await tx.update(kpiScorecards).set({ status: "agreed", agreedAt: new Date(), revisionNote: null, updatedAt: new Date() }).where(eq(kpiScorecards.id, scorecardId))
+    return { managerId: r.sc.managerId }
   })
-  await notify({
-    tenantId: c.tenantId,
-    userId: loaded.kpi.managerId,
-    type: "kpi_agreed",
-    title: "KPI disetujui karyawan",
-    body: `${c.session.user.name ?? "Karyawan"} menyetujui KPI "${loaded.kpi.title}".`,
-    data: { kpiId },
-  })
+  if ("error" in result) return { error: result.error }
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.scorecard.agree", entityType: "kpi_scorecard", entityId: scorecardId })
+  await notify({ tenantId: c.tenantId, userId: result.managerId, type: "kpi_agreed", title: "Scorecard KPI disetujui", body: `${c.session.user.name ?? "Karyawan"} menyetujui scorecard KPI.`, data: { scorecardId } })
   revalidatePath("/dashboard/kpi")
-  return { success: "KPI disetujui" }
+  return { success: "Scorecard disetujui" }
 }
 
-export async function requestRevisionKpi(kpiId: string, note: string): Promise<State> {
+export async function requestRevisionScorecard(scorecardId: string, note: string): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
-
-  const loaded = await loadOwnedProposedKpi(c.tenantId, c.session.user.id, kpiId)
-  if ("error" in loaded) return { error: loaded.error }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx
-      .update(kpis)
-      .set({ status: "revision_requested", revisionNote: note?.trim() || null, updatedAt: new Date() })
-      .where(eq(kpis.id, kpiId)),
-  )
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.request_revision",
-    entityType: "kpi",
-    entityId: kpiId,
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadOwnedProposedScorecard(tx, c.session.user.id, scorecardId)
+    if ("error" in r) return { error: r.error }
+    await tx.update(kpiScorecards).set({ status: "revision_requested", revisionNote: note?.trim() || null, updatedAt: new Date() }).where(eq(kpiScorecards.id, scorecardId))
+    return { managerId: r.sc.managerId }
   })
-  await notify({
-    tenantId: c.tenantId,
-    userId: loaded.kpi.managerId,
-    type: "kpi_revision",
-    title: "Karyawan minta revisi KPI",
-    body: `${c.session.user.name ?? "Karyawan"} meminta revisi KPI "${loaded.kpi.title}".${note ? ` Catatan: ${note}` : ""}`,
-    data: { kpiId },
-  })
+  if ("error" in result) return { error: result.error }
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.scorecard.revision", entityType: "kpi_scorecard", entityId: scorecardId })
+  await notify({ tenantId: c.tenantId, userId: result.managerId, type: "kpi_revision", title: "Karyawan minta revisi scorecard", body: `${c.session.user.name ?? "Karyawan"} meminta revisi scorecard KPI.${note ? ` Catatan: ${note}` : ""}`, data: { scorecardId } })
   revalidatePath("/dashboard/kpi")
   return { success: "Permintaan revisi terkirim" }
 }
 
-// ---------- Fase B: progres (karyawan) & feedback (manajer) ----------
+// ---------- Epic & Task (manajer/HR, planning) ----------
 
-// KPI milik karyawan login, status agreed, periode active.
-async function loadTrackableKpi(tenantId: string, actorUserId: string, kpiId: string) {
-  const myEmployeeId = await getEmployeeIdByUser(tenantId, actorUserId)
-  if (!myEmployeeId) return { error: "Data karyawan tidak ditemukan" as string }
-
-  const kpi = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
-  )
-  if (!kpi) return { error: "KPI tidak ditemukan" }
-  if (kpi.employeeId !== myEmployeeId) return { error: "Ini bukan KPI Anda" }
-  if (kpi.status !== "agreed") return { error: "KPI belum disetujui" }
-
-  const period = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, kpi.periodId) }),
-  )
-  if (period?.status !== "active") return { error: "Periode belum berjalan" }
-  return { kpi }
+async function loadEditableScorecardByChild(
+  tx: Database,
+  actorUserId: string,
+  isHr: boolean,
+  opts: { epicId?: string; taskId?: string },
+) {
+  let scorecardId: string | undefined
+  if (opts.taskId) {
+    const t = await tx.query.kpiTasks.findFirst({ where: eq(kpiTasks.id, opts.taskId) })
+    if (!t) return { error: "Task tidak ditemukan" as string }
+    const e = await tx.query.kpiEpics.findFirst({ where: eq(kpiEpics.id, t.epicId) })
+    scorecardId = e?.scorecardId
+  } else if (opts.epicId) {
+    const e = await tx.query.kpiEpics.findFirst({ where: eq(kpiEpics.id, opts.epicId) })
+    scorecardId = e?.scorecardId
+  }
+  if (!scorecardId) return { error: "Data tidak ditemukan" as string }
+  return loadEditableScorecard(tx, actorUserId, isHr, scorecardId)
 }
+
+export async function createEpic(scorecardId: string, _prev: State, formData: FormData): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const isHr = hasRole(c.session.user.roles, "hr_admin")
+  const parsed = epicSchema.safeParse({ name: formData.get("name"), weight: formData.get("weight") })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadEditableScorecard(tx, c.session.user.id, isHr, scorecardId)
+    if ("error" in r) return { error: r.error }
+    await tx.insert(kpiEpics).values({ tenantId: c.tenantId, scorecardId, name: parsed.data.name, weight: parsed.data.weight })
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath(`/dashboard/kpi/team/${scorecardId}`)
+  return { success: "Epic ditambahkan" }
+}
+
+export async function deleteEpic(epicId: string, scorecardId: string): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const isHr = hasRole(c.session.user.roles, "hr_admin")
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadEditableScorecardByChild(tx, c.session.user.id, isHr, { epicId })
+    if ("error" in r) return { error: r.error }
+    await tx.delete(kpiEpics).where(eq(kpiEpics.id, epicId))
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath(`/dashboard/kpi/team/${scorecardId}`)
+  return { success: "Epic dihapus" }
+}
+
+export async function createTask(epicId: string, scorecardId: string, _prev: State, formData: FormData): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const isHr = hasRole(c.session.user.roles, "hr_admin")
+  const parsed = taskSchema.safeParse({ title: formData.get("title"), weight: formData.get("weight"), targetNote: formData.get("targetNote") })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  const rubric = parseRubric(formData)
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadEditableScorecardByChild(tx, c.session.user.id, isHr, { epicId })
+    if ("error" in r) return { error: r.error }
+    await tx.insert(kpiTasks).values({ tenantId: c.tenantId, epicId, title: parsed.data.title, weight: parsed.data.weight, targetNote: parsed.data.targetNote ?? null, rubric })
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath(`/dashboard/kpi/team/${scorecardId}`)
+  return { success: "Task ditambahkan" }
+}
+
+export async function deleteTask(taskId: string, scorecardId: string): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const isHr = hasRole(c.session.user.roles, "hr_admin")
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadEditableScorecardByChild(tx, c.session.user.id, isHr, { taskId })
+    if ("error" in r) return { error: r.error }
+    await tx.delete(kpiTasks).where(eq(kpiTasks.id, taskId))
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath(`/dashboard/kpi/team/${scorecardId}`)
+  return { success: "Task dihapus" }
+}
+
+// ---------- Sub-task (karyawan, period active) ----------
+
+async function loadOwnedActiveTask(tx: Database, actorUserId: string, taskId: string) {
+  const myEmployeeId = await getEmployeeIdByUser2(tx, actorUserId)
+  const t = await tx.query.kpiTasks.findFirst({ where: eq(kpiTasks.id, taskId) })
+  if (!t) return { error: "Task tidak ditemukan" as string }
+  const e = await tx.query.kpiEpics.findFirst({ where: eq(kpiEpics.id, t.epicId) })
+  const sc = e ? await tx.query.kpiScorecards.findFirst({ where: eq(kpiScorecards.id, e.scorecardId) }) : null
+  if (!sc) return { error: "Scorecard tidak ditemukan" }
+  if (sc.employeeId !== myEmployeeId) return { error: "Ini bukan KPI Anda" }
+  return { sc, task: t }
+}
+
+export async function addSubtask(taskId: string, _prev: State, formData: FormData): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const parsed = subtaskSchema.safeParse({ title: formData.get("title") })
+  if (!parsed.success) return { error: parsed.error.errors[0].message }
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadOwnedActiveTask(tx, c.session.user.id, taskId)
+    if ("error" in r) return { error: r.error }
+    if ((await periodStatusOf(tx, r.sc.periodId)) !== "active") return { error: "Sub-task hanya saat periode berjalan" }
+    await tx.insert(kpiSubtasks).values({ tenantId: c.tenantId, taskId, title: parsed.data.title, createdById: c.session.user.id })
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath("/dashboard/kpi")
+  return { success: "Sub-task ditambahkan" }
+}
+
+export async function toggleSubtask(subtaskId: string): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const st = await tx.query.kpiSubtasks.findFirst({ where: eq(kpiSubtasks.id, subtaskId) })
+    if (!st) return { error: "Sub-task tidak ditemukan" as string }
+    const r = await loadOwnedActiveTask(tx, c.session.user.id, st.taskId)
+    if ("error" in r) return { error: r.error }
+    await tx.update(kpiSubtasks).set({ isDone: !st.isDone }).where(eq(kpiSubtasks.id, subtaskId))
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath("/dashboard/kpi")
+  return { success: "Tersimpan" }
+}
+
+export async function deleteSubtask(subtaskId: string): Promise<State> {
+  const c = await ctx()
+  if ("error" in c) return { error: c.error }
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const st = await tx.query.kpiSubtasks.findFirst({ where: eq(kpiSubtasks.id, subtaskId) })
+    if (!st) return { error: "Sub-task tidak ditemukan" as string }
+    const r = await loadOwnedActiveTask(tx, c.session.user.id, st.taskId)
+    if ("error" in r) return { error: r.error }
+    await tx.delete(kpiSubtasks).where(eq(kpiSubtasks.id, subtaskId))
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  revalidatePath("/dashboard/kpi")
+  return { success: "Sub-task dihapus" }
+}
+
+// ---------- Progres (karyawan) & feedback (manajer), period active ----------
 
 export async function addProgress(_prev: State, formData: FormData): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
-
-  const kpiId = String(formData.get("kpiId") ?? "")
-  if (!kpiId) return { error: "KPI tidak valid" }
-  const parsed = progressSchema.safeParse({
-    percent: formData.get("percent"),
-    note: formData.get("note"),
-  })
+  const taskId = String(formData.get("taskId") ?? "")
+  const parsed = progressSchema.safeParse({ percent: formData.get("percent"), note: formData.get("note") })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
 
-  const loaded = await loadTrackableKpi(c.tenantId, c.session.user.id, kpiId)
-  if ("error" in loaded) return { error: loaded.error }
+  const guard = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadOwnedActiveTask(tx, c.session.user.id, taskId)
+    if ("error" in r) return { error: r.error }
+    if ((await periodStatusOf(tx, r.sc.periodId)) !== "active") return { error: "Hanya saat periode berjalan" }
+    return { managerId: r.sc.managerId, title: r.task.title }
+  })
+  if ("error" in guard) return { error: guard.error }
 
-  // Bukti opsional
   let evidencePath: string | null = null
   let evidenceName: string | null = null
   const file = formData.get("evidence")
@@ -508,232 +476,117 @@ export async function addProgress(_prev: State, formData: FormData): Promise<Sta
     if (!EVIDENCE_EXT.test(file.name)) return { error: "Bukti harus PDF atau gambar" }
     const buffer = Buffer.from(await file.arrayBuffer())
     const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_")
-    evidencePath = GCS_PATHS.kpiEvidence(c.tenantId, kpiId, `${randomUUID()}-${safe}`)
+    evidencePath = GCS_PATHS.kpiEvidence(c.tenantId, taskId, `${randomUUID()}-${safe}`)
     evidenceName = file.name
     await putObject(evidencePath, buffer, file.type || "application/octet-stream")
   }
 
   await withTenantContext(c.tenantId, (tx) =>
-    tx.insert(kpiProgress).values({
-      tenantId: c.tenantId,
-      kpiId,
-      percent: parsed.data.percent,
-      note: parsed.data.note ?? null,
-      evidencePath,
-      evidenceName,
-      createdById: c.session.user.id,
-    }),
+    tx.insert(kpiProgress).values({ tenantId: c.tenantId, taskId, percent: parsed.data.percent, note: parsed.data.note ?? null, evidencePath, evidenceName, createdById: c.session.user.id }),
   )
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.progress",
-    entityType: "kpi",
-    entityId: kpiId,
-    newValues: { percent: parsed.data.percent },
-  })
-  await notify({
-    tenantId: c.tenantId,
-    userId: loaded.kpi.managerId,
-    type: "kpi_progress",
-    title: "Progres KPI diperbarui",
-    body: `${c.session.user.name ?? "Karyawan"} memperbarui progres "${loaded.kpi.title}" ke ${parsed.data.percent}%.`,
-    data: { kpiId },
-  })
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.progress", entityType: "kpi_task", entityId: taskId, newValues: { percent: parsed.data.percent } })
+  await notify({ tenantId: c.tenantId, userId: guard.managerId, type: "kpi_progress", title: "Progres KPI diperbarui", body: `${c.session.user.name ?? "Karyawan"} memperbarui progres "${guard.title}" ke ${parsed.data.percent}%.`, data: { taskId } })
   revalidatePath("/dashboard/kpi")
   return { success: "Progres tersimpan" }
 }
 
-export async function addFeedback(kpiId: string, message: string): Promise<State> {
+export async function addFeedback(taskId: string, message: string): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const isHr = hasRole(c.session.user.roles, "hr_admin")
-
   const parsed = feedbackSchema.safeParse({ message })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
-
-  const kpi = await withTenantContext(c.tenantId, (tx) =>
-    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
-  )
-  if (!kpi) return { error: "KPI tidak ditemukan" }
-  if (!(await canManage(c.tenantId, c.session.user.id, isHr, kpi.employeeId))) {
-    return { error: "Anda tidak berwenang atas KPI ini" }
-  }
-  const period = await withTenantContext(c.tenantId, (tx) =>
-    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, kpi.periodId) }),
-  )
-  if (period?.status !== "active") return { error: "Feedback hanya saat periode berjalan" }
-
-  const employeeUserId = await withTenantContext(c.tenantId, async (tx) => {
-    await tx.insert(kpiFeedback).values({
-      tenantId: c.tenantId,
-      kpiId,
-      fromUserId: c.session.user.id,
-      message: parsed.data.message,
-    })
-    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, kpi.employeeId) })
-    return emp?.userId ?? null
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const t = await tx.query.kpiTasks.findFirst({ where: eq(kpiTasks.id, taskId) })
+    if (!t) return { error: "Task tidak ditemukan" as string }
+    const e = await tx.query.kpiEpics.findFirst({ where: eq(kpiEpics.id, t.epicId) })
+    const sc = e ? await tx.query.kpiScorecards.findFirst({ where: eq(kpiScorecards.id, e.scorecardId) }) : null
+    if (!sc) return { error: "Scorecard tidak ditemukan" }
+    if (!(await canManageEmployee(tx, c.session.user.id, isHr, sc.employeeId))) return { error: "Anda tidak berwenang" }
+    if ((await periodStatusOf(tx, sc.periodId)) !== "active") return { error: "Feedback hanya saat periode berjalan" }
+    await tx.insert(kpiFeedback).values({ tenantId: c.tenantId, taskId, fromUserId: c.session.user.id, message: parsed.data.message })
+    const emp = await tx.query.employees.findFirst({ where: eq(employees.id, sc.employeeId) })
+    return { employeeUserId: emp?.userId ?? null }
   })
-  await logAudit({
-    tenantId: c.tenantId,
-    userId: c.session.user.id,
-    action: "kpi.feedback",
-    entityType: "kpi",
-    entityId: kpiId,
-  })
-  if (employeeUserId) {
-    await notify({
-      tenantId: c.tenantId,
-      userId: employeeUserId,
-      type: "kpi_feedback",
-      title: "Feedback KPI dari atasan",
-      body: `Atasan memberi feedback pada "${kpi.title}".`,
-      data: { kpiId },
-    })
+  if ("error" in result) return { error: result.error }
+  if (result.employeeUserId) {
+    await notify({ tenantId: c.tenantId, userId: result.employeeUserId, type: "kpi_feedback", title: "Feedback KPI dari atasan", body: "Atasan memberi feedback pada KPI Anda.", data: { taskId } })
   }
   revalidatePath("/dashboard/kpi/team")
   return { success: "Feedback terkirim" }
 }
 
-// ---------- Fase C: penilaian (appraisal) ----------
+// ---------- Penilaian (Fase C) ----------
 
-async function periodStatusOf(tenantId: string, periodId: string): Promise<string | undefined> {
-  const p = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpiPeriods.findFirst({ where: eq(kpiPeriods.id, periodId) }),
-  )
-  return p?.status
+// Upsert appraisal helper.
+async function upsertAppraisal(tx: Database, tenantId: string, taskId: string, set: Record<string, unknown>) {
+  await tx
+    .insert(kpiAppraisals)
+    .values({ tenantId, taskId, ...set })
+    .onConflictDoUpdate({ target: kpiAppraisals.taskId, set: { ...set, updatedAt: new Date() } })
 }
 
-// HR: active → appraisal
-export async function startAppraisal(periodId: string): Promise<State> {
-  const c = await requireHr()
-  if ("error" in c) return { error: c.error }
-  if ((await periodStatusOf(c.tenantId, periodId)) !== "active") {
-    return { error: "Hanya periode berjalan yang bisa masuk penilaian" }
-  }
-  await withTenantContext(c.tenantId, (tx) =>
-    tx.update(kpiPeriods).set({ status: "appraisal", updatedAt: new Date() }).where(eq(kpiPeriods.id, periodId)),
-  )
-  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.period.appraisal", entityType: "kpi_period", entityId: periodId })
-  revalidatePath("/dashboard/kpi/periods")
-  return { success: "Periode masuk tahap penilaian" }
-}
-
-// HR: appraisal → locked (guard: semua KPI sudah dinilai manajer)
-export async function lockPeriod(periodId: string): Promise<State> {
-  const c = await requireHr()
-  if ("error" in c) return { error: c.error }
-  if ((await periodStatusOf(c.tenantId, periodId)) !== "appraisal") {
-    return { error: "Hanya periode penilaian yang bisa dikunci" }
-  }
-  const rows = await listScoreRows(c.tenantId, periodId)
-  const problems = lockProblems(rows)
-  if (problems.length > 0) return { error: `Belum bisa dikunci — ${problems.join("; ")}` }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx.update(kpiPeriods).set({ status: "locked", updatedAt: new Date() }).where(eq(kpiPeriods.id, periodId)),
-  )
-  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.period.lock", entityType: "kpi_period", entityId: periodId })
-  revalidatePath("/dashboard/kpi/periods")
-  return { success: "Periode dikunci" }
-}
-
-// Memuat KPI + periode dgn status tertentu.
-async function loadKpiInStatus(tenantId: string, kpiId: string, status: string) {
-  const kpi = await withTenantContext(tenantId, (tx) =>
-    tx.query.kpis.findFirst({ where: eq(kpis.id, kpiId) }),
-  )
-  if (!kpi) return { error: "KPI tidak ditemukan" as string }
-  if ((await periodStatusOf(tenantId, kpi.periodId)) !== status) {
-    return { error: "Aksi tidak sesuai tahap periode" }
-  }
-  return { kpi }
-}
-
-// Karyawan: self-assessment (periode appraisal).
-export async function setSelfScore(_prev: State, formData: FormData): Promise<State> {
+export async function setRealizationSelf(_prev: State, formData: FormData): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
-  const kpiId = String(formData.get("kpiId") ?? "")
-  const parsed = selfScoreSchema.safeParse({
-    selfScore: formData.get("selfScore"),
-    selfNote: formData.get("selfNote"),
-  })
+  const taskId = String(formData.get("taskId") ?? "")
+  const parsed = realizationSchema.safeParse({ realization: formData.get("realization"), selfScore: formData.get("selfScore") })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
-
-  const myEmployeeId = await getEmployeeIdByUser(c.tenantId, c.session.user.id)
-  const loaded = await loadKpiInStatus(c.tenantId, kpiId, "appraisal")
-  if ("error" in loaded) return { error: loaded.error }
-  if (loaded.kpi.employeeId !== myEmployeeId) return { error: "Ini bukan KPI Anda" }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx
-      .insert(kpiAppraisals)
-      .values({ tenantId: c.tenantId, kpiId, selfScore: parsed.data.selfScore, selfNote: parsed.data.selfNote ?? null })
-      .onConflictDoUpdate({
-        target: kpiAppraisals.kpiId,
-        set: { selfScore: parsed.data.selfScore, selfNote: parsed.data.selfNote ?? null, updatedAt: new Date() },
-      }),
-  )
-  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.self_score", entityType: "kpi", entityId: kpiId })
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const r = await loadOwnedActiveTask(tx, c.session.user.id, taskId)
+    if ("error" in r) return { error: r.error }
+    if ((await periodStatusOf(tx, r.sc.periodId)) !== "appraisal") return { error: "Hanya saat tahap penilaian" }
+    await upsertAppraisal(tx, c.tenantId, taskId, { realization: parsed.data.realization ?? null, selfScore: parsed.data.selfScore })
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
   revalidatePath("/dashboard/kpi")
   return { success: "Penilaian diri tersimpan" }
 }
 
-// Manajer/HR: manager scoring (periode appraisal). finalScore default = managerScore.
 export async function setManagerScore(_prev: State, formData: FormData): Promise<State> {
   const c = await ctx()
   if ("error" in c) return { error: c.error }
   const isHr = hasRole(c.session.user.roles, "hr_admin")
-  const kpiId = String(formData.get("kpiId") ?? "")
-  const parsed = managerScoreSchema.safeParse({
-    managerScore: formData.get("managerScore"),
-    managerNote: formData.get("managerNote"),
-  })
+  const taskId = String(formData.get("taskId") ?? "")
+  const parsed = managerScoreSchema.safeParse({ managerScore: formData.get("managerScore"), managerNote: formData.get("managerNote"), notesOnAchievement: formData.get("notesOnAchievement") })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
-
-  const loaded = await loadKpiInStatus(c.tenantId, kpiId, "appraisal")
-  if ("error" in loaded) return { error: loaded.error }
-  if (!(await canManage(c.tenantId, c.session.user.id, isHr, loaded.kpi.employeeId))) {
-    return { error: "Anda tidak berwenang menilai KPI ini" }
-  }
-
-  const score = parsed.data.managerScore
-  await withTenantContext(c.tenantId, (tx) =>
-    tx
-      .insert(kpiAppraisals)
-      .values({ tenantId: c.tenantId, kpiId, managerScore: score, managerNote: parsed.data.managerNote ?? null, finalScore: score })
-      .onConflictDoUpdate({
-        target: kpiAppraisals.kpiId,
-        set: { managerScore: score, managerNote: parsed.data.managerNote ?? null, finalScore: score, updatedAt: new Date() },
-      }),
-  )
-  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.manager_score", entityType: "kpi", entityId: kpiId, newValues: { managerScore: score } })
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const t = await tx.query.kpiTasks.findFirst({ where: eq(kpiTasks.id, taskId) })
+    if (!t) return { error: "Task tidak ditemukan" as string }
+    const e = await tx.query.kpiEpics.findFirst({ where: eq(kpiEpics.id, t.epicId) })
+    const sc = e ? await tx.query.kpiScorecards.findFirst({ where: eq(kpiScorecards.id, e.scorecardId) }) : null
+    if (!sc) return { error: "Scorecard tidak ditemukan" }
+    if (!(await canManageEmployee(tx, c.session.user.id, isHr, sc.employeeId))) return { error: "Anda tidak berwenang menilai" }
+    if ((await periodStatusOf(tx, sc.periodId)) !== "appraisal") return { error: "Hanya saat tahap penilaian" }
+    const score = parsed.data.managerScore
+    await upsertAppraisal(tx, c.tenantId, taskId, { managerScore: score, managerNote: parsed.data.managerNote ?? null, notesOnAchievement: parsed.data.notesOnAchievement ?? null, finalScore: score })
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.manager_score", entityType: "kpi_task", entityId: taskId, newValues: { managerScore: parsed.data.managerScore } })
   revalidatePath("/dashboard/kpi/team")
   return { success: "Nilai tersimpan" }
 }
 
-// HR: kalibrasi finalScore (periode locked).
 export async function calibrateFinalScore(_prev: State, formData: FormData): Promise<State> {
   const c = await requireHr()
   if ("error" in c) return { error: c.error }
-  const kpiId = String(formData.get("kpiId") ?? "")
+  const taskId = String(formData.get("taskId") ?? "")
   const parsed = calibrateSchema.safeParse({ finalScore: formData.get("finalScore") })
   if (!parsed.success) return { error: parsed.error.errors[0].message }
-
-  const loaded = await loadKpiInStatus(c.tenantId, kpiId, "locked")
-  if ("error" in loaded) return { error: loaded.error }
-
-  await withTenantContext(c.tenantId, (tx) =>
-    tx
-      .insert(kpiAppraisals)
-      .values({ tenantId: c.tenantId, kpiId, finalScore: parsed.data.finalScore, calibratedById: c.session.user.id })
-      .onConflictDoUpdate({
-        target: kpiAppraisals.kpiId,
-        set: { finalScore: parsed.data.finalScore, calibratedById: c.session.user.id, updatedAt: new Date() },
-      }),
-  )
-  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.calibrate", entityType: "kpi", entityId: kpiId, newValues: { finalScore: parsed.data.finalScore } })
+  const result = await withTenantContext(c.tenantId, async (tx) => {
+    const t = await tx.query.kpiTasks.findFirst({ where: eq(kpiTasks.id, taskId) })
+    if (!t) return { error: "Task tidak ditemukan" as string }
+    const e = await tx.query.kpiEpics.findFirst({ where: eq(kpiEpics.id, t.epicId) })
+    const sc = e ? await tx.query.kpiScorecards.findFirst({ where: eq(kpiScorecards.id, e.scorecardId) }) : null
+    if (!sc) return { error: "Scorecard tidak ditemukan" }
+    if ((await periodStatusOf(tx, sc.periodId)) !== "locked") return { error: "Kalibrasi hanya saat periode terkunci" }
+    await upsertAppraisal(tx, c.tenantId, taskId, { finalScore: parsed.data.finalScore, calibratedById: c.session.user.id })
+    return { ok: true }
+  })
+  if ("error" in result) return { error: result.error }
+  await logAudit({ tenantId: c.tenantId, userId: c.session.user.id, action: "kpi.calibrate", entityType: "kpi_task", entityId: taskId, newValues: { finalScore: parsed.data.finalScore } })
   revalidatePath("/dashboard/kpi/team")
   return { success: "Skor akhir dikalibrasi" }
 }
