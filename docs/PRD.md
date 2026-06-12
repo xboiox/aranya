@@ -103,14 +103,16 @@ Fitur ini tersedia di semua modul dan tidak dijual terpisah:
 
 Fokus pada **orang**: kinerja, pengembangan, operasi HR. (Add-on independen, butuh Modul 1.)
 
-### 6.1 KPI / Performance Management (siklus 3 fase — lihat `KPI_DESIGN.md`)
-- **Perencanaan:** HR menetapkan periode (kuartalan/tahunan) + target perusahaan; **manajer
-  langsung** menyusun KPI berbobot (total 100%) untuk bawahan; karyawan **menyetujui atau minta
-  revisi** (goal agreement).
-- **Eksekusi:** karyawan memperbarui progres + mengunggah bukti; manajer memantau & memberi feedback.
-- **Penilaian:** karyawan self-assessment (1–5 + kendala); manajer menilai (1–5); HR mengunci
+### 6.1 KPI / Performance Management (scorecard berjenjang — lihat `KPI_DESIGN.md §11`)
+- **Struktur:** scorecard per karyawan = **Epic → Task → Sub-task**. Bobot 2 tingkat (Σ Epic =
+  100%, Σ Task per Epic = 100%). Tiap Task punya **rubrik skor 1–5** (target = 3) + target note.
+  Sub-task opsional dibuat karyawan.
+- **Perencanaan:** HR menetapkan periode + target perusahaan; **manajer langsung** menyusun
+  scorecard untuk bawahan; karyawan **menyetujui atau minta revisi** (goal agreement).
+- **Eksekusi:** karyawan menambah sub-task, memperbarui progres + mengunggah bukti; manajer feedback.
+- **Penilaian:** karyawan isi realization + self score (1–5); manajer menilai (1–5); HR mengunci
   periode & mengkalibrasi skor akhir.
-- **Skor akhir** = Σ(bobot/100 × skor final), rentang 1–5 → referensi perhitungan **Bonus**.
+- **Skor akhir** = Σ(bobot epic × Σ(bobot task × skor final)), rentang 1–5 → referensi **Bonus**.
 
 ### 6.2 Bonus Management
 - HR Admin mengkonfigurasi formula bonus per perusahaan/divisi/jabatan

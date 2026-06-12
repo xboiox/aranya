@@ -142,13 +142,18 @@ user_roles: { userId, roleId: employee_role_id, tenantId }
 | `onboarding_tasks` | Checklist onboarding/offboarding per karyawan |
 | `kpi_periods` | Siklus KPI: `planning → active → appraisal → locked` |
 | `company_objectives` | Target perusahaan top-down per periode (referensi) |
-| `kpis` | KPI per karyawan: bobot, target, status `draft/proposed/agreed/revision_requested` |
-| `kpi_progress` | Update progres (Fase B) + bukti (storage) |
-| `kpi_feedback` | Feedback manajer saat monitoring |
-| `kpi_appraisals` | Penilaian akhir per KPI: self/manager/final score (1–5) + kalibrasi HR |
+| `kpi_scorecards` | Scorecard per (karyawan, periode); pemegang status agreement `draft/proposed/agreed/revision_requested` |
+| `kpi_epics` | Epic (dimensi) di bawah scorecard: bobot (Σ per scorecard = 100%) |
+| `kpi_tasks` | Task (KPI) di bawah epic: bobot (Σ per epic = 100%), `target_note`, rubrik (jsonb 1–5, target=3) |
+| `kpi_subtasks` | Sub-task opsional di bawah task; dibuat karyawan (tanpa bobot/skor) |
+| `kpi_progress` | Update progres per task + bukti (storage) |
+| `kpi_feedback` | Feedback manajer per task |
+| `kpi_appraisals` | Penilaian per task: realization + self/manager/final score (1–5) + kalibrasi HR |
 
 > Semua tabel di atas tenant-scoped (`tenant_id` + RLS, lihat `rls.sql`).
-> KPI lama `kpi_evaluations` (self-score MVP) sudah di-drop & diganti model 3 fase.
+> Model KPI **berjenjang Epic→Task→Sub-task** (lihat `KPI_DESIGN.md §11`). Skor akhir =
+> Σ(bobot epic × Σ(bobot task × finalScore)), rentang 1–5. Model flat lama (`kpis`) &
+> MVP `kpi_evaluations` sudah di-drop.
 
 ---
 
@@ -188,7 +193,7 @@ src/lib/db/schema/
 ├── training.ts      trainingRecords
 ├── asset.ts         assets
 ├── onboarding.ts    onboardingTasks
-├── kpi.ts           kpiPeriods, companyObjectives, kpis, kpiProgress, kpiFeedback, kpiAppraisals
+├── kpi.ts           kpiPeriods, companyObjectives, kpiScorecards, kpiEpics, kpiTasks, kpiSubtasks, kpiProgress, kpiFeedback, kpiAppraisals
 └── index.ts         re-export semua
 ```
 

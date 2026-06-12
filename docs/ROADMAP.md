@@ -190,13 +190,14 @@ lsof -nP -iTCP:5432 -sTCP:LISTEN
 - [x] Asset Management: catat aset perusahaan (laptop/HP/kendaraan/kartu/lainnya), pinjamkan/
   kembalikan ke karyawan, hapus; karyawan lihat aset yang dipinjam. `/dashboard/assets` + `/manage`
   (ter-gate MODULE_2; integrasi offboarding = follow-up)
-- [x] KPI / Performance Management — siklus penuh 3 fase (lihat `docs/KPI_DESIGN.md`):
-  - **Fase A** Perencanaan: HR atur periode + target perusahaan; manajer susun KPI berbobot
-    (total 100%) untuk bawahan; karyawan setujui / minta revisi; guard aktivasi.
-  - **Fase B** Eksekusi: karyawan update progres + unggah bukti; manajer monitoring + feedback;
-    completion rate.
-  - **Fase C** Penilaian: self-assessment + nilai manajer (1–5); HR lock + kalibrasi; skor akhir
-    tertimbang Σ(bobot×final). `/dashboard/kpi` (karyawan) + `/kpi/team` (manajer) + `/kpi/periods` (HR)
+- [x] KPI / Performance Management — scorecard **berjenjang Epic→Task→Sub-task** (lihat
+  `docs/KPI_DESIGN.md §11`); bobot 2 tingkat (Σ epic=100%, Σ task/epic=100%), rubrik skor 1–5 (target=3):
+  - **Perencanaan:** HR atur periode + target perusahaan; manajer susun scorecard (epic+task+rubrik)
+    untuk bawahan; karyawan setujui / minta revisi; guard aktivasi Opsi A + panel kesiapan.
+  - **Eksekusi:** karyawan tambah sub-task + update progres + unggah bukti; manajer feedback.
+  - **Penilaian:** karyawan realization + SE (1–5); manajer nilai (1–5); HR lock + kalibrasi;
+    skor akhir tertimbang Σ(bobot epic × Σ(bobot task × final)). `/dashboard/kpi` (karyawan) +
+    `/kpi/team`+`/[scorecard]` (manajer) + `/kpi/periods` (HR)
   - (ter-gate MODULE_2; v2: cascade formal, template, reminder otomatis, laporan PDF)
 - [x] Onboarding/Offboarding checklist: HR kelola tugas per karyawan (tambah/centang/hapus +
   template standar), karyawan lihat progres. `/dashboard/onboarding` + `/manage` (ter-gate MODULE_2;

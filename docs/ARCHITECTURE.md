@@ -135,11 +135,12 @@
 ```
 HR Admin konfigurasi formula bonus
           ↓
-KPI period selesai → score KPI tercatat dan diapprove
+KPI period dikunci → skor akhir tertimbang (1–5) per karyawan tercatat
+  (scorecard Epic→Task; Σ(bobot epic × Σ(bobot task × finalScore)))
           ↓
 HR Admin trigger "Hitung Bonus" untuk periode tertentu
           ↓
-Sistem: formula + KPI score + gaji pokok → generate angka bonus
+Sistem: formula + skor akhir KPI + gaji pokok → generate angka bonus
           ↓
 HR Admin review & approve hasil kalkulasi
           ↓
