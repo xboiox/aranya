@@ -73,7 +73,33 @@
   },
   "dashboard": {
     "disabledTitle": "Akses Dinonaktifkan",
-    "disabledBody": "Perusahaan Anda saat ini dinonaktifkan. Hubungi administrator Aranya untuk informasi lebih lanjut."
+    "disabledBody": "Perusahaan Anda saat ini dinonaktifkan. Hubungi administrator Aranya untuk informasi lebih lanjut.",
+    "greeting": "Halo, {name}",
+    "welcome": "Selamat datang di Aranya HRIS.",
+    "tenantsTitle": "Kelola Tenant",
+    "tenantsDesc": "Buat & kelola perusahaan, kirim undangan HR Admin.",
+    "securityTitle": "Keamanan",
+    "securityDesc": "Reset 2FA karyawan yang kehilangan akses.",
+    "attendanceTitle": "Absensi",
+    "attendanceComingSoon": "Segera hadir di Modul 1."
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "none": "Tidak ada notifikasi.",
+    "empty": "Belum ada notifikasi.",
+    "markAll": "Tandai semua dibaca",
+    "mark": "Tandai",
+    "viewDetail": "Lihat detail →"
+  },
+  "security": {
+    "title": "Keamanan",
+    "subtitle": "Reset 2FA karyawan yang kehilangan akses ke aplikasi authenticator.",
+    "cardTitle": "Reset 2FA Karyawan",
+    "cardDesc": "Masukkan email karyawan. Record 2FA akan dihapus dan mereka akan diminta mendaftar ulang saat login berikutnya.",
+    "emailLabel": "Email Karyawan",
+    "emailPlaceholder": "karyawan@perusahaan.com",
+    "processing": "Memproses...",
+    "resetButton": "Reset 2FA"
   },
   "userMenu": {
     "signOut": "Keluar"

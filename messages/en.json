@@ -73,7 +73,33 @@
   },
   "dashboard": {
     "disabledTitle": "Access disabled",
-    "disabledBody": "Your company is currently disabled. Contact the Aranya administrator for more information."
+    "disabledBody": "Your company is currently disabled. Contact the Aranya administrator for more information.",
+    "greeting": "Hi, {name}",
+    "welcome": "Welcome to Aranya HRIS.",
+    "tenantsTitle": "Manage tenants",
+    "tenantsDesc": "Create & manage companies, send HR Admin invitations.",
+    "securityTitle": "Security",
+    "securityDesc": "Reset 2FA for employees who lost access.",
+    "attendanceTitle": "Attendance",
+    "attendanceComingSoon": "Coming soon in Module 1."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "none": "No notifications.",
+    "empty": "No notifications yet.",
+    "markAll": "Mark all as read",
+    "mark": "Mark",
+    "viewDetail": "View detail →"
+  },
+  "security": {
+    "title": "Security",
+    "subtitle": "Reset 2FA for employees who lost access to their authenticator app.",
+    "cardTitle": "Reset employee 2FA",
+    "cardDesc": "Enter the employee's email. Their 2FA record will be deleted and they'll be asked to set it up again on next login.",
+    "emailLabel": "Employee email",
+    "emailPlaceholder": "employee@company.com",
+    "processing": "Processing...",
+    "resetButton": "Reset 2FA"
   },
   "userMenu": {
     "signOut": "Sign out"

@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import { auth, hasRole, hasAnyRole } from "@/lib/auth"
 import {
   Card,
@@ -14,16 +15,16 @@ export default async function DashboardPage() {
   const roles = session?.user.roles ?? []
   const isSuper = hasRole(roles, "super_admin")
   const isHrOrSuper = hasAnyRole(roles, "hr_admin", "super_admin")
+  const t = await getTranslations("dashboard")
+  const tCommon = await getTranslations("common")
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">
-          Halo, {session?.user?.name ?? "Pengguna"}
+          {t("greeting", { name: session?.user?.name ?? tCommon("user") })}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Selamat datang di Aranya HRIS.
-        </p>
+        <p className="text-sm text-muted-foreground">{t("welcome")}</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -31,16 +32,16 @@ export default async function DashboardPage() {
           <QuickCard
             href="/tenants"
             icon={<Building2 className="size-5" />}
-            title="Kelola Tenant"
-            desc="Buat & kelola perusahaan, kirim undangan HR Admin."
+            title={t("tenantsTitle")}
+            desc={t("tenantsDesc")}
           />
         )}
         {isHrOrSuper && (
           <QuickCard
             href="/dashboard/security"
             icon={<Shield className="size-5" />}
-            title="Keamanan"
-            desc="Reset 2FA karyawan yang kehilangan akses."
+            title={t("securityTitle")}
+            desc={t("securityDesc")}
           />
         )}
         <Card className="opacity-60">
@@ -49,9 +50,9 @@ export default async function DashboardPage() {
               <span className="flex size-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                 <Clock className="size-5" />
               </span>
-              Absensi
+              {t("attendanceTitle")}
             </CardTitle>
-            <CardDescription>Segera hadir di Modul 1.</CardDescription>
+            <CardDescription>{t("attendanceComingSoon")}</CardDescription>
           </CardHeader>
         </Card>
       </div>
