@@ -2,8 +2,9 @@
 
 **Versi:** 2.0
 **Tanggal:** 2026-06-12
-**Status:** **REBUILD berjalan.** Model flat (§1–9) diganti oleh **model berjenjang
-Epic→Task→Sub-task** — spec final & terkunci di **§11**. Rebuild bersih (pra-produksi).
+**Status:** **REBUILD SELESAI.** Model berjenjang **Epic→Task→Sub-task** (§11)
+sudah diimplementasi penuh (skema, modul, 5 halaman, RLS, tes). Model flat (§1–9)
+tinggal sebagai catatan historis. Menunggu smoke-test, lalu **Bonus**.
 
 Menggantikan KPI MVP lama (satu skor self-assessment) dengan siklus manajemen
 kinerja 3 fase. Dibangun **bertahap A → B → C**, tiap fase shippable.

@@ -11,8 +11,8 @@ perlu diverifikasi.
 
 ## 0. Prasyarat
 
-- [ ] App jalan: `npm run dev` → buka http://localhost:3000
-- [ ] Punya data untuk dites. Dua opsi:
+- [x] App jalan: `npm run dev` → buka http://localhost:3000
+- [x] Punya data untuk dites. Dua opsi:
   - **Cepat (disarankan):** `npm run db:seed:demo` → tenant **PT Demo Aranya**
     (semua modul aktif). Akun di bawah.
   - **Tenant sendiri:** pastikan **MODULE_2 aktif** agar menu Modul 2 muncul
@@ -38,45 +38,56 @@ perlu diverifikasi.
 
 ## ⭐ Smoke Test Cepat (≈15 menit) — jalankan ini dulu
 
-> Jalur prioritas end-to-end untuk fitur terbaru (**KPI Fase A + B**) yang akan jadi
-> fondasi Fase C. Lakukan **berurutan** dengan 3 login bergantian. Buka **DevTools →
-> Console** sepanjang pengujian — tidak boleh ada error merah.
-> Detail tiap langkah ada di **Bagian 7 → KPI**.
+> Jalur prioritas end-to-end **KPI model berjenjang** (Epic → Task → Sub-task).
+> Lakukan **berurutan** dengan 3 login bergantian. Buka **DevTools → Console**
+> sepanjang pengujian — tidak boleh ada error merah.
+> Istilah: **Epic** (dimensi, Σ bobot=100%) → **Task** (KPI, Σ bobot/epic=100% +
+> rubrik skor 1–5, target=3) → **Sub-task** (opsional, dibuat karyawan).
 
 **A. HR menyiapkan periode** (login `hr@demo.aranya`)
-- [ ] `/dashboard/kpi/periods` → **Buat Periode** (mis. "KPI Q3 2026", Kuartalan) → muncul **Perencanaan**
-- [ ] **Kelola →** → tambah 1 **Target Perusahaan** → coba **Aktifkan** sekarang → **ditolak** (belum ada KPI 100%)
+- [ ] `/dashboard/kpi/periods` → **Buat Periode** (mis. "KPI Q3 2026", Kuartalan) → **Perencanaan**
+- [ ] **Kelola →** → tambah **Target Perusahaan**; panel **Kesiapan Aktivasi** menampilkan
+      blocker (mis. "Budi — belum ada scorecard KPI", "Siti — …")
+- [ ] Coba **Aktifkan** → **ditolak** (scorecard belum lengkap/disetujui)
 
-**B. Manajer menyusun KPI** (login `manager@demo.aranya`)
-- [ ] `/dashboard/kpi/team` → pilih periode tadi → **Tambah KPI** untuk Budi sampai **total bobot = 100%** (indikator hijau)
-- [ ] **Kirim** semua KPI → status **Menunggu persetujuan**
+**B. Manajer menyusun scorecard** (login `manager@demo.aranya`)
+- [ ] `/dashboard/kpi/team` → pilih periode → tiap bawahan ada tombol **Buat scorecard** → klik
+- [ ] **Kelola →** scorecard Budi → tambah **Epic** (mis. "Financial" bobot 100% atau
+      beberapa epic Σ=100%) → tambah **Task** (judul, bobot, **Notes on KPI Target**, isi
+      **rubrik skor 1–5**) hingga **Task per epic Σ=100%** (indikator hijau)
+- [ ] **Kirim ke karyawan** → status **Menunggu persetujuan** (validasi bobot jalan)
 
 **C. Karyawan menyetujui** (login `budi@demo.aranya`)
-- [ ] `/dashboard/kpi` → **Setujui** semua KPI (atau **Minta revisi** 1, lalu manajer revisi+kirim, lalu setujui)
-- [ ] Cek **notifikasi** manajer ter-update (klik → diarahkan ke KPI Tim)
+- [ ] `/dashboard/kpi` → scorecard tampil dgn pohon Epic→Task → **Setujui** (atau **Minta
+      revisi** + catatan, lalu manajer ubah & kirim ulang)
+- [ ] Notifikasi manajer ter-update (klik → diarahkan ke KPI Tim)
 
 **D. HR mengaktifkan** (login `hr@demo.aranya`)
-- [ ] **Aktifkan periode** → berhasil → status **Berjalan**
+- [ ] Panel **Kesiapan Aktivasi** kini **✓ Siap diaktifkan** → **Aktifkan periode** → **Berjalan**
 
-**E. Eksekusi (Fase B)**
-- [ ] Karyawan (`/dashboard/kpi`): **Update** progres 1 KPI ke 50% + **unggah bukti** (PDF/gambar) → bar & riwayat update
-- [ ] Manajer (`/dashboard/kpi/team`): lihat **% terbaru**, badge **"Perlu perhatian"** bila <30%, **completion rate**; **unduh bukti**; kirim **feedback**
-- [ ] Karyawan melihat **feedback** atasan di KPI-nya
+**E. Eksekusi** (periode Berjalan)
+- [ ] Karyawan (`/dashboard/kpi`): per Task tambah **Sub-task**, **Update progres** (% + bukti)
+- [ ] Manajer (`/dashboard/kpi/team/[scorecard]`): lihat progres, kirim **feedback** → karyawan melihatnya
 
-**F. Cek keamanan singkat**
-- [ ] Login Karyawan → buka langsung `/dashboard/kpi/periods` → **ditarik keluar**
-- [ ] Console tetap **bersih** sepanjang A–E
+**F. Penilaian** (HR **Mulai tahap penilaian** dari periode)
+- [ ] Karyawan: per Task isi **Realization** + **SE (1–5)** merujuk rubrik
+- [ ] Manajer: per Task beri **nilai manajer (1–5)** + catatan
+- [ ] HR **Kunci periode** (ditolak bila ada task belum dinilai) → **Terkunci** → **kalibrasi**
+      skor akhir → **skor akhir tertimbang** muncul ke karyawan & manajer
 
-> Jika semua ✅ → fondasi KPI sehat untuk Fase C. Bila ada ❌, lapor (format di bawah)
-> sebelum lanjut. Checklist regresi lengkap ada di bagian-bagian berikutnya.
+**G. Cek keamanan**
+- [ ] Login Karyawan → buka `/dashboard/kpi/periods` langsung → **ditarik keluar**
+- [ ] Console **bersih** sepanjang A–F
+
+> Jika semua ✅ → KPI berjenjang sehat. Bila ada ❌, lapor (format di bawah).
 
 ---
 
 ## 1. Login, 2FA & Navigasi
 
-- [ ] Login `hr@demo.aranya` → diminta setup/isi **2FA** (TOTP) → berhasil masuk `/dashboard`
+- [x] Login `hr@demo.aranya` → diminta setup/isi **2FA** (TOTP) → berhasil masuk `/dashboard`
 - [ ] Salah password → pesan error jelas (tidak membocorkan detail)
-- [ ] 🆕 **Sign out**: klik kartu user di **bawah sidebar** → menu terbuka **tanpa
+- [x] 🆕 **Sign out**: klik kartu user di **bawah sidebar** → menu terbuka **tanpa
       console error** → klik **Keluar** → balik ke `/login`
 - [ ] Buka **DevTools → Console**: tidak ada warning merah Base UI
       (`MenuGroupContext` / `nativeButton`) saat membuka menu user
@@ -196,86 +207,42 @@ perlu diverifikasi.
 - [ ] HR (`/assets/manage`): tambah aset → **pinjamkan** ke karyawan → karyawan
       melihat aset di "Aset Saya" → **kembalikan** aset → hilang dari karyawan
 
-### KPI — Performance Management (siklus penuh A → B → C) 🆕
+### KPI — Performance Management berjenjang (Epic → Task → Sub-task) 🆕
 
-> Modul KPI dirombak total (lihat `docs/KPI_DESIGN.md`). Alur baru = siklus goal
-> setting 3 peran. Uji **end-to-end** dengan urutan di bawah (Fase A → B → C). Butuh
-> minimal 1 manajer + 1 bawahan langsung (mis. demo: Manager → Budi).
-> Untuk jalur cepat ~15 menit, lihat **⭐ Smoke Test Cepat** di atas.
+> Model dirombak (lihat `docs/KPI_DESIGN.md §11`). Alur end-to-end ada di **⭐ Smoke
+> Test Cepat** di atas. Bagian ini = **edge case & regresi** tambahan.
 
-**Fase A — Perencanaan (HR) — `/dashboard/kpi/periods`**
-- [ ] HR: **Buat Periode** (nama, tipe Kuartalan/Tahunan, tanggal mulai–selesai)
-      → muncul di daftar berstatus **Perencanaan**
-- [ ] Tanggal selesai sebelum mulai → ditolak dengan pesan
-- [ ] Klik **Kelola →** periode → halaman detail
-- [ ] **Target Perusahaan**: tambah 1–2 target (referensi) → muncul; hapus salah satu
-- [ ] **Aktifkan periode** saat belum ada KPI / bobot belum 100% → **ditolak** dengan
-      pesan masalah (mis. "Budi: total bobot 0% (harus 100%)")
+**Perencanaan & bobot**
+- [ ] Tanggal periode: selesai sebelum mulai → ditolak
+- [ ] Manajer **tidak bisa** membuat scorecard untuk yang bukan bawahan langsung
+      (HR bisa untuk semua)
+- [ ] Bobot: epic Σ ≠ 100% **atau** task dalam satu epic Σ ≠ 100% → indikator kuning;
+      **Kirim** ditolak dengan pesan bobot
+- [ ] Rubrik task: 5 baris skor 1–5; baris 3 ditandai **(target)**
+- [ ] Panel **Kesiapan Aktivasi** (HR, halaman periode): daftar blocker per karyawan
+      wajib (mis. "Siti — belum ada scorecard KPI") → **✓ Siap** saat semua lengkap & agreed
+- [ ] Karyawan tanpa atasan langsung **tidak** menghalangi aktivasi (dikecualikan)
 
-**Penyusunan KPI (Manajer) — `/dashboard/kpi/team`**
-- [ ] Login **Manager** → buka KPI Tim → pilih periode (status Perencanaan)
-- [ ] **Tambah KPI** untuk bawahan langsung (judul, bobot, target) → muncul sebagai **Draf**
-- [ ] Tambah beberapa KPI hingga **total bobot per karyawan = 100%** (indikator
-      hijau saat 100%, kuning bila belum)
-- [ ] **Ubah** KPI draf → tersimpan; **Hapus** KPI draf → hilang
-- [ ] **Kirim** KPI → status berubah **Menunggu persetujuan**
-- [ ] Manajer **tidak bisa** membuat KPI untuk karyawan yang bukan bawahannya
-      (dropdown hanya berisi bawahan langsung; HR bisa untuk semua)
+**Goal agreement**
+- [ ] Karyawan **Minta revisi** (+ catatan) → manajer melihat catatan, ubah, kirim ulang,
+      karyawan setujui → status **Disetujui**
 
-**Goal Agreement (Karyawan) — `/dashboard/kpi`**
-- [ ] Login **Budi** → KPI Saya → KPI berstatus **Menunggu persetujuan** terlihat
-- [ ] **Setujui** satu KPI → status jadi **Disetujui** + notifikasi ke manajer
-- [ ] **Minta revisi** KPI lain (+ catatan) → status **Minta revisi** + notifikasi ke manajer
-- [ ] Manajer melihat catatan revisi di KPI Tim → **Ubah** lalu **Kirim** ulang →
-      karyawan menyetujui
+**Eksekusi (Berjalan)**
+- [ ] Sub-task: tambah / centang / hapus (oleh karyawan)
+- [ ] Update progres + **unggah bukti** (PDF/gambar ≤5MB); >5MB / tipe lain → ditolak
+- [ ] **Otorisasi bukti**: user lain (bukan pemilik/atasan/HR) buka `/api/kpi/evidence/<id>`
+      → **403**
+- [ ] Feedback manajer → notifikasi ke karyawan; klik notifikasi → halaman benar
 
-**Aktivasi (HR)**
-- [ ] Setelah semua KPI tiap karyawan **bobot 100% & Disetujui**, HR **Aktifkan periode**
-      → status jadi **Berjalan**; form & tombol KPI terkunci (tidak bisa diubah)
-- [ ] Coba akses `/dashboard/kpi/periods` sebagai **Karyawan** (non-HR) → diarahkan keluar
+**Penilaian & skor**
+- [ ] **HR Kunci periode** saat ada task belum dinilai manajer → **ditolak** dgn pesan
+- [ ] Skor akhir = **bottom-up tertimbang** (cek contoh: Task 60%×skor4 + 40%×skor5 =
+      epik 4.4; × bobot epik). Bandingkan dgn template scorecard Anda
+- [ ] Kalibrasi HR (periode Terkunci): ubah skor final satu task → skor akhir ikut berubah
+- [ ] Non-HR (manajer/karyawan) **tidak** punya form kalibrasi
+- [ ] **HR Analytics**: kartu **"Rata-rata KPI"** muncul (skor akhir periode terkunci)
 
-**Fase B — Eksekusi & Monitoring (periode `Berjalan`)** 🆕
-> Prasyarat: sudah ada periode berstatus **Berjalan** (lihat aktivasi di atas) dengan
-> minimal 1 KPI Disetujui untuk seorang karyawan.
-
-- [ ] **Karyawan** (`/dashboard/kpi`): pada KPI Disetujui muncul **progress bar** +
-      form **Update** (persen, catatan, unggah bukti)
-- [ ] Update progres ke mis. 50% (tanpa bukti) → bar berubah, riwayat bertambah
-- [ ] Update lagi + **unggah bukti** (PDF/gambar ≤5MB) → muncul link 📎 di riwayat
-- [ ] Unggah bukti > 5MB / tipe selain PDF-gambar → ditolak dengan pesan
-- [ ] **Manajer** (`/dashboard/kpi/team`, periode Berjalan): tiap KPI menampilkan
-      **% terbaru** + bar; KPI < 30% diberi badge **"Perlu perhatian"** (merah)
-- [ ] Header menampilkan **completion rate** ("X/Y KPI sudah diupdate")
-- [ ] Manajer klik link 📎 bukti → **terunduh** (otorisasi: pemilik/manajer/HR)
-- [ ] Manajer kirim **feedback** pada satu KPI → muncul di riwayat + notifikasi ke karyawan
-- [ ] Karyawan melihat **feedback atasan** di KPI-nya
-- [ ] **Notifikasi**: "Progres KPI diperbarui" (ke manajer) & "Feedback KPI dari atasan"
-      (ke karyawan) → klik mengarah ke halaman yang benar
-- [ ] **Otorisasi bukti**: karyawan lain (bukan pemilik/atasan/HR) membuka
-      `/api/kpi/evidence/<id>` langsung → **ditolak** (403)
-
-**Fase C — Penilaian (periode `Penilaian` → `Terkunci`)** 🆕
-> Prasyarat: periode **Berjalan** dengan KPI Disetujui (lihat Fase A & B).
-
-- [ ] **HR** (`/dashboard/kpi/periods/[id]`): klik **Mulai tahap penilaian**
-      → status jadi **Penilaian**; input progres tertutup
-- [ ] **Karyawan** (`/dashboard/kpi`): tiap KPI muncul **self-assessment** (skor 1–5 +
-      catatan kendala) → simpan → bisa diperbarui
-- [ ] **Manajer** (`/dashboard/kpi/team`, periode Penilaian): tiap KPI menampilkan
-      **nilai diri karyawan**; beri **nilai manajer (1–5)** + catatan → tersimpan
-- [ ] Header per karyawan menampilkan **"Skor akhir X.XX / 5"** (tertimbang) atau
-      "Skor belum lengkap" bila ada KPI belum dinilai
-- [ ] **HR Kunci periode** saat masih ada KPI belum dinilai → **ditolak** dengan pesan
-- [ ] Setelah semua dinilai → **Kunci periode** berhasil → status **Terkunci**
-- [ ] **HR** (KPI Tim, periode Terkunci): **kalibrasi skor akhir** satu KPI (ubah final
-      ke nilai berbeda dari manajer) → tersimpan; skor akhir karyawan ikut berubah
-- [ ] **Karyawan** (periode Terkunci): banner **"Skor akhir [periode]: X.XX / 5"** +
-      skor final per KPI (read-only)
-- [ ] **HR Analytics** (`/dashboard/analytics`): kartu **"Rata-rata KPI"** kembali
-      muncul (skor akhir periode terkunci, 1–5)
-- [ ] Manajer/karyawan **tidak bisa** kalibrasi (hanya HR); coba sebagai non-HR → tak ada form
-
-> Siklus KPI penuh (A→B→C) selesai. Selanjutnya: Bonus (memakai skor akhir).
+> Siklus KPI berjenjang lengkap. Selanjutnya: Bonus (memakai skor akhir).
 
 ### Onboarding/Offboarding (`/dashboard/onboarding`)
 - [ ] HR (`/onboarding/manage`): pilih karyawan + tipe → **Terapkan checklist standar**
