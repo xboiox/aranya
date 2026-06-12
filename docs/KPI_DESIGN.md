@@ -1,10 +1,9 @@
 # Aranya HRIS — Desain Modul KPI / Performance Management
 
-**Versi:** 2.0-draft
+**Versi:** 2.0
 **Tanggal:** 2026-06-12
-**Status:** Model **flat** (§1–9) **SELESAI dibangun**, tapi akan **diganti** oleh
-**model berjenjang Dimension→KPI→Sub-task** — spec final di **§11** (parameter sudah
-disepakati). Rebuild bersih (pra-produksi). Smoke-test fitur lain dulu / lalu rebuild KPI.
+**Status:** **REBUILD berjalan.** Model flat (§1–9) diganti oleh **model berjenjang
+Epic→Task→Sub-task** — spec final & terkunci di **§11**. Rebuild bersih (pra-produksi).
 
 Menggantikan KPI MVP lama (satu skor self-assessment) dengan siklus manajemen
 kinerja 3 fase. Dibangun **bertahap A → B → C**, tiap fase shippable.
@@ -212,15 +211,17 @@ draft ──(manajer kirim)──▶ proposed ──(karyawan setuju)──▶ a
 berbasis scorecard. Perubahan **besar** (data model, scoring, ketiga halaman). Karena
 pra-produksi → **rebuild bersih**, bukan migrasi data.
 
-### 11.1 Terminologi
+### 11.1 Terminologi (FINAL)
 
-| Istilah user | Istilah scorecard / produk | Keterangan |
-|--------------|---------------------------|------------|
-| Epic | **Dimension** | mis. "Financial", "Productivity" |
-| Task | **KPI** | mis. "1.1 Target 80% utilization" |
-| Sub-task | **Sub-task** | opsional, dibuat karyawan |
+Nama di UI & kode = **Epic → Task → Sub-task** (keputusan user 2026-06-12).
+Tabel: `kpi_epics`, `kpi_tasks`, `kpi_subtasks`. (Di template HR aslinya disebut
+Dimension/KPI — kita pakai istilah user.)
 
-> Usul nama UI: **Dimension → KPI → Sub-task** (selaras template HR). *Perlu konfirmasi.*
+| Tingkat | Contoh | Bobot |
+|---------|--------|-------|
+| **Epic** | "Financial", "Productivity" | Σ per karyawan = 100% |
+| **Task** | "Target 80% utilization" | Σ per epic = 100% + rubrik 1–5 |
+| **Sub-task** | rincian karyawan | tanpa bobot/skor |
 
 ### 11.2 Parameter terkunci
 
@@ -271,34 +272,34 @@ Kontribusi Dimensi = 4.4 × 20% = **0.88**. Skor akhir = Σ semua kontribusi dim
 | status | text | `draft → proposed → agreed \| revision_requested` |
 | revisionNote, agreedAt | text?/ts? | |
 
-**`kpi_dimensions`** (= Epic)
+**`kpi_epics`** (= Epic)
 | kolom | tipe |
 |-------|------|
 | scorecardId | fk kpi_scorecards (cascade) |
 | name | text |
-| weight | integer (% , Σ per scorecard = 100) |
+| weight | integer (%, Σ per scorecard = 100) |
 
-**`kpis`** (= KPI/Task) — **restruktur** (kini di bawah dimension)
+**`kpi_tasks`** (= Task) — menggantikan `kpis` flat
 | kolom | tipe | catatan |
 |-------|------|---------|
-| dimensionId | fk kpi_dimensions (cascade) | |
+| epicId | fk kpi_epics (cascade) | |
 | title | text | |
-| weight | integer | %, Σ per dimensi = 100 |
+| weight | integer | %, Σ per epic = 100 |
 | targetNote | text? | "Notes on KPI Target" |
 | rubric | jsonb | 5 entri `{score:1..5, criteria}` (target=3) |
 
 **`kpi_subtasks`** — opsional, milik karyawan
 | kolom | tipe |
 |-------|------|
-| kpiId | fk kpis (cascade) |
+| taskId | fk kpi_tasks (cascade) |
 | title | text |
 | isDone | boolean |
 | createdById | text (userId) |
 
-**`kpi_appraisals`** — per KPI (extend dari Fase C)
+**`kpi_appraisals`** — per Task (extend dari Fase C)
 | kolom | tipe | catatan |
 |-------|------|---------|
-| kpiId | fk kpis (unik) | |
+| taskId | fk kpi_tasks (unik) | |
 | realization | text? | capaian (karyawan) |
 | selfScore | int? | 1–5 (SE, karyawan) |
 | managerScore | int? | 1–5 (manajer) |
@@ -306,8 +307,8 @@ Kontribusi Dimensi = 4.4 × 20% = **0.88**. Skor akhir = Σ semua kontribusi dim
 | selfNote, managerNote, notesOnAchievement | text? | |
 | calibratedById | text? | userId HR |
 
-**Tetap dipakai (per KPI):** `kpi_progress` (progres % + bukti) & `kpi_feedback`
-(feedback manajer) — *lihat catatan terbuka 11.7.*
+**Tetap dipakai (per Task):** `kpi_progress` (progres % + bukti) & `kpi_feedback`
+(feedback manajer) — direstruktur agar FK ke `kpi_tasks`. (Keputusan: dipertahankan.)
 
 ### 11.5 State machine & siklus
 
@@ -331,13 +332,11 @@ Karyawan tanpa atasan (puncak hierarki) dikecualikan. **Panel "Kesiapan aktivasi
 persisten di halaman periode menampilkan blocker per karyawan ("Siti — belum ada scorecard",
 "Budi/Financial — bobot KPI 80%").
 
-### 11.7 Catatan terbuka (minor — perlu konfirmasi)
+### 11.7 Catatan terbuka — RESOLVED (2026-06-12)
 
-1. **Penamaan UI:** Dimension/KPI/Sub-task (template) vs Epic/Task/Sub-task (istilah Anda)?
-2. **`kpi_progress` (progres % + bukti):** dipertahankan berdampingan dengan sub-task,
-   atau cukup sub-task + realization saja (drop progres %)? Default usul: **pertahankan**
-   (bukti & feedback bernilai); sub-task = ceklis pribadi pelengkap.
-3. **Rubrik:** selalu tepat 5 baris, kriteria bebas teks (boleh kosong selain target?).
+1. **Penamaan UI:** **Epic / Task / Sub-task** (istilah user). ✓
+2. **`kpi_progress` (progres % + bukti):** **dipertahankan** berdampingan dgn sub-task. ✓
+3. **Rubrik:** **tepat 5 baris**, kriteria teks bebas (boleh sebagian kosong selain target). ✓
 
 ### 11.8 Dampak implementasi (rebuild)
 
