@@ -44,6 +44,37 @@
     "notFoundBody": "The page you're looking for doesn't exist or has been moved.",
     "backToDashboard": "Back to dashboard"
   },
+  "twoFactor": {
+    "verifyTitle": "Two-factor verification",
+    "verifyAppHint": "Enter the 6-digit code from Google Authenticator.",
+    "verifyBackupHint": "Enter one of your backup codes.",
+    "authCode": "Authentication code",
+    "backupCode": "Backup code",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "useBackup": "Use a backup code",
+    "useApp": "Use authenticator app",
+    "setupTitle": "Set up two-factor authentication",
+    "setupHint": "Scan the QR code below with Google Authenticator.",
+    "qrAlt": "2FA QR code",
+    "loadingQr": "Loading QR code...",
+    "enterCodeLabel": "Enter the 6-digit code from the app",
+    "enable": "Enable 2FA",
+    "enabledTitle": "2FA enabled successfully!",
+    "enabledBody": "Save the backup codes below in a safe place. They are shown only once.",
+    "continueToDashboard": "Continue to dashboard"
+  },
+  "invite": {
+    "title": "Create your account",
+    "subtitle": "You've been invited to Aranya HRIS. Complete the details below to get started.",
+    "fullName": "Full name",
+    "createAccount": "Create account & sign in",
+    "creating": "Creating account..."
+  },
+  "dashboard": {
+    "disabledTitle": "Access disabled",
+    "disabledBody": "Your company is currently disabled. Contact the Aranya administrator for more information."
+  },
   "userMenu": {
     "signOut": "Sign out"
   },

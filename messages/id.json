@@ -44,6 +44,37 @@
     "notFoundBody": "Halaman yang Anda cari tidak ada atau sudah dipindahkan.",
     "backToDashboard": "Kembali ke Dashboard"
   },
+  "twoFactor": {
+    "verifyTitle": "Verifikasi 2FA",
+    "verifyAppHint": "Masukkan kode 6 digit dari Google Authenticator.",
+    "verifyBackupHint": "Masukkan salah satu kode backup Anda.",
+    "authCode": "Kode Autentikasi",
+    "backupCode": "Kode Backup",
+    "verify": "Verifikasi",
+    "verifying": "Memverifikasi...",
+    "useBackup": "Gunakan kode backup",
+    "useApp": "Gunakan aplikasi authenticator",
+    "setupTitle": "Setup Autentikasi 2 Faktor",
+    "setupHint": "Pindai QR code di bawah dengan aplikasi Google Authenticator.",
+    "qrAlt": "QR Code 2FA",
+    "loadingQr": "Memuat QR Code...",
+    "enterCodeLabel": "Masukkan kode 6 digit dari aplikasi",
+    "enable": "Aktifkan 2FA",
+    "enabledTitle": "2FA berhasil diaktifkan!",
+    "enabledBody": "Simpan kode backup berikut di tempat yang aman. Kode ini hanya ditampilkan sekali.",
+    "continueToDashboard": "Lanjut ke Dashboard"
+  },
+  "invite": {
+    "title": "Buat Akun Anda",
+    "subtitle": "Anda diundang ke Aranya HRIS. Lengkapi data berikut untuk mulai.",
+    "fullName": "Nama Lengkap",
+    "createAccount": "Buat Akun & Masuk",
+    "creating": "Membuat akun..."
+  },
+  "dashboard": {
+    "disabledTitle": "Akses Dinonaktifkan",
+    "disabledBody": "Perusahaan Anda saat ini dinonaktifkan. Hubungi administrator Aranya untuk informasi lebih lanjut."
+  },
   "userMenu": {
     "signOut": "Keluar"
   },

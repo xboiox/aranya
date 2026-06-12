@@ -17,7 +17,7 @@ export default async function TwoFactorPage() {
   const isSetupComplete = record?.isEnabled === true
 
   return (
-    <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
+    <div className="w-full rounded-2xl border border-border bg-card p-8 shadow-xl ring-1 ring-foreground/5">
       {isSetupComplete ? <TwoFactorVerify /> : <TwoFactorSetup />}
     </div>
   )
