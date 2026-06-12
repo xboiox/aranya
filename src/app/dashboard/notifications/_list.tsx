@@ -1,6 +1,7 @@
 "use client"
 import { useTransition } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import {
   markNotificationRead,
   markAllNotificationsRead,
@@ -26,6 +27,7 @@ export default function NotificationList({
 }) {
   const [pending, startTransition] = useTransition()
   const router = useRouter()
+  const t = useTranslations("notifications")
 
   function markAll() {
     startTransition(async () => {
@@ -48,7 +50,7 @@ export default function NotificationList({
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-muted-foreground">Belum ada notifikasi.</p>
+    return <p className="text-sm text-muted-foreground">{t("empty")}</p>
   }
 
   return (
@@ -56,7 +58,7 @@ export default function NotificationList({
       {hasUnread && (
         <div className="flex justify-end">
           <Button variant="outline" size="sm" onClick={markAll} disabled={pending}>
-            Tandai semua dibaca
+            {t("markAll")}
           </Button>
         </div>
       )}
@@ -86,7 +88,7 @@ export default function NotificationList({
                   >
                     {content}
                     <span className="mt-1 block text-xs font-medium text-primary">
-                      Lihat detail →
+                      {t("viewDetail")}
                     </span>
                   </button>
                 ) : (
@@ -94,7 +96,7 @@ export default function NotificationList({
                 )}
                 {!n.isRead && (
                   <Button variant="ghost" size="xs" onClick={() => markOne(n.id)} disabled={pending}>
-                    Tandai
+                    {t("mark")}
                   </Button>
                 )}
               </div>

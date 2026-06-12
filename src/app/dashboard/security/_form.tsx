@@ -1,5 +1,6 @@
 "use client"
 import { useActionState } from "react"
+import { useTranslations } from "next-intl"
 import { resetUserTwoFactor } from "@/modules/security/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,26 +15,24 @@ import {
 
 export default function ResetTwoFactorForm() {
   const [state, formAction, isPending] = useActionState(resetUserTwoFactor, {})
+  const t = useTranslations("security")
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Reset 2FA Karyawan</CardTitle>
-        <CardDescription>
-          Masukkan email karyawan. Record 2FA akan dihapus dan mereka akan diminta
-          mendaftar ulang saat login berikutnya.
-        </CardDescription>
+        <CardTitle>{t("cardTitle")}</CardTitle>
+        <CardDescription>{t("cardDesc")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email Karyawan</Label>
+            <Label htmlFor="email">{t("emailLabel")}</Label>
             <Input
               id="email"
               name="email"
               type="email"
               required
-              placeholder="karyawan@perusahaan.com"
+              placeholder={t("emailPlaceholder")}
             />
           </div>
 
@@ -43,13 +42,13 @@ export default function ResetTwoFactorForm() {
             </p>
           )}
           {state.success && (
-            <p className="rounded-md bg-green-50 px-3 py-2 text-sm text-green-700">
+            <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
               {state.success}
             </p>
           )}
 
           <Button type="submit" disabled={isPending} variant="destructive">
-            {isPending ? "Memproses..." : "Reset 2FA"}
+            {isPending ? t("processing") : t("resetButton")}
           </Button>
         </form>
       </CardContent>

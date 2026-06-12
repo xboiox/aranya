@@ -1,10 +1,15 @@
 "use client"
 import { useActionState, useEffect, useState } from "react"
+import { useTranslations } from "next-intl"
 import { initTwoFactorSetup, completeTwoFactorSetup } from "../actions"
+
+const primaryButton =
+  "w-full cursor-pointer rounded-lg bg-primary px-4 py-2.5 text-center text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:opacity-50"
 
 export default function TwoFactorSetup() {
   const [qrCode, setQrCode] = useState<string>("")
   const [state, formAction, isPending] = useActionState(completeTwoFactorSetup, {})
+  const t = useTranslations("twoFactor")
 
   useEffect(() => {
     initTwoFactorSetup().then((res) => {
@@ -15,24 +20,24 @@ export default function TwoFactorSetup() {
   if (state.backupCodes) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg bg-green-50 p-4">
-          <h3 className="font-semibold text-green-800">2FA berhasil diaktifkan!</h3>
-          <p className="mt-1 text-sm text-green-700">
-            Simpan kode backup berikut di tempat yang aman. Kode ini hanya ditampilkan sekali.
-          </p>
+        <div className="rounded-lg bg-emerald-50 p-4 dark:bg-emerald-500/10">
+          <h3 className="font-semibold text-emerald-800 dark:text-emerald-300">
+            {t("enabledTitle")}
+          </h3>
+          <p className="mt-1 text-sm text-emerald-700 dark:text-emerald-400">{t("enabledBody")}</p>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {state.backupCodes.map((code) => (
-            <code key={code} className="rounded bg-gray-100 px-3 py-1.5 text-center text-sm font-mono">
+            <code
+              key={code}
+              className="rounded bg-muted px-3 py-1.5 text-center font-mono text-sm"
+            >
               {code}
             </code>
           ))}
         </div>
-        <a
-          href="/dashboard"
-          className="block w-full rounded-lg bg-blue-600 px-4 py-2.5 text-center text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Lanjut ke Dashboard
+        <a href="/dashboard" className={primaryButton}>
+          {t("continueToDashboard")}
         </a>
       </div>
     )
@@ -41,27 +46,25 @@ export default function TwoFactorSetup() {
   return (
     <div className="space-y-5">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Setup Autentikasi 2 Faktor</h2>
-        <p className="mt-1 text-sm text-gray-500">
-          Pindai QR code di bawah dengan aplikasi Google Authenticator.
-        </p>
+        <h2 className="text-xl font-bold tracking-tight">{t("setupTitle")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("setupHint")}</p>
       </div>
 
       {qrCode ? (
         <div className="flex justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrCode} alt="QR Code 2FA" className="h-48 w-48" />
+          <img src={qrCode} alt={t("qrAlt")} className="h-48 w-48 rounded-lg" />
         </div>
       ) : (
-        <div className="flex h-48 w-48 mx-auto items-center justify-center rounded-lg bg-gray-100">
-          <span className="text-sm text-gray-400">Memuat QR Code...</span>
+        <div className="mx-auto flex h-48 w-48 items-center justify-center rounded-lg bg-muted">
+          <span className="text-sm text-muted-foreground">{t("loadingQr")}</span>
         </div>
       )}
 
       <form action={formAction} className="space-y-4">
         <div>
-          <label htmlFor="token" className="block text-sm font-medium text-gray-700">
-            Masukkan kode 6 digit dari aplikasi
+          <label htmlFor="token" className="block text-sm font-medium text-foreground">
+            {t("enterCodeLabel")}
           </label>
           <input
             id="token"
@@ -71,20 +74,18 @@ export default function TwoFactorSetup() {
             maxLength={6}
             required
             placeholder="000000"
-            className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-center text-lg font-mono tracking-widest focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2 text-center font-mono text-lg tracking-widest transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
           />
         </div>
 
         {state?.error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {state.error}
+          </p>
         )}
 
-        <button
-          type="submit"
-          disabled={isPending || !qrCode}
-          className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-        >
-          {isPending ? "Memverifikasi..." : "Aktifkan 2FA"}
+        <button type="submit" disabled={isPending || !qrCode} className={primaryButton}>
+          {isPending ? t("verifying") : t("enable")}
         </button>
       </form>
     </div>

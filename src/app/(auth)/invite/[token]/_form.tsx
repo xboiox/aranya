@@ -1,5 +1,6 @@
 "use client"
 import { useActionState } from "react"
+import { useTranslations } from "next-intl"
 import { acceptInvitationAction } from "./actions"
 
 interface Props {
@@ -7,59 +8,66 @@ interface Props {
   email: string
 }
 
+const inputClass =
+  "mt-1.5 block w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40"
+
 export default function InviteForm({ token, email: _email }: Props) {
   const [state, formAction, isPending] = useActionState(acceptInvitationAction, {})
+  const t = useTranslations("invite")
+  const tAuth = useTranslations("auth")
 
   return (
     <form action={formAction} className="space-y-5">
       <input type="hidden" name="token" value={token} />
 
       <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700">Nama Lengkap</label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          required
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        />
+        <label htmlFor="name" className="block text-sm font-medium text-foreground">
+          {t("fullName")}
+        </label>
+        <input id="name" name="name" type="text" required autoComplete="name" className={inputClass} />
       </div>
 
       <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
+        <label htmlFor="password" className="block text-sm font-medium text-foreground">
+          {tAuth("password")}
+        </label>
         <input
           id="password"
           name="password"
           type="password"
           required
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          autoComplete="new-password"
+          className={inputClass}
         />
-        <p className="mt-1 text-xs text-gray-400">Min. 8 karakter, huruf kapital, dan angka</p>
+        <p className="mt-1.5 text-xs text-muted-foreground">{tAuth("passwordHint")}</p>
       </div>
 
       <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-          Konfirmasi Password
+        <label htmlFor="confirmPassword" className="block text-sm font-medium text-foreground">
+          {tAuth("confirmPassword")}
         </label>
         <input
           id="confirmPassword"
           name="confirmPassword"
           type="password"
           required
-          className="mt-1 block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          autoComplete="new-password"
+          className={inputClass}
         />
       </div>
 
       {state?.error && (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">{state.error}</p>
+        <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          {state.error}
+        </p>
       )}
 
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        className="w-full cursor-pointer rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50"
       >
-        {isPending ? "Membuat akun..." : "Buat Akun & Masuk"}
+        {isPending ? t("creating") : t("createAccount")}
       </button>
     </form>
   )

@@ -1,15 +1,16 @@
 import Link from "next/link"
+import { getTranslations } from "next-intl/server"
 import { Button } from "@/components/ui/button"
 
-export default function NotFound() {
+export default async function NotFound() {
+  const t = await getTranslations("errors")
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-center gap-4 p-6 text-center">
       <p className="text-6xl font-bold text-muted-foreground">404</p>
-      <h1 className="text-xl font-semibold">Halaman tidak ditemukan</h1>
-      <p className="max-w-sm text-sm text-muted-foreground">
-        Halaman yang Anda cari tidak ada atau sudah dipindahkan.
-      </p>
-      <Button render={<Link href="/dashboard" />}>Kembali ke Dashboard</Button>
+      <h1 className="text-xl font-semibold">{t("notFoundTitle")}</h1>
+      <p className="max-w-sm text-sm text-muted-foreground">{t("notFoundBody")}</p>
+      <Button render={<Link href="/dashboard" />}>{t("backToDashboard")}</Button>
     </main>
   )
 }

@@ -1,0 +1,194 @@
+{
+  "common": {
+    "soon": "Segera",
+    "user": "Pengguna"
+  },
+  "language": {
+    "label": "Bahasa",
+    "en": "English",
+    "id": "Indonesia"
+  },
+  "auth": {
+    "welcomeBack": "Selamat datang kembali",
+    "subtitle": "Masuk ke akun Anda",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "anda@perusahaan.com",
+    "signIn": "Masuk",
+    "signingIn": "Memproses...",
+    "forgotPassword": "Lupa password?",
+    "backToLogin": "Kembali ke login",
+    "forgotTitle": "Lupa Password",
+    "forgotSubtitle": "Masukkan email Anda dan kami akan mengirimkan link reset password.",
+    "sendResetLink": "Kirim Link Reset",
+    "sending": "Mengirim...",
+    "emailSentTitle": "Email terkirim",
+    "emailSentBody": "Jika email Anda terdaftar, kami telah mengirimkan link reset password. Periksa inbox Anda.",
+    "resetTitle": "Reset Password",
+    "resetSubtitle": "Buat password baru untuk akun Anda.",
+    "newPassword": "Password Baru",
+    "confirmPassword": "Konfirmasi Password",
+    "passwordHint": "Min. 8 karakter, huruf kapital, dan angka",
+    "saveNewPassword": "Simpan Password Baru",
+    "saving": "Menyimpan...",
+    "loading": "Memuat...",
+    "tokenMissing": "Token reset tidak ditemukan.",
+    "requestNewLink": "Minta link baru"
+  },
+  "errors": {
+    "unexpectedTitle": "Terjadi kesalahan",
+    "unexpectedBody": "Maaf, terjadi kesalahan tak terduga. Tim kami sudah dicatat.",
+    "tryAgain": "Coba lagi",
+    "toDashboard": "Ke Dashboard",
+    "notFoundTitle": "Halaman tidak ditemukan",
+    "notFoundBody": "Halaman yang Anda cari tidak ada atau sudah dipindahkan.",
+    "backToDashboard": "Kembali ke Dashboard"
+  },
+  "twoFactor": {
+    "verifyTitle": "Verifikasi 2FA",
+    "verifyAppHint": "Masukkan kode 6 digit dari Google Authenticator.",
+    "verifyBackupHint": "Masukkan salah satu kode backup Anda.",
+    "authCode": "Kode Autentikasi",
+    "backupCode": "Kode Backup",
+    "verify": "Verifikasi",
+    "verifying": "Memverifikasi...",
+    "useBackup": "Gunakan kode backup",
+    "useApp": "Gunakan aplikasi authenticator",
+    "setupTitle": "Setup Autentikasi 2 Faktor",
+    "setupHint": "Pindai QR code di bawah dengan aplikasi Google Authenticator.",
+    "qrAlt": "QR Code 2FA",
+    "loadingQr": "Memuat QR Code...",
+    "enterCodeLabel": "Masukkan kode 6 digit dari aplikasi",
+    "enable": "Aktifkan 2FA",
+    "enabledTitle": "2FA berhasil diaktifkan!",
+    "enabledBody": "Simpan kode backup berikut di tempat yang aman. Kode ini hanya ditampilkan sekali.",
+    "continueToDashboard": "Lanjut ke Dashboard"
+  },
+  "invite": {
+    "title": "Buat Akun Anda",
+    "subtitle": "Anda diundang ke Aranya HRIS. Lengkapi data berikut untuk mulai.",
+    "fullName": "Nama Lengkap",
+    "createAccount": "Buat Akun & Masuk",
+    "creating": "Membuat akun..."
+  },
+  "dashboard": {
+    "disabledTitle": "Akses Dinonaktifkan",
+    "disabledBody": "Perusahaan Anda saat ini dinonaktifkan. Hubungi administrator Aranya untuk informasi lebih lanjut.",
+    "greeting": "Halo, {name}",
+    "welcome": "Selamat datang di Aranya HRIS.",
+    "tenantsTitle": "Kelola Tenant",
+    "tenantsDesc": "Buat & kelola perusahaan, kirim undangan HR Admin.",
+    "securityTitle": "Keamanan",
+    "securityDesc": "Reset 2FA karyawan yang kehilangan akses.",
+    "attendanceTitle": "Absensi",
+    "attendanceComingSoon": "Segera hadir di Modul 1."
+  },
+  "notifications": {
+    "title": "Notifikasi",
+    "none": "Tidak ada notifikasi.",
+    "empty": "Belum ada notifikasi.",
+    "markAll": "Tandai semua dibaca",
+    "mark": "Tandai",
+    "viewDetail": "Lihat detail →"
+  },
+  "security": {
+    "title": "Keamanan",
+    "subtitle": "Reset 2FA karyawan yang kehilangan akses ke aplikasi authenticator.",
+    "cardTitle": "Reset 2FA Karyawan",
+    "cardDesc": "Masukkan email karyawan. Record 2FA akan dihapus dan mereka akan diminta mendaftar ulang saat login berikutnya.",
+    "emailLabel": "Email Karyawan",
+    "emailPlaceholder": "karyawan@perusahaan.com",
+    "processing": "Memproses...",
+    "resetButton": "Reset 2FA"
+  },
+  "userMenu": {
+    "signOut": "Keluar"
+  },
+  "moduleLocked": {
+    "title": "Modul belum aktif",
+    "body": "Fitur ini bagian dari <imp>{module}</imp> yang belum diaktifkan untuk perusahaan Anda. Hubungi administrator Aranya untuk mengaktifkan."
+  },
+  "organization": {
+    "noCompany": "Akun tidak terhubung ke perusahaan.",
+    "title": "Struktur Organisasi",
+    "subtitle": "Hierarki pelaporan kerja ({count} karyawan aktif).",
+    "empty": "Belum ada data karyawan."
+  },
+  "audit": {
+    "title": "Audit Log",
+    "subtitleAll": "Catatan aktivitas seluruh platform.",
+    "subtitleTenant": "Catatan aktivitas perusahaan Anda.",
+    "colTime": "Waktu",
+    "colActor": "Aktor",
+    "colAction": "Aksi",
+    "colEntity": "Entitas",
+    "colTenant": "Tenant",
+    "colIp": "IP",
+    "empty": "Belum ada catatan audit.",
+    "prev": "← Sebelumnya",
+    "next": "Berikutnya →"
+  },
+  "analytics": {
+    "title": "HR Analytics",
+    "subtitle": "Ringkasan tenaga kerja & aktivitas hari ini.",
+    "emptyData": "Belum ada data.",
+    "activeEmployees": "Karyawan Aktif",
+    "totalRegistered": "{count} total terdaftar",
+    "presentToday": "Hadir Hari Ini",
+    "ofActive": "{rate}% dari aktif",
+    "onLeaveToday": "Cuti Hari Ini",
+    "pendingApprovals": "Menunggu Persetujuan",
+    "leaveOvertimeHint": "cuti + lembur",
+    "newHires": "Karyawan Baru (bln ini)",
+    "inactive": "Nonaktif",
+    "avgKpi": "Rata-rata KPI",
+    "avgKpiHint": "skor akhir periode terkunci (1–5)",
+    "byDepartment": "Per Departemen",
+    "byContractType": "Per Tipe Kontrak",
+    "byGender": "Per Gender"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "subtitle": "Kalkulator payroll (PPh 21 TER, BPJS) & slip gaji otomatis — segera hadir di Modul 3."
+  },
+  "nav": {
+    "sections": {
+      "selfService": "Layanan Mandiri",
+      "management": "Manajemen",
+      "hrOps": "HR Ops & Performa (Modul 2)",
+      "payroll": "Payroll (Modul 3)",
+      "platform": "Platform"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "notifications": "Notifikasi",
+      "attendance": "Absensi",
+      "leave": "Cuti",
+      "overtime": "Lembur",
+      "organization": "Struktur Organisasi",
+      "payslip": "Slip Gaji",
+      "leaveApprovals": "Persetujuan Cuti",
+      "overtimeApprovals": "Persetujuan Lembur",
+      "employees": "Karyawan",
+      "payslipManage": "Kelola Slip Gaji",
+      "leaveSettings": "Pengaturan Cuti",
+      "attendanceTeam": "Absensi Tim",
+      "shifts": "Shift Kerja",
+      "attendanceSettings": "Pengaturan Absensi",
+      "security": "Keamanan",
+      "audit": "Audit Log",
+      "training": "Training & Sertifikasi",
+      "trainingManage": "Kelola Training",
+      "assets": "Aset Saya",
+      "assetsManage": "Kelola Aset",
+      "kpi": "KPI Saya",
+      "kpiTeam": "KPI Tim",
+      "kpiPeriods": "Periode KPI",
+      "onboarding": "Checklist Saya",
+      "onboardingManage": "Onboarding/Offboarding",
+      "analytics": "HR Analytics",
+      "payroll": "Payroll",
+      "tenants": "Tenant"
+    }
+  }
+}

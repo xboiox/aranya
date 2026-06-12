@@ -1,9 +1,10 @@
 # Aranya HRIS — Desain Internationalization (i18n)
 
-**Versi:** 0.1 (perencanaan)
-**Tanggal:** 2026-06-10
-**Status:** **PLANNED — belum dikerjakan.** Dikerjakan nanti (setelah smoke-test &
-kemungkinan setelah Bonus). Dokumen ini menetapkan keputusan + rencana bertahap.
+**Versi:** 0.2
+**Tanggal:** 2026-06-10 (rev. 2026-06-12)
+**Status:** **Fase 0 SELESAI (2026-06-12)** — infra + toggle EN/ID aktif & verifiable.
+Fase 1 (chrome) sebagian: nav, halaman login, menu user sudah dilokalkan. **Fase 2–6
+belum** (UI per-modul, server actions, Zod, notifikasi, email). Lihat §5 untuk detail.
 
 Tujuan: aplikasi **lebih global** dengan **toggle dwibahasa Inggris + Indonesia**.
 
@@ -101,10 +102,14 @@ messages/
 
 > Tiap fase shippable & dapat diverifikasi. **Default EN** sejak Fase 0.
 
-- **Fase 0 — Infra:** pasang `next-intl`; `request.ts`/`routing.ts`; provider di root
-  layout; migrasi kolom `users.locale`; komponen toggle; scaffold `en.json`/`id.json`.
-- **Fase 1 — Chrome bersama:** nav, layout, halaman auth, `error.tsx`/`not-found.tsx`,
-  komponen `ui` umum.
+- **Fase 0 — Infra:** ✅ **SELESAI (2026-06-12).** `next-intl` v4.13 (mode cookie, tanpa
+  routing); `src/i18n/routing.ts` + `request.ts`; `createNextIntlPlugin` di `next.config.js`;
+  `NextIntlClientProvider` + `<html lang>` dinamis di root layout; migrasi `users.locale`
+  (`drizzle/0017`, applied); `LocaleToggle` di menu user + action `setLocale` (cookie + DB);
+  `messages/en.json` + `id.json`. Sync cookie dari `users.locale` saat login.
+- **Fase 1 — Chrome bersama:** 🟡 **sebagian.** Sudah: **nav** (nav-config `labelKey`/`titleKey`),
+  **halaman login**, **menu user**. Belum: `error.tsx`/`not-found.tsx`, halaman auth lain
+  (forgot/reset/2FA/invite), komponen `ui` umum, layout dashboard.
 - **Fase 2 — UI per modul:** employees, attendance, leave, overtime, payslip, kpi,
   training, asset, onboarding, analytics, tenant, security, audit. (string → kunci, 2 locale)
 - **Fase 3 — Server actions + Zod:** pesan `error`/`success` & validasi → kunci.

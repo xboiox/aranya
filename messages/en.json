@@ -1,0 +1,194 @@
+{
+  "common": {
+    "soon": "Soon",
+    "user": "User"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "id": "Indonesian"
+  },
+  "auth": {
+    "welcomeBack": "Welcome back",
+    "subtitle": "Sign in to your account",
+    "email": "Email",
+    "password": "Password",
+    "emailPlaceholder": "you@company.com",
+    "signIn": "Sign in",
+    "signingIn": "Signing in...",
+    "forgotPassword": "Forgot password?",
+    "backToLogin": "Back to login",
+    "forgotTitle": "Forgot password",
+    "forgotSubtitle": "Enter your email and we'll send you a reset link.",
+    "sendResetLink": "Send reset link",
+    "sending": "Sending...",
+    "emailSentTitle": "Email sent",
+    "emailSentBody": "If your email is registered, we've sent a password reset link. Please check your inbox.",
+    "resetTitle": "Reset password",
+    "resetSubtitle": "Create a new password for your account.",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordHint": "Min. 8 characters, with an uppercase letter and a number",
+    "saveNewPassword": "Save new password",
+    "saving": "Saving...",
+    "loading": "Loading...",
+    "tokenMissing": "Reset token not found.",
+    "requestNewLink": "Request a new link"
+  },
+  "errors": {
+    "unexpectedTitle": "Something went wrong",
+    "unexpectedBody": "Sorry, an unexpected error occurred. Our team has been notified.",
+    "tryAgain": "Try again",
+    "toDashboard": "Go to dashboard",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "The page you're looking for doesn't exist or has been moved.",
+    "backToDashboard": "Back to dashboard"
+  },
+  "twoFactor": {
+    "verifyTitle": "Two-factor verification",
+    "verifyAppHint": "Enter the 6-digit code from Google Authenticator.",
+    "verifyBackupHint": "Enter one of your backup codes.",
+    "authCode": "Authentication code",
+    "backupCode": "Backup code",
+    "verify": "Verify",
+    "verifying": "Verifying...",
+    "useBackup": "Use a backup code",
+    "useApp": "Use authenticator app",
+    "setupTitle": "Set up two-factor authentication",
+    "setupHint": "Scan the QR code below with Google Authenticator.",
+    "qrAlt": "2FA QR code",
+    "loadingQr": "Loading QR code...",
+    "enterCodeLabel": "Enter the 6-digit code from the app",
+    "enable": "Enable 2FA",
+    "enabledTitle": "2FA enabled successfully!",
+    "enabledBody": "Save the backup codes below in a safe place. They are shown only once.",
+    "continueToDashboard": "Continue to dashboard"
+  },
+  "invite": {
+    "title": "Create your account",
+    "subtitle": "You've been invited to Aranya HRIS. Complete the details below to get started.",
+    "fullName": "Full name",
+    "createAccount": "Create account & sign in",
+    "creating": "Creating account..."
+  },
+  "dashboard": {
+    "disabledTitle": "Access disabled",
+    "disabledBody": "Your company is currently disabled. Contact the Aranya administrator for more information.",
+    "greeting": "Hi, {name}",
+    "welcome": "Welcome to Aranya HRIS.",
+    "tenantsTitle": "Manage tenants",
+    "tenantsDesc": "Create & manage companies, send HR Admin invitations.",
+    "securityTitle": "Security",
+    "securityDesc": "Reset 2FA for employees who lost access.",
+    "attendanceTitle": "Attendance",
+    "attendanceComingSoon": "Coming soon in Module 1."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "none": "No notifications.",
+    "empty": "No notifications yet.",
+    "markAll": "Mark all as read",
+    "mark": "Mark",
+    "viewDetail": "View detail →"
+  },
+  "security": {
+    "title": "Security",
+    "subtitle": "Reset 2FA for employees who lost access to their authenticator app.",
+    "cardTitle": "Reset employee 2FA",
+    "cardDesc": "Enter the employee's email. Their 2FA record will be deleted and they'll be asked to set it up again on next login.",
+    "emailLabel": "Employee email",
+    "emailPlaceholder": "employee@company.com",
+    "processing": "Processing...",
+    "resetButton": "Reset 2FA"
+  },
+  "userMenu": {
+    "signOut": "Sign out"
+  },
+  "moduleLocked": {
+    "title": "Module not enabled",
+    "body": "This feature is part of <imp>{module}</imp>, which hasn't been enabled for your company. Contact the Aranya administrator to enable it."
+  },
+  "organization": {
+    "noCompany": "Your account isn't linked to a company.",
+    "title": "Org structure",
+    "subtitle": "Reporting hierarchy ({count} active employees).",
+    "empty": "No employee data yet."
+  },
+  "audit": {
+    "title": "Audit log",
+    "subtitleAll": "Activity records for the entire platform.",
+    "subtitleTenant": "Activity records for your company.",
+    "colTime": "Time",
+    "colActor": "Actor",
+    "colAction": "Action",
+    "colEntity": "Entity",
+    "colTenant": "Tenant",
+    "colIp": "IP",
+    "empty": "No audit records yet.",
+    "prev": "← Previous",
+    "next": "Next →"
+  },
+  "analytics": {
+    "title": "HR Analytics",
+    "subtitle": "Workforce summary & today's activity.",
+    "emptyData": "No data yet.",
+    "activeEmployees": "Active employees",
+    "totalRegistered": "{count} total registered",
+    "presentToday": "Present today",
+    "ofActive": "{rate}% of active",
+    "onLeaveToday": "On leave today",
+    "pendingApprovals": "Pending approvals",
+    "leaveOvertimeHint": "leave + overtime",
+    "newHires": "New hires (this month)",
+    "inactive": "Inactive",
+    "avgKpi": "Average KPI",
+    "avgKpiHint": "final score of locked period (1–5)",
+    "byDepartment": "By department",
+    "byContractType": "By contract type",
+    "byGender": "By gender"
+  },
+  "payroll": {
+    "title": "Payroll",
+    "subtitle": "Payroll calculator (PPh 21 TER, BPJS) & automated payslips — coming soon in Module 3."
+  },
+  "nav": {
+    "sections": {
+      "selfService": "Self-Service",
+      "management": "Management",
+      "hrOps": "HR Ops & Performance (Module 2)",
+      "payroll": "Payroll (Module 3)",
+      "platform": "Platform"
+    },
+    "items": {
+      "dashboard": "Dashboard",
+      "notifications": "Notifications",
+      "attendance": "Attendance",
+      "leave": "Leave",
+      "overtime": "Overtime",
+      "organization": "Org Structure",
+      "payslip": "Payslip",
+      "leaveApprovals": "Leave Approvals",
+      "overtimeApprovals": "Overtime Approvals",
+      "employees": "Employees",
+      "payslipManage": "Manage Payslips",
+      "leaveSettings": "Leave Settings",
+      "attendanceTeam": "Team Attendance",
+      "shifts": "Work Shifts",
+      "attendanceSettings": "Attendance Settings",
+      "security": "Security",
+      "audit": "Audit Log",
+      "training": "Training & Certification",
+      "trainingManage": "Manage Training",
+      "assets": "My Assets",
+      "assetsManage": "Manage Assets",
+      "kpi": "My KPI",
+      "kpiTeam": "Team KPI",
+      "kpiPeriods": "KPI Periods",
+      "onboarding": "My Checklist",
+      "onboardingManage": "Onboarding/Offboarding",
+      "analytics": "HR Analytics",
+      "payroll": "Payroll",
+      "tenants": "Tenants"
+    }
+  }
+}

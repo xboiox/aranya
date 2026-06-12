@@ -1,3 +1,8 @@
+const createNextIntlPlugin = require("next-intl/plugin");
+
+// Mendaftarkan src/i18n/request.ts sebagai sumber konfigurasi next-intl.
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
@@ -42,4 +47,4 @@ const nextConfig = {
 //   - Serwist "configurator mode" / @serwist/turbopack sudah lebih matang, ATAU
 //   - kita evaluasi ulang dengan kebutuhan offline yang konkret.
 // Lihat docs/TECH_STACK.md bagian PWA untuk detail keputusan ini.
-module.exports = nextConfig;
+module.exports = withNextIntl(nextConfig);

@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation"
+import { getTranslations } from "next-intl/server"
 import { auth } from "@/lib/auth"
 import { listOrgEmployees } from "@/modules/organization/queries"
 import { buildOrgTree, type OrgNode } from "@/modules/organization/tree"
@@ -35,8 +36,9 @@ function TreeNode({ node, depth }: { node: OrgNode; depth: number }) {
 export default async function OrganizationPage() {
   const session = await auth()
   if (!session) redirect("/login")
+  const t = await getTranslations("organization")
   if (!session.user.tenantId) {
-    return <p className="text-sm text-muted-foreground">Akun tidak terhubung ke perusahaan.</p>
+    return <p className="text-sm text-muted-foreground">{t("noCompany")}</p>
   }
 
   const employees = await listOrgEmployees(session.user.tenantId)
@@ -45,14 +47,14 @@ export default async function OrganizationPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Struktur Organisasi</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <p className="text-sm text-muted-foreground">
-          Hierarki pelaporan kerja ({employees.length} karyawan aktif).
+          {t("subtitle", { count: employees.length })}
         </p>
       </div>
 
       {tree.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Belum ada data karyawan.</p>
+        <p className="text-sm text-muted-foreground">{t("empty")}</p>
       ) : (
         <ul className="space-y-2">
           {tree.map((n) => (

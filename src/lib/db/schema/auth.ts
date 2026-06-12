@@ -16,6 +16,8 @@ export const users = pgTable("users", {
   emailVerified: timestamp("email_verified", { mode: "date" }),
   image: text("image"),
   password: text("password"),
+  // Preferensi bahasa UI/notifikasi/email. Default English (lihat docs/I18N_DESIGN.md).
+  locale: text("locale").$type<"en" | "id">().default("en").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow().notNull(),
 })
