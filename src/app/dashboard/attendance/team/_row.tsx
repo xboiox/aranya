@@ -5,6 +5,8 @@ import { toast } from "sonner"
 import { correctAttendance } from "@/modules/attendance/actions"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { TableCell, TableRow } from "@/components/ui/table"
 
 interface Props {
   employeeId: string
@@ -46,28 +48,26 @@ export default function AttendanceCorrectionRow({
   }
 
   return (
-    <tr>
-      <td className="px-4 py-2 text-sm whitespace-nowrap text-muted-foreground">{dateDisplay}</td>
-      <td className="px-4 py-2 text-sm">
+    <TableRow>
+      <TableCell className="whitespace-nowrap text-muted-foreground">{dateDisplay}</TableCell>
+      <TableCell>
         {name ?? "—"}
         {isLate && (
-          <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 text-[10px] font-medium text-red-700">
-            Terlambat
-          </span>
+          <Badge variant="destructive" className="ml-1.5">Terlambat</Badge>
         )}
-      </td>
-      <td className="px-4 py-2 text-sm text-muted-foreground">{department ?? "—"}</td>
-      <td className="px-4 py-2">
+      </TableCell>
+      <TableCell className="text-muted-foreground">{department ?? "—"}</TableCell>
+      <TableCell>
         <Input type="time" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} className="w-28" />
-      </td>
-      <td className="px-4 py-2">
+      </TableCell>
+      <TableCell>
         <Input type="time" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} className="w-28" />
-      </td>
-      <td className="px-4 py-2 text-right">
+      </TableCell>
+      <TableCell className="text-right">
         <Button size="xs" variant="outline" disabled={pending || !dirty} onClick={save}>
           Simpan
         </Button>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 }

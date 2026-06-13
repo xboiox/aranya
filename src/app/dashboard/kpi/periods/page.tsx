@@ -6,10 +6,20 @@ import { ModuleLocked } from "@/components/module-locked"
 import { listPeriods } from "@/modules/kpi/queries"
 import {
   PERIOD_STATUS_LABEL,
-  PERIOD_STATUS_STYLE,
   PERIOD_TYPE_OPTIONS,
   type PeriodStatus,
 } from "@/modules/kpi/schema"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { periodStatusVariant } from "@/lib/status"
 import PeriodCreateForm from "./_create-form"
 
 function dateLabel(d: Date): string {
@@ -47,51 +57,45 @@ export default async function KpiPeriodsPage() {
 
       <PeriodCreateForm />
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Periode</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Rentang</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-              <th className="px-4 py-2 text-right text-xs font-medium uppercase text-muted-foreground"></th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {periods.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Belum ada periode.
-                </td>
-              </tr>
-            ) : (
-              periods.map((p) => (
-                <tr key={p.id} className="hover:bg-muted/30">
-                  <td className="px-4 py-2 text-sm">
-                    <Link href={`/dashboard/kpi/periods/${p.id}`} className="font-medium hover:underline">
-                      {p.name}
-                    </Link>
-                    <div className="text-xs text-muted-foreground">{TYPE_LABEL[p.type] ?? p.type}</div>
-                  </td>
-                  <td className="px-4 py-2 text-sm text-muted-foreground">
-                    {dateLabel(p.startDate)} – {dateLabel(p.endDate)}
-                  </td>
-                  <td className="px-4 py-2">
-                    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${PERIOD_STATUS_STYLE[p.status as PeriodStatus]}`}>
-                      {PERIOD_STATUS_LABEL[p.status as PeriodStatus]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <Link href={`/dashboard/kpi/periods/${p.id}`} className="text-sm text-primary hover:underline">
-                      Kelola →
-                    </Link>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Periode</TableHead>
+            <TableHead>Rentang</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="text-right"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {periods.length === 0 ? (
+            <TableEmpty colSpan={4}>Belum ada periode.</TableEmpty>
+          ) : (
+            periods.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <Link href={`/dashboard/kpi/periods/${p.id}`} className="font-medium hover:underline">
+                    {p.name}
+                  </Link>
+                  <div className="text-xs text-muted-foreground">{TYPE_LABEL[p.type] ?? p.type}</div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {dateLabel(p.startDate)} – {dateLabel(p.endDate)}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={periodStatusVariant(p.status)}>
+                    {PERIOD_STATUS_LABEL[p.status as PeriodStatus]}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-right">
+                  <Link href={`/dashboard/kpi/periods/${p.id}`} className="text-sm text-primary hover:underline">
+                    Kelola →
+                  </Link>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

@@ -18,3 +18,35 @@ export function requestStatusVariant(status: string): BadgeVariant {
       return "secondary"
   }
 }
+
+/** Status periode KPI (planning/active/appraisal/locked) → varian Badge. */
+export function periodStatusVariant(status: string): BadgeVariant {
+  switch (status) {
+    case "planning":
+      return "warning"
+    case "active":
+      return "info"
+    case "appraisal":
+      return "default"
+    case "locked":
+      return "muted"
+    default:
+      return "secondary"
+  }
+}
+
+/** Status scorecard KPI (draft/proposed/agreed/revision_requested) → varian Badge. */
+export function scorecardStatusVariant(status: string): BadgeVariant {
+  switch (status) {
+    case "agreed":
+      return "success"
+    case "proposed":
+      return "warning"
+    case "revision_requested":
+      return "destructive"
+    case "draft":
+      return "muted"
+    default:
+      return "secondary"
+  }
+}

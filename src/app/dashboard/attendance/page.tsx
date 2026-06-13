@@ -6,6 +6,16 @@ import {
   listRecentAttendance,
   getGeofenceConfig,
 } from "@/modules/attendance/queries"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import CheckInWidget from "./_checkin"
 
 function timeLabel(d: Date | null): string {
@@ -70,43 +80,35 @@ export default async function AttendancePage() {
 
       <div>
         <h2 className="mb-2 text-sm font-semibold">Riwayat Terakhir</h2>
-        <div className="overflow-hidden rounded-xl border">
-          <table className="min-w-full divide-y">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Tanggal</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Masuk</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Keluar</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Ket.</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {recent.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    Belum ada riwayat absensi.
-                  </td>
-                </tr>
-              ) : (
-                recent.map((r) => (
-                  <tr key={r.id}>
-                    <td className="px-4 py-2 text-sm">{dateLabel(r.date)}</td>
-                    <td className="px-4 py-2 text-sm">{timeLabel(r.checkInAt)}</td>
-                    <td className="px-4 py-2 text-sm">{timeLabel(r.checkOutAt)}</td>
-                    <td className="px-4 py-2 text-xs">
-                      <span className="text-muted-foreground">{r.checkInWfh ? "WFH" : "WFO"}</span>
-                      {r.isLate && (
-                        <span className="ml-1 rounded bg-red-100 px-1.5 py-0.5 font-medium text-red-700">
-                          Terlambat
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Tanggal</TableHead>
+              <TableHead>Masuk</TableHead>
+              <TableHead>Keluar</TableHead>
+              <TableHead>Ket.</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {recent.length === 0 ? (
+              <TableEmpty colSpan={4}>Belum ada riwayat absensi.</TableEmpty>
+            ) : (
+              recent.map((r) => (
+                <TableRow key={r.id}>
+                  <TableCell>{dateLabel(r.date)}</TableCell>
+                  <TableCell>{timeLabel(r.checkInAt)}</TableCell>
+                  <TableCell>{timeLabel(r.checkOutAt)}</TableCell>
+                  <TableCell>
+                    <span className="text-xs text-muted-foreground">{r.checkInWfh ? "WFH" : "WFO"}</span>
+                    {r.isLate && (
+                      <Badge variant="destructive" className="ml-1.5">Terlambat</Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )
