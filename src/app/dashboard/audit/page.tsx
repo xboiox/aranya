@@ -4,6 +4,15 @@ import { getLocale, getTranslations } from "next-intl/server"
 import { auth, hasRole, hasAnyRole } from "@/lib/auth"
 import { listTenantAuditLogs, listAllAuditLogs, type AuditRow } from "@/modules/audit/queries"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 function timeLabel(d: Date, locale: string): string {
   return new Date(d).toLocaleString(locale === "id" ? "id-ID" : "en-US", {
@@ -47,40 +56,34 @@ export default async function AuditPage({ searchParams }: Props) {
         </p>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border">
-        <table className="min-w-full divide-y text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colTime")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colActor")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colAction")}</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colEntity")}</th>
-              {isSuper && <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colTenant")}</th>}
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">{t("colIp")}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={isSuper ? 6 : 5} className="px-4 py-8 text-center text-muted-foreground">
-                  {t("empty")}
-                </td>
-              </tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.id}>
-                  <td className="whitespace-nowrap px-4 py-2 text-muted-foreground">{timeLabel(r.createdAt, locale)}</td>
-                  <td className="px-4 py-2">{r.actorName ?? r.actorEmail ?? "—"}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{r.action}</td>
-                  <td className="px-4 py-2 text-muted-foreground">{r.entityType ?? "—"}</td>
-                  {isSuper && <td className="px-4 py-2 text-muted-foreground">{r.tenantName ?? "—"}</td>}
-                  <td className="px-4 py-2 text-muted-foreground">{r.ipAddress ?? "—"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>{t("colTime")}</TableHead>
+            <TableHead>{t("colActor")}</TableHead>
+            <TableHead>{t("colAction")}</TableHead>
+            <TableHead>{t("colEntity")}</TableHead>
+            {isSuper && <TableHead>{t("colTenant")}</TableHead>}
+            <TableHead>{t("colIp")}</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.length === 0 ? (
+            <TableEmpty colSpan={isSuper ? 6 : 5}>{t("empty")}</TableEmpty>
+          ) : (
+            rows.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="whitespace-nowrap text-muted-foreground">{timeLabel(r.createdAt, locale)}</TableCell>
+                <TableCell>{r.actorName ?? r.actorEmail ?? "—"}</TableCell>
+                <TableCell className="font-mono text-xs">{r.action}</TableCell>
+                <TableCell className="text-muted-foreground">{r.entityType ?? "—"}</TableCell>
+                {isSuper && <TableCell className="text-muted-foreground">{r.tenantName ?? "—"}</TableCell>}
+                <TableCell className="text-muted-foreground">{r.ipAddress ?? "—"}</TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
       <div className="flex justify-between">
         {page > 0 ? (
