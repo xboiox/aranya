@@ -5,6 +5,16 @@ import { ModuleLocked } from "@/components/module-locked"
 import { getEmployeeIdByUser } from "@/modules/attendance/queries"
 import { listMyTraining } from "@/modules/training/queries"
 import { TRAINING_STATUS_LABEL, certStatus } from "@/modules/training/schema"
+import { Badge, type BadgeVariant } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 
 function dateLabel(d: Date | null): string {
   if (!d) return "—"
@@ -16,10 +26,10 @@ function dateLabel(d: Date | null): string {
   })
 }
 
-const CERT_BADGE: Record<string, string> = {
-  expired: "bg-red-100 text-red-700",
-  expiring: "bg-amber-100 text-amber-700",
-  valid: "bg-green-100 text-green-700",
+const CERT_VARIANT: Record<string, BadgeVariant> = {
+  expired: "destructive",
+  expiring: "warning",
+  valid: "success",
 }
 const CERT_LABEL: Record<string, string> = {
   expired: "Kedaluwarsa",
@@ -52,49 +62,43 @@ export default async function TrainingPage() {
         <p className="text-sm text-muted-foreground">Riwayat pelatihan & sertifikasi Anda.</p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Judul</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Jenis</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Berlaku s/d</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {records.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-muted-foreground">
-                  Belum ada data training.
-                </td>
-              </tr>
-            ) : (
-              records.map((r) => {
-                const cs = certStatus(r.expiryDate)
-                return (
-                  <tr key={r.id}>
-                    <td className="px-4 py-2">
-                      {r.title}
-                      {r.provider && <span className="block text-xs text-muted-foreground">{r.provider}</span>}
-                    </td>
-                    <td className="px-4 py-2 capitalize">{r.type === "certification" ? "Sertifikasi" : "Pelatihan"}</td>
-                    <td className="px-4 py-2 text-muted-foreground">{TRAINING_STATUS_LABEL[r.status]}</td>
-                    <td className="px-4 py-2">
-                      {dateLabel(r.expiryDate)}
-                      {cs && (
-                        <span className={`ml-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${CERT_BADGE[cs]}`}>
-                          {CERT_LABEL[cs]}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                )
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Judul</TableHead>
+            <TableHead>Jenis</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Berlaku s/d</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {records.length === 0 ? (
+            <TableEmpty colSpan={4}>Belum ada data training.</TableEmpty>
+          ) : (
+            records.map((r) => {
+              const cs = certStatus(r.expiryDate)
+              return (
+                <TableRow key={r.id}>
+                  <TableCell>
+                    {r.title}
+                    {r.provider && <span className="block text-xs text-muted-foreground">{r.provider}</span>}
+                  </TableCell>
+                  <TableCell className="capitalize">{r.type === "certification" ? "Sertifikasi" : "Pelatihan"}</TableCell>
+                  <TableCell className="text-muted-foreground">{TRAINING_STATUS_LABEL[r.status]}</TableCell>
+                  <TableCell>
+                    {dateLabel(r.expiryDate)}
+                    {cs && (
+                      <Badge variant={CERT_VARIANT[cs]} className="ml-1.5">
+                        {CERT_LABEL[cs]}
+                      </Badge>
+                    )}
+                  </TableCell>
+                </TableRow>
+              )
+            })
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

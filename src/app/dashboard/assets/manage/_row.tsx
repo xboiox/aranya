@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { assignAsset, deleteAsset } from "@/modules/asset/actions"
 import { Button } from "@/components/ui/button"
+import { TableCell, TableRow } from "@/components/ui/table"
 import { Trash2 } from "lucide-react"
 
 interface Props {
@@ -34,14 +35,14 @@ export default function AssetRow({ id, name, category, serialNumber, assignedToI
   }
 
   return (
-    <tr>
-      <td className="px-4 py-2 text-sm">
+    <TableRow>
+      <TableCell>
         {name}
         <span className="block text-xs text-muted-foreground capitalize">
           {category}{serialNumber ? ` · ${serialNumber}` : ""}
         </span>
-      </td>
-      <td className="px-4 py-2">
+      </TableCell>
+      <TableCell>
         <select
           className={selectClass}
           defaultValue={assignedToId ?? ""}
@@ -53,12 +54,12 @@ export default function AssetRow({ id, name, category, serialNumber, assignedToI
             <option key={emp.id} value={emp.id}>{emp.name ?? "—"}</option>
           ))}
         </select>
-      </td>
-      <td className="px-4 py-2 text-right">
+      </TableCell>
+      <TableCell className="text-right">
         <Button variant="ghost" size="icon-sm" disabled={pending} onClick={() => run(() => deleteAsset(id))}>
           <Trash2 className="size-4 text-destructive" />
         </Button>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   )
 }
