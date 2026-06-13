@@ -7,9 +7,10 @@ import { getPeriod, listObjectives, listActivationStates } from "@/modules/kpi/q
 import { activationProblems } from "@/modules/kpi/validation"
 import {
   PERIOD_STATUS_LABEL,
-  PERIOD_STATUS_STYLE,
   type PeriodStatus,
 } from "@/modules/kpi/schema"
+import { Badge } from "@/components/ui/badge"
+import { periodStatusVariant } from "@/lib/status"
 import ObjectivesPanel from "./_objectives"
 import PeriodActions from "./_period-actions"
 
@@ -44,9 +45,9 @@ export default async function PeriodDetailPage({ params }: Props) {
         </Link>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold">{period.name}</h1>
-          <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${PERIOD_STATUS_STYLE[period.status as PeriodStatus]}`}>
+          <Badge variant={periodStatusVariant(period.status)}>
             {PERIOD_STATUS_LABEL[period.status as PeriodStatus]}
-          </span>
+          </Badge>
         </div>
       </div>
 

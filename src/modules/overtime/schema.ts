@@ -18,9 +18,3 @@ export const OVERTIME_STATUS_LABEL: Record<string, string> = {
   cancelled: "Dibatalkan",
 }
 
-export const OVERTIME_STATUS_STYLE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  cancelled: "bg-muted text-muted-foreground",
-}
