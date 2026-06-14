@@ -5,6 +5,7 @@ import { ModuleLocked } from "@/components/module-locked"
 import { listEmployees } from "@/modules/employees/queries"
 import { listChecklist } from "@/modules/onboarding/queries"
 import { CHECKLIST_TYPE_LABEL, isChecklistType, type ChecklistType } from "@/modules/onboarding/schema"
+import { Select } from "@/components/ui/select"
 import ChecklistManager from "./_manager"
 
 interface Props {
@@ -42,29 +43,29 @@ export default async function ManageOnboardingPage({ searchParams }: Props) {
       <form method="get" className="flex flex-wrap items-end gap-3 rounded-xl border p-4">
         <div className="space-y-1">
           <label htmlFor="employeeId" className="text-xs font-medium text-muted-foreground">Karyawan</label>
-          <select
+          <Select
             id="employeeId"
             name="employeeId"
             defaultValue={selectedId}
-            className="block w-56 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-56"
           >
             <option value="">— Pilih karyawan —</option>
             {employees.map((e) => (
               <option key={e.id} value={e.id}>{e.name ?? e.email}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="space-y-1">
           <label htmlFor="type" className="text-xs font-medium text-muted-foreground">Tipe</label>
-          <select
+          <Select
             id="type"
             name="type"
             defaultValue={type}
-            className="block w-44 rounded-md border border-input bg-background px-3 py-2 text-sm"
+            className="w-44"
           >
             <option value="onboarding">{CHECKLIST_TYPE_LABEL.onboarding}</option>
             <option value="offboarding">{CHECKLIST_TYPE_LABEL.offboarding}</option>
-          </select>
+          </Select>
         </div>
         <button
           type="submit"

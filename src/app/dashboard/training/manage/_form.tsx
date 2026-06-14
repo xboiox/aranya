@@ -7,10 +7,8 @@ import { TRAINING_TYPE_OPTIONS } from "@/modules/training/schema"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const selectClass =
-  "mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 
 export default function TrainingForm({
   employees,
@@ -39,20 +37,20 @@ export default function TrainingForm({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
               <Label htmlFor="employeeId">Karyawan</Label>
-              <select id="employeeId" name="employeeId" className={selectClass} required defaultValue="">
+              <Select id="employeeId" name="employeeId" className="w-full" required defaultValue="">
                 <option value="" disabled>— Pilih —</option>
                 {employees.map((e) => (
                   <option key={e.id} value={e.id}>{e.name ?? "—"}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="type">Jenis</Label>
-              <select id="type" name="type" className={selectClass} defaultValue="training">
+              <Select id="type" name="type" className="w-full" defaultValue="training">
                 {TRAINING_TYPE_OPTIONS.map((t) => (
                   <option key={t.value} value={t.value}>{t.label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           </div>
           <div className="space-y-2">
@@ -66,11 +64,11 @@ export default function TrainingForm({
             </div>
             <div className="space-y-2">
               <Label htmlFor="status">Status</Label>
-              <select id="status" name="status" className={selectClass} defaultValue="completed">
+              <Select id="status" name="status" className="w-full" defaultValue="completed">
                 <option value="planned">Direncanakan</option>
                 <option value="ongoing">Berlangsung</option>
                 <option value="completed">Selesai</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="completionDate">Tanggal Selesai</Label>

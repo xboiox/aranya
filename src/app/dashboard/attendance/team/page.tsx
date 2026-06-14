@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Select } from "@/components/ui/select"
 import { Pagination } from "@/components/pagination"
 import { Download } from "lucide-react"
 import AttendanceCorrectionRow from "./_row"
@@ -127,20 +128,20 @@ export default async function TeamAttendancePage({ searchParams }: Props) {
         </div>
         <div>
           <label htmlFor="department" className="text-xs text-muted-foreground">Departemen</label>
-          <select id="department" name="department" defaultValue={department ?? ""} className={inputClass}>
+          <Select id="department" name="department" defaultValue={department ?? ""} className="mt-1">
             <option value="">Semua</option>
             {departments.map((d) => (
               <option key={d} value={d}>{d}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div>
           <label htmlFor="status" className="text-xs text-muted-foreground">Status</label>
-          <select id="status" name="status" defaultValue={status} className={inputClass}>
+          <Select id="status" name="status" defaultValue={status} className="mt-1">
             {STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="min-w-40 flex-1">
           <label htmlFor="q" className="text-xs text-muted-foreground">Cari nama</label>

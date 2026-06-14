@@ -7,10 +7,8 @@ import { PERIOD_TYPE_OPTIONS } from "@/modules/kpi/schema"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const selectClass =
-  "mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
 
 export default function PeriodCreateForm() {
   const [state, formAction, isPending] = useActionState(createPeriod, {})
@@ -39,11 +37,11 @@ export default function PeriodCreateForm() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="type">Tipe</Label>
-              <select id="type" name="type" className={selectClass} defaultValue="quarterly">
+              <Select id="type" name="type" className="w-full" defaultValue="quarterly">
                 {PERIOD_TYPE_OPTIONS.map((o) => (
                   <option key={o.value} value={o.value}>{o.label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-1">
               <Label htmlFor="startDate">Mulai</Label>
