@@ -1,6 +1,7 @@
 "use client"
 import { useActionState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { useTranslations } from "next-intl"
 import { toast } from "sonner"
 import { requestOvertime } from "@/modules/overtime/actions"
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function OvertimeRequestForm() {
   const [state, formAction, isPending] = useActionState(requestOvertime, {})
   const router = useRouter()
+  const t = useTranslations("overtime")
 
   useEffect(() => {
     if (state.success) {
@@ -22,26 +24,26 @@ export default function OvertimeRequestForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">Ajukan Lembur</CardTitle>
+        <CardTitle className="text-base">{t("formTitle")}</CardTitle>
       </CardHeader>
       <CardContent>
         <form action={formAction} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label htmlFor="date">Tanggal</Label>
+              <Label htmlFor="date">{t("fieldDate")}</Label>
               <Input id="date" name="date" type="date" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="startTime">Jam Mulai</Label>
+              <Label htmlFor="startTime">{t("fieldStart")}</Label>
               <Input id="startTime" name="startTime" type="time" required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">Jam Selesai</Label>
+              <Label htmlFor="endTime">{t("fieldEnd")}</Label>
               <Input id="endTime" name="endTime" type="time" required />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="reason">Keterangan (opsional)</Label>
+            <Label htmlFor="reason">{t("fieldReason")}</Label>
             <Input id="reason" name="reason" />
           </div>
 
@@ -52,11 +54,9 @@ export default function OvertimeRequestForm() {
           )}
 
           <Button type="submit" disabled={isPending}>
-            {isPending ? "Mengirim..." : "Ajukan"}
+            {isPending ? t("submitting") : t("submit")}
           </Button>
-          <p className="text-xs text-muted-foreground">
-            Lembur lewat tengah malam dihitung otomatis.
-          </p>
+          <p className="text-xs text-muted-foreground">{t("midnightHint")}</p>
         </form>
       </CardContent>
     </Card>
