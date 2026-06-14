@@ -7,10 +7,8 @@ import { ASSET_CATEGORY_OPTIONS } from "@/modules/asset/schema"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-
-const selectClass =
-  "mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 
 export default function AssetForm() {
   const [state, formAction] = useActionState(createAsset, {})
@@ -39,11 +37,11 @@ export default function AssetForm() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="category">Kategori</Label>
-              <select id="category" name="category" className={selectClass} defaultValue="laptop">
+              <Select id="category" name="category" className="w-full" defaultValue="laptop">
                 {ASSET_CATEGORY_OPTIONS.map((c) => (
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="serialNumber">Nomor Seri</Label>

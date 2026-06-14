@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { assignAsset, deleteAsset } from "@/modules/asset/actions"
 import { Button } from "@/components/ui/button"
+import { Select } from "@/components/ui/select"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { Trash2 } from "lucide-react"
 
@@ -15,9 +16,6 @@ interface Props {
   assignedToId: string | null
   employees: { id: string; name: string | null }[]
 }
-
-const selectClass =
-  "rounded-md border border-input bg-background px-2 py-1 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 
 export default function AssetRow({ id, name, category, serialNumber, assignedToId, employees }: Props) {
   const [pending, startTransition] = useTransition()
@@ -43,8 +41,8 @@ export default function AssetRow({ id, name, category, serialNumber, assignedToI
         </span>
       </TableCell>
       <TableCell>
-        <select
-          className={selectClass}
+        <Select
+          className="w-full"
           defaultValue={assignedToId ?? ""}
           disabled={pending}
           onChange={(e) => run(() => assignAsset(id, e.target.value))}
@@ -53,7 +51,7 @@ export default function AssetRow({ id, name, category, serialNumber, assignedToI
           {employees.map((emp) => (
             <option key={emp.id} value={emp.id}>{emp.name ?? "—"}</option>
           ))}
-        </select>
+        </Select>
       </TableCell>
       <TableCell className="text-right">
         <Button variant="ghost" size="icon-sm" disabled={pending} onClick={() => run(() => deleteAsset(id))}>

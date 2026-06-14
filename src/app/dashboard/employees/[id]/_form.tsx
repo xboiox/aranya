@@ -7,6 +7,7 @@ import type { EmployeeDetail } from "@/modules/employees/queries"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import {
   Card,
   CardContent,
@@ -27,8 +28,6 @@ interface Shift {
   endTime: string
 }
 
-const selectClass =
-  "mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 
 function dateValue(d: Date | null): string {
   if (!d) return ""
@@ -60,14 +59,14 @@ export default function EmployeeEditForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="reportsToId">Atasan Langsung</Label>
-            <select id="reportsToId" name="reportsToId" className={selectClass} defaultValue={employee.reportsToId ?? ""}>
+            <Select id="reportsToId" name="reportsToId" className="w-full" defaultValue={employee.reportsToId ?? ""}>
               <option value="">— Tidak ada —</option>
               {leads.map((l) => (
                 <option key={l.id} value={l.id}>
                   {l.name ?? "—"} {l.position ? `(${l.position})` : ""}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="position">Jabatan</Label>
@@ -79,14 +78,14 @@ export default function EmployeeEditForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="contractType">Tipe Kontrak</Label>
-            <select id="contractType" name="contractType" className={selectClass} defaultValue={employee.contractType ?? ""}>
+            <Select id="contractType" name="contractType" className="w-full" defaultValue={employee.contractType ?? ""}>
               <option value="">— Pilih —</option>
               {CONTRACT_TYPE_OPTIONS.map((c) => (
                 <option key={c.value} value={c.value}>
                   {c.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
           <div className="space-y-2">
             <Label htmlFor="joinDate">Tanggal Bergabung</Label>
@@ -94,14 +93,14 @@ export default function EmployeeEditForm({
           </div>
           <div className="space-y-2">
             <Label htmlFor="defaultShiftId">Shift Kerja</Label>
-            <select id="defaultShiftId" name="defaultShiftId" className={selectClass} defaultValue={employee.defaultShiftId ?? ""}>
+            <Select id="defaultShiftId" name="defaultShiftId" className="w-full" defaultValue={employee.defaultShiftId ?? ""}>
               <option value="">— Tidak ada —</option>
               {shifts.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name} ({s.startTime}–{s.endTime})
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </CardContent>
       </Card>

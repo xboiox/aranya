@@ -6,6 +6,7 @@ import { CONTRACT_TYPE_OPTIONS } from "@/modules/employees/schema"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 
 interface Lead {
@@ -14,8 +15,6 @@ interface Lead {
   position: string | null
 }
 
-const selectClass =
-  "mt-1 block w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:border-ring focus:outline-none focus:ring-1 focus:ring-ring"
 
 export default function EmployeeCreateForm({ leads }: { leads: Lead[] }) {
   const [state, formAction, isPending] = useActionState(createEmployee, {})
@@ -35,21 +34,21 @@ export default function EmployeeCreateForm({ leads }: { leads: Lead[] }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role *</Label>
-              <select id="role" name="role" required className={selectClass} defaultValue="employee">
+              <Select id="role" name="role" required className="w-full" defaultValue="employee">
                 <option value="employee">Karyawan</option>
                 <option value="manager">Manager</option>
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="reportsToId">Atasan Langsung</Label>
-              <select id="reportsToId" name="reportsToId" className={selectClass} defaultValue="">
+              <Select id="reportsToId" name="reportsToId" className="w-full" defaultValue="">
                 <option value="">— Tidak ada —</option>
                 {leads.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name ?? "—"} {l.position ? `(${l.position})` : ""}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="position">Jabatan</Label>
@@ -61,14 +60,14 @@ export default function EmployeeCreateForm({ leads }: { leads: Lead[] }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="contractType">Tipe Kontrak</Label>
-              <select id="contractType" name="contractType" className={selectClass} defaultValue="">
+              <Select id="contractType" name="contractType" className="w-full" defaultValue="">
                 <option value="">— Pilih —</option>
                 {CONTRACT_TYPE_OPTIONS.map((c) => (
                   <option key={c.value} value={c.value}>
                     {c.label}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
             <div className="space-y-2">
               <Label htmlFor="joinDate">Tanggal Bergabung</Label>

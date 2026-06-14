@@ -22,9 +22,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { periodStatusVariant, scorecardStatusVariant } from "@/lib/status"
+import { Select } from "@/components/ui/select"
 import CreateScorecardButton from "./_create-scorecard"
-
-const selectClass = "rounded-md border border-input bg-background px-3 py-2 text-sm"
 
 interface Props {
   searchParams: Promise<{ periodId?: string }>
@@ -64,9 +63,9 @@ export default async function TeamKpiPage({ searchParams }: Props) {
 
       <form method="get" className="flex flex-wrap items-center gap-2">
         <label htmlFor="periodId" className="text-sm text-muted-foreground">Periode</label>
-        <select id="periodId" name="periodId" defaultValue={period.id} className={selectClass}>
+        <Select id="periodId" name="periodId" defaultValue={period.id}>
           {periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
+        </Select>
         <button type="submit" className="cursor-pointer rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted">Lihat</button>
         <Badge variant={periodStatusVariant(period.status)} className="ml-auto">
           {PERIOD_STATUS_LABEL[period.status as PeriodStatus]}
