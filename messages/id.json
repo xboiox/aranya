@@ -1,7 +1,65 @@
 {
   "common": {
     "soon": "Segera",
-    "user": "Pengguna"
+    "user": "Pengguna",
+    "noCompany": "Akun tidak terhubung ke perusahaan."
+  },
+  "requestStatus": {
+    "pending": "Menunggu",
+    "approved": "Disetujui",
+    "rejected": "Ditolak",
+    "cancelled": "Dibatalkan"
+  },
+  "leave": {
+    "title": "Cuti",
+    "employeeOnly": "Fitur cuti hanya untuk akun karyawan.",
+    "quotaAnnual": "Kuota Tahunan",
+    "used": "Terpakai",
+    "remaining": "Sisa",
+    "days": "{count} hari",
+    "history": "Riwayat Pengajuan",
+    "colType": "Jenis",
+    "colDate": "Tanggal",
+    "colDays": "Hari",
+    "colStatus": "Status",
+    "colAction": "Aksi",
+    "empty": "Belum ada pengajuan cuti.",
+    "cancel": "Batalkan",
+    "types": {
+      "annual": "Cuti Tahunan",
+      "sick": "Sakit",
+      "permission": "Izin",
+      "maternity": "Melahirkan",
+      "important": "Keperluan Penting"
+    },
+    "formTitle": "Ajukan Cuti",
+    "fieldType": "Jenis Cuti",
+    "fieldStart": "Tanggal Mulai",
+    "fieldEnd": "Tanggal Selesai",
+    "fieldReason": "Alasan (opsional)",
+    "submit": "Ajukan",
+    "submitting": "Mengirim...",
+    "daysHint": "Jumlah hari dihitung otomatis (hari kerja Senin–Jumat)."
+  },
+  "overtime": {
+    "title": "Lembur",
+    "employeeOnly": "Fitur lembur hanya untuk akun karyawan.",
+    "history": "Riwayat Pengajuan",
+    "colDate": "Tanggal",
+    "colTime": "Jam",
+    "colDuration": "Durasi",
+    "colStatus": "Status",
+    "colAction": "Aksi",
+    "empty": "Belum ada pengajuan lembur.",
+    "cancel": "Batalkan",
+    "formTitle": "Ajukan Lembur",
+    "fieldDate": "Tanggal",
+    "fieldStart": "Jam Mulai",
+    "fieldEnd": "Jam Selesai",
+    "fieldReason": "Keterangan (opsional)",
+    "submit": "Ajukan",
+    "submitting": "Mengirim...",
+    "midnightHint": "Lembur lewat tengah malam dihitung otomatis."
   },
   "language": {
     "label": "Bahasa",

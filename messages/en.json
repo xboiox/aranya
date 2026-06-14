@@ -1,7 +1,65 @@
 {
   "common": {
     "soon": "Soon",
-    "user": "User"
+    "user": "User",
+    "noCompany": "Your account isn't linked to a company."
+  },
+  "requestStatus": {
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "cancelled": "Cancelled"
+  },
+  "leave": {
+    "title": "Leave",
+    "employeeOnly": "Leave is available for employee accounts only.",
+    "quotaAnnual": "Annual quota",
+    "used": "Used",
+    "remaining": "Remaining",
+    "days": "{count} days",
+    "history": "Request history",
+    "colType": "Type",
+    "colDate": "Date",
+    "colDays": "Days",
+    "colStatus": "Status",
+    "colAction": "Action",
+    "empty": "No leave requests yet.",
+    "cancel": "Cancel",
+    "types": {
+      "annual": "Annual leave",
+      "sick": "Sick",
+      "permission": "Permission",
+      "maternity": "Maternity",
+      "important": "Important matter"
+    },
+    "formTitle": "Request leave",
+    "fieldType": "Leave type",
+    "fieldStart": "Start date",
+    "fieldEnd": "End date",
+    "fieldReason": "Reason (optional)",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "daysHint": "Days are counted automatically (Mon–Fri working days)."
+  },
+  "overtime": {
+    "title": "Overtime",
+    "employeeOnly": "Overtime is available for employee accounts only.",
+    "history": "Request history",
+    "colDate": "Date",
+    "colTime": "Time",
+    "colDuration": "Duration",
+    "colStatus": "Status",
+    "colAction": "Action",
+    "empty": "No overtime requests yet.",
+    "cancel": "Cancel",
+    "formTitle": "Request overtime",
+    "fieldDate": "Date",
+    "fieldStart": "Start time",
+    "fieldEnd": "End time",
+    "fieldReason": "Notes (optional)",
+    "submit": "Submit",
+    "submitting": "Submitting...",
+    "midnightHint": "Overtime past midnight is calculated automatically."
   },
   "language": {
     "label": "Language",
