@@ -12,9 +12,10 @@ import {
 import { scorecardWeightProblems, scorecardScore } from "@/modules/kpi/validation"
 import {
   SCORECARD_STATUS_LABEL,
-  SCORECARD_STATUS_STYLE,
   type ScorecardStatus,
 } from "@/modules/kpi/schema"
+import { Badge } from "@/components/ui/badge"
+import { scorecardStatusVariant } from "@/lib/status"
 import ManagerScorecard, { type MgrView } from "./_manager-scorecard"
 
 function dt(d: Date): string {
@@ -89,9 +90,9 @@ export default async function ScorecardDetailPage({ params }: Props) {
         <Link href="/dashboard/kpi/team" className="text-sm text-primary hover:underline">← KPI Tim</Link>
         <div className="mt-1 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-bold">Scorecard — {sc.employeeName ?? "Karyawan"}</h1>
-          <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SCORECARD_STATUS_STYLE[sc.status as ScorecardStatus]}`}>
+          <Badge variant={scorecardStatusVariant(sc.status)}>
             {SCORECARD_STATUS_LABEL[sc.status as ScorecardStatus]}
-          </span>
+          </Badge>
         </div>
       </div>
       <ManagerScorecard view={view} />

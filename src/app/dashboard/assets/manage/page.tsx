@@ -4,6 +4,14 @@ import { isModuleActive } from "@/lib/modules"
 import { ModuleLocked } from "@/components/module-locked"
 import { listAllAssets } from "@/modules/asset/queries"
 import { listLeadCandidates } from "@/modules/employees/queries"
+import {
+  Table,
+  TableBody,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import AssetForm from "./_form"
 import AssetRow from "./_row"
 
@@ -35,38 +43,32 @@ export default async function ManageAssetsPage() {
 
       <AssetForm />
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Aset</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Dipinjam Oleh</th>
-              <th className="px-4 py-2 text-right text-xs font-medium uppercase text-muted-foreground">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {assets.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Belum ada aset.
-                </td>
-              </tr>
-            ) : (
-              assets.map((a) => (
-                <AssetRow
-                  key={a.id}
-                  id={a.id}
-                  name={a.name}
-                  category={a.category}
-                  serialNumber={a.serialNumber}
-                  assignedToId={a.assignedToId}
-                  employees={empOptions}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Aset</TableHead>
+            <TableHead>Dipinjam Oleh</TableHead>
+            <TableHead className="text-right">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {assets.length === 0 ? (
+            <TableEmpty colSpan={3}>Belum ada aset.</TableEmpty>
+          ) : (
+            assets.map((a) => (
+              <AssetRow
+                key={a.id}
+                id={a.id}
+                name={a.name}
+                category={a.category}
+                serialNumber={a.serialNumber}
+                assignedToId={a.assignedToId}
+                employees={empOptions}
+              />
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

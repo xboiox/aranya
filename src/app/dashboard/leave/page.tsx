@@ -5,6 +5,17 @@ import { listMyLeaveRequests, getLeaveBalance } from "@/modules/leave/queries"
 import { leaveTypeLabel } from "@/modules/leave/schema"
 import { todayJakarta } from "@/lib/date"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { requestStatusVariant } from "@/lib/status"
 import LeaveRequestForm from "./_form"
 import CancelLeaveButton from "./_cancel"
 
@@ -17,12 +28,6 @@ function dateLabel(d: Date): string {
   })
 }
 
-const STATUS_STYLE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-700",
-  approved: "bg-green-100 text-green-700",
-  rejected: "bg-red-100 text-red-700",
-  cancelled: "bg-muted text-muted-foreground",
-}
 const STATUS_LABEL: Record<string, string> = {
   pending: "Menunggu",
   approved: "Disetujui",
@@ -77,54 +82,48 @@ export default async function LeavePage() {
 
       <div>
         <h2 className="mb-2 text-sm font-semibold">Riwayat Pengajuan</h2>
-        <div className="overflow-hidden rounded-xl border">
-          <table className="min-w-full divide-y">
-            <thead className="bg-muted/50">
-              <tr>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Jenis</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Tanggal</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Hari</th>
-                <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-                <th className="px-4 py-2 text-right text-xs font-medium uppercase text-muted-foreground">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {requests.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                    Belum ada pengajuan cuti.
-                  </td>
-                </tr>
-              ) : (
-                requests.map((r) => {
-                  const cancellable =
-                    r.status === "pending" ||
-                    (r.status === "approved" && new Date(r.startDate) > todayJakarta())
-                  return (
-                    <tr key={r.id}>
-                      <td className="px-4 py-2 text-sm">{leaveTypeLabel(r.type)}</td>
-                      <td className="px-4 py-2 text-sm">
-                        {dateLabel(r.startDate)} – {dateLabel(r.endDate)}
-                      </td>
-                      <td className="px-4 py-2 text-sm">{r.totalDays}</td>
-                      <td className="px-4 py-2">
-                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLE[r.status]}`}>
-                          {STATUS_LABEL[r.status]}
-                        </span>
-                        {r.status === "rejected" && r.rejectionReason && (
-                          <p className="mt-1 text-xs text-muted-foreground">{r.rejectionReason}</p>
-                        )}
-                      </td>
-                      <td className="px-4 py-2 text-right">
-                        {cancellable && <CancelLeaveButton id={r.id} />}
-                      </td>
-                    </tr>
-                  )
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Jenis</TableHead>
+              <TableHead>Tanggal</TableHead>
+              <TableHead>Hari</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Aksi</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {requests.length === 0 ? (
+              <TableEmpty colSpan={5}>Belum ada pengajuan cuti.</TableEmpty>
+            ) : (
+              requests.map((r) => {
+                const cancellable =
+                  r.status === "pending" ||
+                  (r.status === "approved" && new Date(r.startDate) > todayJakarta())
+                return (
+                  <TableRow key={r.id}>
+                    <TableCell>{leaveTypeLabel(r.type)}</TableCell>
+                    <TableCell>
+                      {dateLabel(r.startDate)} – {dateLabel(r.endDate)}
+                    </TableCell>
+                    <TableCell>{r.totalDays}</TableCell>
+                    <TableCell>
+                      <Badge variant={requestStatusVariant(r.status)}>
+                        {STATUS_LABEL[r.status]}
+                      </Badge>
+                      {r.status === "rejected" && r.rejectionReason && (
+                        <p className="mt-1 text-xs text-muted-foreground">{r.rejectionReason}</p>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {cancellable && <CancelLeaveButton id={r.id} />}
+                    </TableCell>
+                  </TableRow>
+                )
+              })
+            )}
+          </TableBody>
+        </Table>
       </div>
     </div>
   )

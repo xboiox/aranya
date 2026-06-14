@@ -5,6 +5,15 @@ import { ModuleLocked } from "@/components/module-locked"
 import { listAllTraining } from "@/modules/training/queries"
 import { listLeadCandidates } from "@/modules/employees/queries"
 import { TRAINING_STATUS_LABEL } from "@/modules/training/schema"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import TrainingForm from "./_form"
 import DeleteTrainingButton from "./_delete"
 
@@ -43,43 +52,37 @@ export default async function ManageTrainingPage() {
 
       <TrainingForm employees={employees.map((e) => ({ id: e.id, name: e.name }))} />
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y text-sm">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Karyawan</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Judul</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Berlaku s/d</th>
-              <th className="px-4 py-2 text-right text-xs font-medium uppercase text-muted-foreground">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {records.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                  Belum ada data training.
-                </td>
-              </tr>
-            ) : (
-              records.map((r) => (
-                <tr key={r.id}>
-                  <td className="px-4 py-2">{r.employeeName ?? "—"}</td>
-                  <td className="px-4 py-2">
-                    {r.title}
-                    <span className="block text-xs text-muted-foreground">
-                      {r.type === "certification" ? "Sertifikasi" : "Pelatihan"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground">{TRAINING_STATUS_LABEL[r.status]}</td>
-                  <td className="px-4 py-2">{dateLabel(r.expiryDate)}</td>
-                  <td className="px-4 py-2 text-right"><DeleteTrainingButton id={r.id} /></td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Karyawan</TableHead>
+            <TableHead>Judul</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Berlaku s/d</TableHead>
+            <TableHead className="text-right">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {records.length === 0 ? (
+            <TableEmpty colSpan={5}>Belum ada data training.</TableEmpty>
+          ) : (
+            records.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell>{r.employeeName ?? "—"}</TableCell>
+                <TableCell>
+                  {r.title}
+                  <span className="block text-xs text-muted-foreground">
+                    {r.type === "certification" ? "Sertifikasi" : "Pelatihan"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{TRAINING_STATUS_LABEL[r.status]}</TableCell>
+                <TableCell>{dateLabel(r.expiryDate)}</TableCell>
+                <TableCell className="text-right"><DeleteTrainingButton id={r.id} /></TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

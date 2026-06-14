@@ -15,13 +15,6 @@ export const PERIOD_STATUS_LABEL: Record<PeriodStatus, string> = {
   locked: "Terkunci",
 }
 
-export const PERIOD_STATUS_STYLE: Record<PeriodStatus, string> = {
-  planning: "bg-amber-100 text-amber-800",
-  active: "bg-blue-100 text-blue-800",
-  appraisal: "bg-purple-100 text-purple-800",
-  locked: "bg-muted text-muted-foreground",
-}
-
 export type ScorecardStatus = "draft" | "proposed" | "agreed" | "revision_requested"
 
 export const SCORECARD_STATUS_LABEL: Record<ScorecardStatus, string> = {
@@ -31,12 +24,6 @@ export const SCORECARD_STATUS_LABEL: Record<ScorecardStatus, string> = {
   revision_requested: "Minta revisi",
 }
 
-export const SCORECARD_STATUS_STYLE: Record<ScorecardStatus, string> = {
-  draft: "bg-muted text-muted-foreground",
-  proposed: "bg-amber-100 text-amber-800",
-  agreed: "bg-emerald-100 text-emerald-800",
-  revision_requested: "bg-red-100 text-red-800",
-}
 
 export const SCORE_LABEL: Record<number, string> = {
   1: "Sangat kurang",

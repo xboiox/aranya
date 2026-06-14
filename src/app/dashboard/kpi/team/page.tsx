@@ -7,12 +7,21 @@ import { getEmployeeIdByUser } from "@/modules/attendance/queries"
 import { listPeriods, getPeriod, listTeamScorecards } from "@/modules/kpi/queries"
 import {
   PERIOD_STATUS_LABEL,
-  PERIOD_STATUS_STYLE,
   SCORECARD_STATUS_LABEL,
-  SCORECARD_STATUS_STYLE,
   type PeriodStatus,
   type ScorecardStatus,
 } from "@/modules/kpi/schema"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { periodStatusVariant, scorecardStatusVariant } from "@/lib/status"
 import CreateScorecardButton from "./_create-scorecard"
 
 const selectClass = "rounded-md border border-input bg-background px-3 py-2 text-sm"
@@ -58,52 +67,50 @@ export default async function TeamKpiPage({ searchParams }: Props) {
         <select id="periodId" name="periodId" defaultValue={period.id} className={selectClass}>
           {periods.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
         </select>
-        <button type="submit" className="rounded-md border px-3 py-2 text-sm hover:bg-muted">Lihat</button>
-        <span className={`ml-auto inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${PERIOD_STATUS_STYLE[period.status as PeriodStatus]}`}>
+        <button type="submit" className="cursor-pointer rounded-md border px-3 py-2 text-sm transition-colors hover:bg-muted">Lihat</button>
+        <Badge variant={periodStatusVariant(period.status)} className="ml-auto">
           {PERIOD_STATUS_LABEL[period.status as PeriodStatus]}
-        </span>
+        </Badge>
       </form>
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Karyawan</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Scorecard</th>
-              <th className="px-4 py-2 text-right text-xs font-medium uppercase text-muted-foreground">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {rows.length === 0 ? (
-              <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-muted-foreground">Tidak ada bawahan.</td></tr>
-            ) : (
-              rows.map((r) => (
-                <tr key={r.employeeId}>
-                  <td className="px-4 py-2 text-sm">{r.employeeName ?? "—"}</td>
-                  <td className="px-4 py-2">
-                    {r.status ? (
-                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${SCORECARD_STATUS_STYLE[r.status as ScorecardStatus]}`}>
-                        {SCORECARD_STATUS_LABEL[r.status as ScorecardStatus]}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-muted-foreground">Belum ada</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    {r.scorecardId ? (
-                      <Link href={`/dashboard/kpi/team/${r.scorecardId}`} className="text-sm text-primary hover:underline">Kelola →</Link>
-                    ) : isPlanning ? (
-                      <CreateScorecardButton periodId={period.id} employeeId={r.employeeId} />
-                    ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Karyawan</TableHead>
+            <TableHead>Scorecard</TableHead>
+            <TableHead className="text-right">Aksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.length === 0 ? (
+            <TableEmpty colSpan={3}>Tidak ada bawahan.</TableEmpty>
+          ) : (
+            rows.map((r) => (
+              <TableRow key={r.employeeId}>
+                <TableCell>{r.employeeName ?? "—"}</TableCell>
+                <TableCell>
+                  {r.status ? (
+                    <Badge variant={scorecardStatusVariant(r.status)}>
+                      {SCORECARD_STATUS_LABEL[r.status as ScorecardStatus]}
+                    </Badge>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">Belum ada</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {r.scorecardId ? (
+                    <Link href={`/dashboard/kpi/team/${r.scorecardId}`} className="text-sm text-primary hover:underline">Kelola →</Link>
+                  ) : isPlanning ? (
+                    <CreateScorecardButton periodId={period.id} employeeId={r.employeeId} />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
     </div>
   )
 }

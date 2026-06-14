@@ -3,6 +3,16 @@ import { redirect } from "next/navigation"
 import { auth, hasRole } from "@/lib/auth"
 import { listEmployeesPaginated } from "@/modules/employees/queries"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Pagination } from "@/components/pagination"
 import { Download, Upload } from "lucide-react"
 
@@ -67,59 +77,46 @@ export default async function EmployeesPage({ searchParams }: Props) {
         )}
       </form>
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Nama</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Jabatan</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Departemen</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Atasan Langsung</th>
-              <th className="px-4 py-3 text-left text-xs font-medium uppercase text-muted-foreground">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {employees.length === 0 ? (
-              <tr>
-                <td colSpan={5} className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  Belum ada karyawan.{" "}
-                  <Link href="/dashboard/employees/new" className="text-primary underline">
-                    Tambah sekarang.
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nama</TableHead>
+            <TableHead>Jabatan</TableHead>
+            <TableHead>Departemen</TableHead>
+            <TableHead>Atasan Langsung</TableHead>
+            <TableHead>Status</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {employees.length === 0 ? (
+            <TableEmpty colSpan={5}>
+              Belum ada karyawan.{" "}
+              <Link href="/dashboard/employees/new" className="text-primary underline">
+                Tambah sekarang.
+              </Link>
+            </TableEmpty>
+          ) : (
+            employees.map((e) => (
+              <TableRow key={e.id}>
+                <TableCell>
+                  <Link href={`/dashboard/employees/${e.id}`} className="font-medium hover:underline">
+                    {e.name ?? "—"}
                   </Link>
-                </td>
-              </tr>
-            ) : (
-              employees.map((e) => (
-                <tr key={e.id} className="hover:bg-muted/30">
-                  <td className="px-4 py-3 text-sm">
-                    <Link href={`/dashboard/employees/${e.id}`} className="font-medium hover:underline">
-                      {e.name ?? "—"}
-                    </Link>
-                    <div className="text-xs text-muted-foreground">{e.email}</div>
-                  </td>
-                  <td className="px-4 py-3 text-sm">{e.position ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm">{e.department ?? "—"}</td>
-                  <td className="px-4 py-3 text-sm">{e.managerName ?? "—"}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={
-                        "inline-flex rounded-full px-2 py-0.5 text-xs font-medium " +
-                        (!e.isActive
-                          ? "bg-muted text-muted-foreground"
-                          : e.isActivated
-                            ? "bg-green-100 text-green-700"
-                            : "bg-amber-100 text-amber-700")
-                      }
-                    >
-                      {!e.isActive ? "Nonaktif" : e.isActivated ? "Aktif" : "Menunggu aktivasi"}
-                    </span>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                  <div className="text-xs text-muted-foreground">{e.email}</div>
+                </TableCell>
+                <TableCell>{e.position ?? "—"}</TableCell>
+                <TableCell>{e.department ?? "—"}</TableCell>
+                <TableCell>{e.managerName ?? "—"}</TableCell>
+                <TableCell>
+                  <Badge variant={!e.isActive ? "muted" : e.isActivated ? "success" : "warning"}>
+                    {!e.isActive ? "Nonaktif" : e.isActivated ? "Aktif" : "Menunggu aktivasi"}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
 
       <Pagination
         basePath="/dashboard/employees"

@@ -11,6 +11,14 @@ import {
 } from "@/modules/attendance/team-report"
 import { todayJakarta, toYMD, parseDateOnly } from "@/lib/date"
 import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableEmpty,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { Pagination } from "@/components/pagination"
 import { Download } from "lucide-react"
 import AttendanceCorrectionRow from "./_row"
@@ -145,43 +153,37 @@ export default async function TeamAttendancePage({ searchParams }: Props) {
         </Button>
       </form>
 
-      <div className="overflow-hidden rounded-xl border">
-        <table className="min-w-full divide-y">
-          <thead className="bg-muted/50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Tanggal</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Karyawan</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Departemen</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Masuk</th>
-              <th className="px-4 py-2 text-left text-xs font-medium uppercase text-muted-foreground">Keluar</th>
-              <th className="px-4 py-2 text-right text-xs font-medium uppercase text-muted-foreground">Koreksi</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {pageRows.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  Tidak ada data untuk filter ini.
-                </td>
-              </tr>
-            ) : (
-              pageRows.map((r) => (
-                <AttendanceCorrectionRow
-                  key={`${r.employeeId}-${toYMD(r.date)}`}
-                  employeeId={r.employeeId}
-                  name={r.name}
-                  department={r.department}
-                  dateStr={toYMD(r.date)}
-                  dateDisplay={dateDisplay(r.date)}
-                  initialCheckIn={toHHMM(r.checkInAt)}
-                  initialCheckOut={toHHMM(r.checkOutAt)}
-                  isLate={r.isLate}
-                />
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Tanggal</TableHead>
+            <TableHead>Karyawan</TableHead>
+            <TableHead>Departemen</TableHead>
+            <TableHead>Masuk</TableHead>
+            <TableHead>Keluar</TableHead>
+            <TableHead className="text-right">Koreksi</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {pageRows.length === 0 ? (
+            <TableEmpty colSpan={6}>Tidak ada data untuk filter ini.</TableEmpty>
+          ) : (
+            pageRows.map((r) => (
+              <AttendanceCorrectionRow
+                key={`${r.employeeId}-${toYMD(r.date)}`}
+                employeeId={r.employeeId}
+                name={r.name}
+                department={r.department}
+                dateStr={toYMD(r.date)}
+                dateDisplay={dateDisplay(r.date)}
+                initialCheckIn={toHHMM(r.checkInAt)}
+                initialCheckOut={toHHMM(r.checkOutAt)}
+                isLate={r.isLate}
+              />
+            ))
+          )}
+        </TableBody>
+      </Table>
 
       <Pagination
         basePath="/dashboard/attendance/team"

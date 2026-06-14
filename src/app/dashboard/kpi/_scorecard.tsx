@@ -11,10 +11,12 @@ import {
   addProgress,
   setRealizationSelf,
 } from "@/modules/kpi/actions"
-import { SCORECARD_STATUS_LABEL, SCORECARD_STATUS_STYLE, SCORE_LABEL, type ScorecardStatus } from "@/modules/kpi/schema"
+import { SCORECARD_STATUS_LABEL, SCORE_LABEL, type ScorecardStatus } from "@/modules/kpi/schema"
 import type { RubricLevel } from "@/lib/db/schema"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { scorecardStatusVariant } from "@/lib/status"
 
 export interface TaskView {
   id: string
@@ -83,9 +85,9 @@ export default function EmployeeScorecard({ view }: { view: ScorecardView }) {
           <p className="font-semibold">{view.periodName}</p>
           <p className="text-xs text-muted-foreground">Periode: {st}</p>
         </div>
-        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${SCORECARD_STATUS_STYLE[view.status as ScorecardStatus]}`}>
+        <Badge variant={scorecardStatusVariant(view.status)}>
           {SCORECARD_STATUS_LABEL[view.status as ScorecardStatus]}
-        </span>
+        </Badge>
       </div>
 
       {st === "locked" && view.finalTotal != null && (

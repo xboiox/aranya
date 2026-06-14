@@ -1,11 +1,9 @@
+import { Badge } from "@/components/ui/badge"
+import { requestStatusVariant } from "@/lib/status"
+
 const STATUS_LABEL: Record<string, string> = {
   approved: "Disetujui",
   rejected: "Ditolak",
-}
-
-const STATUS_STYLE: Record<string, string> = {
-  approved: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-red-100 text-red-800",
 }
 
 export interface ApprovalHistoryItem {
@@ -46,13 +44,9 @@ export function ApprovalHistory({
                 )}
               </div>
               <div className="shrink-0 text-right">
-                <span
-                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${
-                    STATUS_STYLE[it.status] ?? "bg-muted text-muted-foreground"
-                  }`}
-                >
+                <Badge variant={requestStatusVariant(it.status)}>
                   {STATUS_LABEL[it.status] ?? it.status}
-                </span>
+                </Badge>
                 {it.decidedAt && (
                   <p className="mt-1 text-xs text-muted-foreground">{it.decidedAt}</p>
                 )}
